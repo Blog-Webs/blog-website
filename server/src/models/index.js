@@ -1,0 +1,15 @@
+module.exports = {
+  User: require('./User'),
+  Subject: require('./Subject'),
+  Topic: require('./Topic'),
+  Track: require('./Track'),
+  Chapter: require('./Chapter'),
+  Progress: require('./Progress'),
+  Bookmark: require('./Bookmark'),
+  Blog: require('./Blog'),
+  Comment: require('./Comment'),
+  Newsletter: require('./Newsletter'),
+  Todo: require('./Todo'),
+  Contact: require('./Contact'),
+  Series: require('./Series'),
+};
