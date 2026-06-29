@@ -24,8 +24,9 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="font-mono-display font-bold text-lg mb-2">httpTechNex</p>
+          <p className="font-mono-display font-bold text-lg mb-2">By Tanish Dewase</p>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            DSA, Java, and Aptitude — explained, visualized, and tracked.
+            DSA, Java, and Aptitude  explained, visualized, and tracked.
           </p>
         </div>
 
@@ -72,7 +73,7 @@ const Footer = () => {
         </div>
       </div>
       <div className="text-center text-xs py-4 border-t" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-        © {new Date().getFullYear()} HttpTechNex. Built for learners, by learners.
+        © {new Date().getFullYear()} HttpTechNex. By Tanish Dewase.
       </div>
     </footer>
   );

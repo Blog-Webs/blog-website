@@ -30,10 +30,10 @@ const Home = () => {
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-5 glow-title">
             Learn DSA, Java &amp; Aptitude<br />
-            <span style={{ color: 'var(--accent)' }}>the way it should be taught.</span>
+            <span style={{ color: 'var(--accent)' }}>the way it should be taught, with Tanish</span>
           </h1>
           <p className="text-lg mb-8" style={{ color: 'var(--text-muted)' }}>
-            Visual algorithm walkthroughs, structured roadmaps, and chapter-by-chapter tracking —
+            Visual algorithm walkthroughs, structured roadmaps, and chapter by chapter tracking 
             built for engineers actually preparing for interviews, not just browsing tutorials.
           </p>
           <div className="flex flex-wrap gap-3">
@@ -121,8 +121,8 @@ const Home = () => {
         >
           <p className="text-sm font-mono-display mb-2" style={{ color: 'var(--accent)' }}>references &amp; further reading</p>
           <p className="max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
-            Every chapter links out to GeeksforGeeks for deeper practice sets, and our Blog reads like Medium —
-            cover images, rich text, tags, and a real comment section.
+            Every chapter created by Tanish self learning for deeper practice sets, and our Blog reads are like to understand the 
+            concept from Scratch to Mastery. No doubt left. for revision this platform is Best.
           </p>
         </div>
       </section>
