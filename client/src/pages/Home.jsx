@@ -1,20 +1,115 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, BookOpen, FileText, TrendingUp, HelpCircle } from 'lucide-react';
+import { Users, BookOpen, FileText, TrendingUp, HelpCircle, Layers, ArrowRight, Clock } from 'lucide-react';
 import SortVisualizer from '../components/home/SortVisualizer';
 import SubjectCard from '../components/home/SubjectCard';
 import SearchBar from '../components/home/SearchBar';
 import ContactModal from '../components/home/ContactModal';
 import { contentApi } from '../api/content';
+import { seriesApi } from '../api/series';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
+
+/* Spawns a CSS water-ripple dot at the click position on the card */
+const useWaterRipple = () => {
+  const createRipple = useCallback((e) => {
+    const card = e.currentTarget;
+    const container = card.querySelector('.ripple-container');
+    if (!container) return;
+
+    const rect = card.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.4;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+
+    const ripple = document.createElement('span');
+    ripple.className = 'water-ripple';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+    container.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  }, []);
+
+  return createRipple;
+};
+
+const SeriesCard = ({ series }) => {
+  const createRipple = useWaterRipple();
+  const hasMultiplePosts = (series.postCount || 0) >= 2;
+
+  return (
+    <Link
+      to={`/series/${series.slug}`}
+      className={`series-card group block p-6 rounded-2xl border${hasMultiplePosts ? ' series-card' : ''}`}
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      onClick={createRipple}
+    >
+      {/* Ripple layer */}
+      <div className="ripple-container" />
+
+      {/* Content sits above ripple/blobs */}
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Series icon */}
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 shrink-0"
+          style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
+        >
+          <Layers size={20} />
+        </div>
+
+        {/* Badge */}
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="text-[10px] font-mono-display uppercase tracking-widest px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
+          >
+            Series
+          </span>
+          {hasMultiplePosts && (
+            <span
+              className="text-[10px] font-mono-display px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: 'rgba(94,234,212,0.1)', color: '#5EEAD4' }}
+            >
+              {series.postCount} parts
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-lg font-semibold mb-1.5 leading-snug">{series.title}</h3>
+
+        {series.description && (
+          <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-muted)' }}>
+            {series.description}
+          </p>
+        )}
+
+        <div
+          className="flex items-center gap-1 text-sm font-medium mt-auto"
+          style={{ color: 'var(--accent)' }}
+        >
+          Read series
+          <ArrowRight
+            size={14}
+            className="transition-transform group-hover:translate-x-1"
+          />
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 const Home = () => {
   const [subjects, setSubjects] = useState([]);
+  const [seriesList, setSeriesList] = useState([]);
   const [helpOpen, setHelpOpen] = useState(false);
   const liveCount = useLiveUserCount();
 
   useEffect(() => {
     contentApi.getSubjects().then(({ data }) => setSubjects(data.subjects)).catch(() => {});
+    seriesApi.getAll().then(({ data }) => setSeriesList(data.series || [])).catch(() => {});
   }, []);
 
   return (
@@ -112,6 +207,37 @@ const Home = () => {
           ))}
         </div>
       </section>
+
+      {/* Blog Series Section */}
+      {seriesList.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          {/* Section header */}
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs font-mono-display uppercase tracking-widest mb-1" style={{ color: 'var(--accent)' }}>
+                // curated reading paths
+              </p>
+              <h2 className="text-2xl font-bold glow-title">Blog Series</h2>
+            </div>
+            <Link
+              to="/blog"
+              className="flex items-center gap-1.5 text-sm font-medium border px-3.5 py-2 rounded-xl btn-press"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              All posts <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="mb-8" style={{ color: 'var(--text-muted)' }}>
+            Multi-part deep dives — each series takes you from zero to expert on one concept.
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {seriesList.map((s) => (
+              <SeriesCard key={s._id} series={s} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Integrations note */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">

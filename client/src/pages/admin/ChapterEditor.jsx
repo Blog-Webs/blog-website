@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Save, Lock, Unlock, Maximize2, Minimize2, Type, Clock } from 'lucide-react';
 import { contentApi } from '../../api/content';
 import { adminApi } from '../../api/admin';
 import { blogApi } from '../../api/blog';
@@ -37,11 +37,14 @@ const ChapterEditor = () => {
   const [existingChapterCount, setExistingChapterCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(!isEditing);
+  const [focusMode, setFocusMode] = useState(false);
+
+  // Live word count
+  const wordCount = chapter.content ? chapter.content.trim().split(/\s+/).filter(Boolean).length : 0;
+  const readTime = Math.max(1, Math.round(wordCount / 200));
 
   useEffect(() => {
     if (!isEditing) {
-      // For a brand new chapter we still want the breadcrumb + next
-      // chapter number, fetched from the track id passed in via the URL.
       if (!trackIdFromQuery) {
         setLoaded(true);
         return;
@@ -76,6 +79,12 @@ const ChapterEditor = () => {
       setLoaded(true);
     });
   }, [id, isEditing, trackIdFromQuery]);
+
+  // Lock body scroll in focus mode
+  useEffect(() => {
+    document.body.style.overflow = focusMode ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [focusMode]);
 
   const handleEditorChange = ({ blocks, headings, plainText }) => {
     setChapter((c) => ({ ...c, contentBlocks: blocks, headings, content: plainText }));
@@ -112,30 +121,27 @@ const ChapterEditor = () => {
 
   if (!loaded) return <p style={{ color: 'var(--text-muted)' }}>Loading…</p>;
 
-  return (
-    <div className="max-w-4xl">
-      <button
-        onClick={() => navigate('/admin-portal/content')}
-        className="flex items-center gap-1.5 text-sm mb-6 px-3 py-1.5 rounded-lg border btn-press"
-        style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-      >
-        <ArrowLeft size={14} /> Back to content tree
-      </button>
-
-      {breadcrumb && (
-        <p className="text-xs font-mono-display mb-2" style={{ color: 'var(--text-muted)' }}>
-          {breadcrumb.subjectName} / {breadcrumb.topicName} / {breadcrumb.trackName}
-        </p>
-      )}
-
-      <h1 className="text-2xl font-bold mb-6">{isEditing ? 'Edit chapter' : 'New chapter'}</h1>
-
+  /* ── Shared editor fields ── */
+  const editorFields = (
+    <>
       <input
         value={chapter.title}
         onChange={(e) => setChapter((c) => ({ ...c, title: e.target.value }))}
         placeholder="Chapter title (e.g. Introduction)"
-        className="w-full text-2xl font-bold mb-6 outline-none bg-transparent"
+        className="w-full text-2xl font-bold mb-4 outline-none bg-transparent"
       />
+
+      {/* Live stats */}
+      <div className="flex items-center gap-4 mb-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span className="flex items-center gap-1.5">
+          <Type size={12} style={{ color: 'var(--accent)' }} />
+          {wordCount.toLocaleString()} words
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Clock size={12} style={{ color: 'var(--accent)' }} />
+          ~{readTime} min read
+        </span>
+      </div>
 
       <p className="text-xs font-mono-display uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Content</p>
 
@@ -148,7 +154,7 @@ const ChapterEditor = () => {
             const { data } = await blogApi.uploadImage(file);
             return data.url;
           }}
-          minHeight="640px"
+          minHeight={focusMode ? '70vh' : '800px'}
         />
       </div>
 
@@ -178,15 +184,85 @@ const ChapterEditor = () => {
           />
         </label>
       </div>
+    </>
+  );
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
-        style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-      >
-        <Save size={15} /> {isEditing ? 'Save changes' : 'Create chapter'}
-      </button>
+  /* ── Save button ── */
+  const saveButton = (
+    <button
+      onClick={handleSave}
+      disabled={saving}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
+      style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
+    >
+      <Save size={15} /> {isEditing ? 'Save changes' : 'Create chapter'}
+    </button>
+  );
+
+  /* ── Focus Mode ── */
+  if (focusMode) {
+    return (
+      <div className="focus-mode-overlay">
+        <div className="focus-mode-bar">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+            {breadcrumb && (
+              <span style={{ color: 'var(--text-muted)' }}>
+                {breadcrumb.subjectName} / {breadcrumb.topicName} &nbsp;·&nbsp;
+              </span>
+            )}
+            <span style={{ color: 'var(--accent)' }}>{wordCount} words</span>
+          </span>
+          <div className="flex items-center gap-3">
+            {saveButton}
+            <button
+              onClick={() => setFocusMode(false)}
+              className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border btn-press"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              <Minimize2 size={14} /> Exit focus
+            </button>
+          </div>
+        </div>
+
+        <div className="focus-mode-inner">
+          {editorFields}
+          {saveButton}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Normal Mode ── */
+  return (
+    <div className="max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={() => navigate('/admin-portal/content')}
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border btn-press"
+          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+        >
+          <ArrowLeft size={14} /> Back to content tree
+        </button>
+        <button
+          onClick={() => setFocusMode(true)}
+          className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-xl border btn-press"
+          style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
+          title="Enter focus / fullscreen writing mode"
+        >
+          <Maximize2 size={14} /> Focus mode
+        </button>
+      </div>
+
+      {breadcrumb && (
+        <p className="text-xs font-mono-display mb-2" style={{ color: 'var(--text-muted)' }}>
+          {breadcrumb.subjectName} / {breadcrumb.topicName} / {breadcrumb.trackName}
+        </p>
+      )}
+
+      <h1 className="text-2xl font-bold mb-6">{isEditing ? 'Edit chapter' : 'New chapter'}</h1>
+
+      {editorFields}
+      {saveButton}
     </div>
   );
 };
