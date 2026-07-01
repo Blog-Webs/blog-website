@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, Pencil, ChevronRight, ChevronDown, Binary, Coffee, Calculator,
-  Network, Database, Cpu, Globe, Layers,
+  Network, Database, Cpu, Globe, Layers, Undo2, Home, ChevronRight as Breadcrumb,
 } from 'lucide-react';
 import { contentApi } from '../../api/content';
 import { adminApi } from '../../api/admin';
@@ -20,26 +20,44 @@ const ICON_OPTIONS = [
 
 const COLOR_OPTIONS = ['#5EEAD4', '#FFB454', '#A78BFA', '#F87171', '#60A5FA', '#34D399'];
 
-const inputClass = 'px-3 py-2.5 rounded-lg border text-sm outline-none w-full input-focus';
+const inputClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full input-focus';
 const inputStyle = { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)' };
+const textareaClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full input-focus resize-none';
 
 const emptySubjectForm = { name: '', description: '', icon: 'layers', color: '#5EEAD4' };
 const emptyTopicForm = { name: '', description: '', difficulty: 'beginner', estimatedMinutes: 30 };
 const emptyTrackForm = { name: '' };
 
-// Small inline rename/edit form, reused for Subject/Topic/Track since they
-// all share the same edit-or-delete interaction shape.
+// Inline rename/edit form, reused for Subject/Topic/Track
 const InlineForm = ({ children, onSave, onCancel, saveLabel = 'Save' }) => (
-  <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'var(--surface-raised)' }}>
+  <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ backgroundColor: 'var(--surface-raised)' }}>
     {children}
     <div className="flex gap-2">
-      <button onClick={onSave} className="px-3 py-1.5 rounded-lg text-xs font-medium btn-press" style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}>
+      <button onClick={onSave} className="px-4 py-2 rounded-lg text-xs font-medium btn-press" style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}>
         {saveLabel}
       </button>
-      <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: 'var(--text-muted)' }}>
+      <button onClick={onCancel} className="px-4 py-2 rounded-lg text-xs" style={{ color: 'var(--text-muted)' }}>
         Cancel
       </button>
     </div>
+  </div>
+);
+
+/* ── Undo toast ── */
+const UndoToast = ({ message, onUndo, onDismiss }) => (
+  <div
+    className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 px-5 py-3 rounded-2xl border shadow-2xl z-50"
+    style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 8px 32px var(--shadow)' }}
+  >
+    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{message}</span>
+    <button
+      onClick={onUndo}
+      className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg btn-press"
+      style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
+    >
+      <Undo2 size={13} /> Undo
+    </button>
+    <button onClick={onDismiss} className="text-xs" style={{ color: 'var(--text-muted)' }}>Dismiss</button>
   </div>
 );
 
@@ -51,6 +69,10 @@ const ContentTreeManager = () => {
   const [tracks, setTracks] = useState({});
   const [expandedTrack, setExpandedTrack] = useState(null);
   const [chapters, setChapters] = useState({});
+
+  // Breadcrumb state: tracks what's currently "selected" at each level
+  // { subject, topic, track } — each is the object or null
+  const [crumb, setCrumb] = useState({ subject: null, topic: null, track: null });
 
   const [addingSubject, setAddingSubject] = useState(false);
   const [subjectForm, setSubjectForm] = useState(emptySubjectForm);
@@ -64,30 +86,53 @@ const ContentTreeManager = () => {
   const [trackForm, setTrackForm] = useState(emptyTrackForm);
   const [editingTrackId, setEditingTrackId] = useState(null);
 
+  // Undo toast state
+  const [toast, setToast] = useState(null); // { message, onUndo }
+  const toastTimer = useRef(null);
+
+  const showToast = useCallback((message, onUndo) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message, onUndo });
+    toastTimer.current = setTimeout(() => {
+      setToast(null);
+      toastTimer.current = null;
+    }, 5000);
+  }, []);
+
+  const dismissToast = () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+  };
+
   const loadSubjects = () => contentApi.getSubjects().then(({ data }) => setSubjects(data.subjects));
 
-  useEffect(() => {
-    loadSubjects();
-  }, []);
+  useEffect(() => { loadSubjects(); }, []);
 
   const toggleSubject = async (subject) => {
     if (expandedSubject === subject._id) {
       setExpandedSubject(null);
+      setCrumb({ subject: null, topic: null, track: null });
       return;
     }
     setExpandedSubject(subject._id);
+    setExpandedTopic(null);
+    setExpandedTrack(null);
+    setCrumb({ subject, topic: null, track: null });
     if (!topics[subject._id]) {
       const { data } = await contentApi.getSubjectBySlug(subject.slug);
       setTopics((prev) => ({ ...prev, [subject._id]: data.topics }));
     }
   };
 
-  const toggleTopic = async (topic) => {
+  const toggleTopic = async (topic, subject) => {
     if (expandedTopic === topic._id) {
       setExpandedTopic(null);
+      setCrumb((c) => ({ ...c, topic: null, track: null }));
       return;
     }
     setExpandedTopic(topic._id);
+    setExpandedTrack(null);
+    setCrumb((c) => ({ ...c, topic, track: null }));
     if (!tracks[topic._id]) {
       const { data } = await contentApi.getTracksForTopic(topic._id);
       setTracks((prev) => ({ ...prev, [topic._id]: data.tracks }));
@@ -97,9 +142,11 @@ const ContentTreeManager = () => {
   const toggleTrack = async (track) => {
     if (expandedTrack === track._id) {
       setExpandedTrack(null);
+      setCrumb((c) => ({ ...c, track: null }));
       return;
     }
     setExpandedTrack(track._id);
+    setCrumb((c) => ({ ...c, track }));
     if (!chapters[track._id]) {
       const { data } = await contentApi.getChaptersForTrack(track._id);
       setChapters((prev) => ({ ...prev, [track._id]: data.chapters }));
@@ -113,7 +160,7 @@ const ContentTreeManager = () => {
 
   // ---------- Subjects ----------
   const handleAddSubject = async () => {
-    if (!subjectForm.name.trim()) return alert('Subject name is required.');
+    if (!subjectForm.name.trim()) return;
     const { data } = await adminApi.createSubject(subjectForm);
     setSubjects((prev) => [...prev, data.subject]);
     setSubjectForm(emptySubjectForm);
@@ -126,22 +173,33 @@ const ContentTreeManager = () => {
   };
 
   const handleSaveSubjectEdit = async () => {
-    if (!subjectForm.name.trim()) return alert('Subject name is required.');
+    if (!subjectForm.name.trim()) return;
     const { data } = await adminApi.updateSubject(editingSubjectId, subjectForm);
     setSubjects((prev) => prev.map((s) => (s._id === editingSubjectId ? data.subject : s)));
     setEditingSubjectId(null);
     setSubjectForm(emptySubjectForm);
   };
 
-  const handleDeleteSubject = async (subjectId) => {
-    if (!window.confirm('Delete this subject and ALL of its topics, tracks, and chapters? This cannot be undone.')) return;
-    await adminApi.deleteSubject(subjectId);
+  const handleDeleteSubject = async (subjectId, subjectName) => {
+    // Optimistic delete — then offer 5-sec undo window
+    const snapshot = [...subjects];
     setSubjects((prev) => prev.filter((s) => s._id !== subjectId));
+    let undone = false;
+    showToast(`Deleted subject "${subjectName}"`, async () => {
+      undone = true;
+      setSubjects(snapshot);
+      dismissToast();
+    });
+    setTimeout(async () => {
+      if (!undone) {
+        try { await adminApi.deleteSubject(subjectId); } catch {}
+      }
+    }, 5100);
   };
 
   // ---------- Topics ----------
   const handleAddTopic = async (subjectId) => {
-    if (!topicForm.name.trim()) return alert('Topic name is required.');
+    if (!topicForm.name.trim()) return;
     const existing = topics[subjectId] || [];
     const { data } = await adminApi.createTopic({ subject: subjectId, ...topicForm, order: existing.length });
     setTopics((prev) => ({ ...prev, [subjectId]: [...existing, data.topic] }));
@@ -155,22 +213,28 @@ const ContentTreeManager = () => {
   };
 
   const handleSaveTopicEdit = async (subjectId) => {
-    if (!topicForm.name.trim()) return alert('Topic name is required.');
+    if (!topicForm.name.trim()) return;
     const { data } = await adminApi.updateTopic(editingTopicId, topicForm);
     setTopics((prev) => ({ ...prev, [subjectId]: prev[subjectId].map((t) => (t._id === editingTopicId ? data.topic : t)) }));
     setEditingTopicId(null);
     setTopicForm(emptyTopicForm);
   };
 
-  const handleDeleteTopic = async (subjectId, topicId) => {
-    if (!window.confirm('Delete this topic and all of its tracks and chapters?')) return;
-    await adminApi.deleteTopic(topicId);
-    setTopics((prev) => ({ ...prev, [subjectId]: prev[subjectId].filter((t) => t._id !== topicId) }));
+  const handleDeleteTopic = async (subjectId, topicId, topicName) => {
+    const snapshot = topics[subjectId] ? [...topics[subjectId]] : [];
+    setTopics((prev) => ({ ...prev, [subjectId]: (prev[subjectId] || []).filter((t) => t._id !== topicId) }));
+    let undone = false;
+    showToast(`Deleted topic "${topicName}"`, () => {
+      undone = true;
+      setTopics((prev) => ({ ...prev, [subjectId]: snapshot }));
+      dismissToast();
+    });
+    setTimeout(async () => { if (!undone) try { await adminApi.deleteTopic(topicId); } catch {} }, 5100);
   };
 
   // ---------- Tracks ----------
   const handleAddTrack = async (topicId) => {
-    if (!trackForm.name.trim()) return alert('Track name is required.');
+    if (!trackForm.name.trim()) return;
     const existing = tracks[topicId] || [];
     const { data } = await adminApi.createTrack({ topic: topicId, name: trackForm.name, order: existing.length });
     setTracks((prev) => ({ ...prev, [topicId]: [...existing, { ...data.track, chapterCount: 0 }] }));
@@ -184,7 +248,7 @@ const ContentTreeManager = () => {
   };
 
   const handleSaveTrackEdit = async (topicId) => {
-    if (!trackForm.name.trim()) return alert('Track name is required.');
+    if (!trackForm.name.trim()) return;
     const { data } = await adminApi.updateTrack(editingTrackId, trackForm);
     setTracks((prev) => ({
       ...prev,
@@ -194,21 +258,89 @@ const ContentTreeManager = () => {
     setTrackForm(emptyTrackForm);
   };
 
-  const handleDeleteTrack = async (topicId, trackId) => {
-    if (!window.confirm('Delete this track and all of its chapters?')) return;
-    await adminApi.deleteTrack(trackId);
-    setTracks((prev) => ({ ...prev, [topicId]: prev[topicId].filter((t) => t._id !== trackId) }));
+  const handleDeleteTrack = async (topicId, trackId, trackName) => {
+    const snapshot = tracks[topicId] ? [...tracks[topicId]] : [];
+    setTracks((prev) => ({ ...prev, [topicId]: (prev[topicId] || []).filter((t) => t._id !== trackId) }));
+    let undone = false;
+    showToast(`Deleted track "${trackName}"`, () => {
+      undone = true;
+      setTracks((prev) => ({ ...prev, [topicId]: snapshot }));
+      dismissToast();
+    });
+    setTimeout(async () => { if (!undone) try { await adminApi.deleteTrack(trackId); } catch {} }, 5100);
   };
 
   // ---------- Chapters ----------
-  const handleDeleteChapter = async (trackId, chapterId) => {
-    if (!window.confirm('Delete this chapter?')) return;
-    await adminApi.deleteChapter(chapterId);
-    setChapters((prev) => ({ ...prev, [trackId]: prev[trackId].filter((c) => c._id !== chapterId) }));
+  const handleDeleteChapter = async (trackId, chapterId, chapterTitle) => {
+    const snapshot = chapters[trackId] ? [...chapters[trackId]] : [];
+    setChapters((prev) => ({ ...prev, [trackId]: (prev[trackId] || []).filter((c) => c._id !== chapterId) }));
+    let undone = false;
+    showToast(`Deleted chapter "${chapterTitle}"`, () => {
+      undone = true;
+      setChapters((prev) => ({ ...prev, [trackId]: snapshot }));
+      dismissToast();
+    });
+    setTimeout(async () => { if (!undone) try { await adminApi.deleteChapter(chapterId); } catch {} }, 5100);
+  };
+
+  // Breadcrumb navigation handlers
+  const navToSubject = (subjectId) => {
+    setExpandedSubject(subjectId);
+    setExpandedTopic(null);
+    setExpandedTrack(null);
+    const s = subjects.find((x) => x._id === subjectId);
+    setCrumb({ subject: s || null, topic: null, track: null });
+  };
+
+  const navToTopic = (topicId) => {
+    setExpandedTopic(topicId);
+    setExpandedTrack(null);
+    const topicList = Object.values(topics).flat();
+    const t = topicList.find((x) => x._id === topicId);
+    setCrumb((c) => ({ ...c, topic: t || null, track: null }));
   };
 
   return (
     <div>
+      {/* Breadcrumb nav */}
+      {crumb.subject && (
+        <nav className="flex items-center gap-1.5 mb-5 flex-wrap">
+          <button
+            onClick={() => { setExpandedSubject(null); setExpandedTopic(null); setExpandedTrack(null); setCrumb({ subject: null, topic: null, track: null }); }}
+            className="flex items-center gap-1 text-sm btn-press"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <Home size={12} /> Content Tree
+          </button>
+          <ChevronRight size={13} style={{ color: 'var(--border)' }} />
+          <button
+            onClick={() => navToSubject(crumb.subject._id)}
+            className="text-sm font-medium btn-press hover:underline"
+            style={{ color: crumb.subject.color || 'var(--accent)' }}
+          >
+            {crumb.subject.name}
+          </button>
+          {crumb.topic && (
+            <>
+              <ChevronRight size={13} style={{ color: 'var(--border)' }} />
+              <button
+                onClick={() => navToTopic(crumb.topic._id)}
+                className="text-sm font-medium btn-press hover:underline"
+                style={{ color: 'var(--text)' }}
+              >
+                {crumb.topic.name}
+              </button>
+            </>
+          )}
+          {crumb.track && (
+            <>
+              <ChevronRight size={13} style={{ color: 'var(--border)' }} />
+              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{crumb.track.name}</span>
+            </>
+          )}
+        </nav>
+      )}
+
       <h1 className="text-2xl font-bold mb-1">Content Tree</h1>
       <p className="mb-6" style={{ color: 'var(--text-muted)' }}>
         Subjects → Topics → Tracks (e.g. "Deep Analysis", "Data Research") → Chapters.
@@ -247,10 +379,10 @@ const ContentTreeManager = () => {
                   {expandedSubject === subject._id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => startEditSubject(subject)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }} title="Edit subject">
+                  <button onClick={() => startEditSubject(subject)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }} title="Edit">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => handleDeleteSubject(subject._id)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--danger)' }} title="Delete subject">
+                  <button onClick={() => handleDeleteSubject(subject._id, subject.name)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--danger)' }} title="Delete">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -269,15 +401,15 @@ const ContentTreeManager = () => {
                       </div>
                     ) : (
                       <div className="w-full flex items-center justify-between gap-3 p-3">
-                        <button onClick={() => toggleTopic(topic)} className="flex items-center gap-2 flex-1 text-left text-sm">
+                        <button onClick={() => toggleTopic(topic, subject)} className="flex items-center gap-2 flex-1 text-left text-sm">
                           <span>{topic.name}</span>
                           {expandedTopic === topic._id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </button>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => startEditTopic(topic)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }} title="Edit topic">
+                          <button onClick={() => startEditTopic(topic)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }}>
                             <Pencil size={13} />
                           </button>
-                          <button onClick={() => handleDeleteTopic(subject._id, topic._id)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--danger)' }} title="Delete topic">
+                          <button onClick={() => handleDeleteTopic(subject._id, topic._id, topic.name)} className="p-1.5 rounded-lg btn-press" style={{ color: 'var(--danger)' }}>
                             <Trash2 size={13} />
                           </button>
                         </div>
@@ -307,10 +439,10 @@ const ContentTreeManager = () => {
                                   {expandedTrack === track._id ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                                 </button>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                  <button onClick={() => startEditTrack(track)} className="p-1 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }} title="Rename track">
+                                  <button onClick={() => startEditTrack(track)} className="p-1 rounded-lg btn-press" style={{ color: 'var(--text-muted)' }}>
                                     <Pencil size={12} />
                                   </button>
-                                  <button onClick={() => handleDeleteTrack(topic._id, track._id)} className="p-1 rounded-lg btn-press" style={{ color: 'var(--danger)' }} title="Delete track">
+                                  <button onClick={() => handleDeleteTrack(topic._id, track._id, track.name)} className="p-1 rounded-lg btn-press" style={{ color: 'var(--danger)' }}>
                                     <Trash2 size={12} />
                                   </button>
                                 </div>
@@ -321,23 +453,19 @@ const ContentTreeManager = () => {
                               <div className="px-3 pb-3">
                                 {(chapters[track._id] || []).map((chapter) => (
                                   <div key={chapter._id} className="flex items-center justify-between py-1.5 text-sm group">
-                                    <Link
-                                      to={`/admin-portal/content/chapters/${chapter._id}`}
-                                      className="hover:text-[var(--accent)] transition-colors"
-                                    >
+                                    <Link to={`/admin-portal/content/chapters/${chapter._id}`} className="hover:text-[var(--accent)] transition-colors">
                                       Ch.{chapter.chapterNumber} — {chapter.title}
                                     </Link>
                                     <div className="flex items-center gap-2">
-                                      <Link to={`/admin-portal/content/chapters/${chapter._id}`} style={{ color: 'var(--text-muted)' }} title="Edit chapter">
+                                      <Link to={`/admin-portal/content/chapters/${chapter._id}`} style={{ color: 'var(--text-muted)' }}>
                                         <Pencil size={13} />
                                       </Link>
-                                      <button onClick={() => handleDeleteChapter(track._id, chapter._id)} style={{ color: 'var(--danger)' }} title="Delete chapter">
+                                      <button onClick={() => handleDeleteChapter(track._id, chapter._id, chapter.title)} style={{ color: 'var(--danger)' }}>
                                         <Trash2 size={13} />
                                       </button>
                                     </div>
                                   </div>
                                 ))}
-
                                 <Link
                                   to={`/admin-portal/content/chapters/new?track=${track._id}`}
                                   className="flex items-center gap-1.5 text-xs mt-2"
@@ -364,11 +492,7 @@ const ContentTreeManager = () => {
                             </InlineForm>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => setAddingTrackTo(topic._id)}
-                            className="flex items-center gap-1.5 text-xs ml-2 mt-1"
-                            style={{ color: 'var(--accent)' }}
-                          >
+                          <button onClick={() => setAddingTrackTo(topic._id)} className="flex items-center gap-1.5 text-xs ml-2 mt-1" style={{ color: 'var(--accent)' }}>
                             <Plus size={13} /> Add track
                           </button>
                         )}
@@ -384,11 +508,7 @@ const ContentTreeManager = () => {
                     </InlineForm>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setAddingTopicTo(subject._id)}
-                    className="flex items-center gap-1.5 text-xs"
-                    style={{ color: 'var(--accent)' }}
-                  >
+                  <button onClick={() => setAddingTopicTo(subject._id)} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--accent)' }}>
                     <Plus size={13} /> Add topic
                   </button>
                 )}
@@ -397,11 +517,14 @@ const ContentTreeManager = () => {
           </div>
         ))}
       </div>
+
+      {/* Undo toast */}
+      {toast && <UndoToast message={toast.message} onUndo={toast.onUndo} onDismiss={dismissToast} />}
     </div>
   );
 };
 
-// Shared field group for Subject create/edit forms
+// Shared field groups — larger inputs for comfortable writing
 const SubjectFields = ({ form, setForm }) => (
   <>
     <p className="text-sm font-semibold">Subject</p>
@@ -416,8 +539,8 @@ const SubjectFields = ({ form, setForm }) => (
       value={form.description}
       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
       placeholder="Short description shown on the homepage card"
-      rows={2}
-      className={inputClass}
+      rows={3}
+      className={textareaClass}
       style={inputStyle}
     />
     <div>
@@ -425,9 +548,7 @@ const SubjectFields = ({ form, setForm }) => (
       <div className="flex flex-wrap gap-2">
         {ICON_OPTIONS.map(({ key, icon: Icon, label }) => (
           <button
-            key={key}
-            type="button"
-            title={label}
+            key={key} type="button" title={label}
             onClick={() => setForm((f) => ({ ...f, icon: key }))}
             className="p-2.5 rounded-lg border btn-press"
             style={{
@@ -446,8 +567,7 @@ const SubjectFields = ({ form, setForm }) => (
       <div className="flex flex-wrap gap-2">
         {COLOR_OPTIONS.map((color) => (
           <button
-            key={color}
-            type="button"
+            key={color} type="button"
             onClick={() => setForm((f) => ({ ...f, color }))}
             className="w-7 h-7 rounded-full border-2 btn-press"
             style={{ backgroundColor: color, borderColor: form.color === color ? 'var(--text)' : 'transparent' }}
@@ -458,7 +578,6 @@ const SubjectFields = ({ form, setForm }) => (
   </>
 );
 
-// Shared field group for Topic create/edit forms
 const TopicFields = ({ form, setForm }) => (
   <>
     <input
@@ -471,9 +590,9 @@ const TopicFields = ({ form, setForm }) => (
     <textarea
       value={form.description}
       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-      placeholder="Short description"
-      rows={2}
-      className={inputClass}
+      placeholder="Short description (what will the learner understand after this topic?)"
+      rows={3}
+      className={textareaClass}
       style={inputStyle}
     />
     <div className="flex gap-2">
@@ -488,8 +607,7 @@ const TopicFields = ({ form, setForm }) => (
         <option value="advanced">Advanced</option>
       </select>
       <input
-        type="number"
-        min={5}
+        type="number" min={5}
         value={form.estimatedMinutes}
         onChange={(e) => setForm((f) => ({ ...f, estimatedMinutes: Number(e.target.value) }))}
         placeholder="Minutes"

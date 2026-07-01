@@ -10,6 +10,7 @@ module.exports = {
   Comment: require('./Comment'),
   Newsletter: require('./Newsletter'),
   Todo: require('./Todo'),
+  Note: require('./Note'),
   Contact: require('./Contact'),
   Series: require('./Series'),
 };

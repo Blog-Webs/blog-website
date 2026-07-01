@@ -1,16 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, Heart, Bookmark, BookmarkCheck, Clock, Eye, Send, List, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ArrowLeft, Heart, Bookmark, BookmarkCheck, Clock, Eye, Send,
+  List, ChevronDown, ChevronUp, Star
+} from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { bookmarkApi } from '../api/userFeatures';
 import { useAuth } from '../context/AuthContext';
 import GoogleSignInButton from '../components/ui/GoogleSignInButton';
-import Header from '../components/layout/Header';
 import BlockNoteRenderer from '../components/ui/BlockNoteRenderer';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { useReadingProgress } from '../hooks/useReadingProgress';
+
+/* ── Circular SVG progress ring ── */
+const ProgressRing = ({ progress }) => {
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+  return (
+    <div className="progress-ring-container" title={`${Math.round(progress)}% read`}>
+      <svg className="progress-ring-svg" viewBox="0 0 48 48">
+        <circle className="progress-ring-track" cx="24" cy="24" r={radius} />
+        <circle
+          className="progress-ring-fill"
+          cx="24" cy="24" r={radius}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="progress-ring-label">{Math.round(progress)}%</div>
+    </div>
+  );
+};
 
 const BlogDetail = () => {
   const { slug } = useParams();
@@ -37,8 +60,6 @@ const BlogDetail = () => {
       setLikeCount(data.likeCount);
       setLiked(user ? data.blog.likes.includes(user.id) : false);
       setLoading(false);
-      // Jump back to the top of the reading pane on every new post,
-      // otherwise scroll position carries over from the previous article.
       scrollRef.current?.scrollTo({ top: 0 });
     });
   }, [slug, user]);
@@ -79,31 +100,32 @@ const BlogDetail = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-        <Header />
-        <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Loading…</div>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center"
+        style={{ backgroundColor: 'var(--bg)', color: 'var(--text-muted)' }}
+      >
+        Loading…
       </div>
     );
   }
 
   if (!blog) {
     return (
-      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-        <Header />
-        <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Post not found.</div>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center"
+        style={{ backgroundColor: 'var(--bg)', color: 'var(--text-muted)' }}
+      >
+        Post not found.
       </div>
     );
   }
 
   return (
-    // Fixed-height shell on desktop so only the center article column
-    // scrolls. On mobile this collapses to normal page scroll with the
-    // rail stacked below the article, since a fixed split-pane doesn't
-    // fit a small screen.
-    <div className="lg:h-screen flex flex-col lg:overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
-      <Header />
+    // Fixed-height shell so only the center article column scrolls on desktop.
+    // On mobile everything stacks normally.
+    <div className="lg:h-screen flex flex-col lg:overflow-hidden" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
 
-      {/* Reading progress bar, pinned just under the header */}
+      {/* Reading progress bar pinned at the very top */}
       <div className="h-0.5 shrink-0" style={{ backgroundColor: 'var(--border)' }}>
         <div
           className="h-full transition-[width] duration-150 ease-out"
@@ -111,11 +133,12 @@ const BlogDetail = () => {
         />
       </div>
 
-      {/* Fixed back button — pinned to top-left, OUTSIDE the scroll container */}
+      {/* Fixed action strip — Back button on the left, Bookmark + Ring on the right */}
       <div
-        className="shrink-0 px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full"
+        className="shrink-0 px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
+        {/* Left: Back */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border btn-press"
@@ -123,20 +146,86 @@ const BlogDetail = () => {
         >
           <ArrowLeft size={14} /> Back
         </button>
+
+        {/* Right: Bookmark + Reading progress ring */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={handleBookmark}
+              aria-label="Bookmark this post"
+              className="p-2 rounded-lg border btn-press transition-all"
+              style={{
+                borderColor: bookmarked ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: bookmarked ? 'var(--accent-soft)' : 'transparent',
+              }}
+            >
+              {bookmarked
+                ? <BookmarkCheck size={17} style={{ color: 'var(--accent)' }} />
+                : <Bookmark size={17} style={{ color: 'var(--text-muted)' }} />
+              }
+            </button>
+          )}
+          <ProgressRing progress={progress} />
+        </div>
       </div>
 
-      {/* Main reading shell */}
-      <div className="flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-8">
-        {/* Center: scrolls on its own on desktop; normal flow on mobile */}
-        <div ref={scrollRef} className="order-1 lg:overflow-y-auto py-8 lg:min-h-0">
+      {/* Main reading shell:
+           desktop: [LEFT 260px | CENTER 1fr | RIGHT 240px]
+           Left has: Up Next list
+           Center has: the article (only this scrolls)
+           Right has: TOC "On this page"
+      */}
+      <div className="flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[240px_1fr_240px] gap-6">
+
+        {/* LEFT sidebar — Up Next */}
+        <aside className="order-3 lg:order-1 py-6 lg:overflow-y-auto">
+          {upNext.length > 0 && (
+            <div>
+              <p className="text-xs font-mono-display uppercase mb-3" style={{ color: 'var(--text-muted)' }}>
+                Up next
+              </p>
+              <div className="flex flex-col gap-3">
+                {upNext.map((post) => (
+                  <Link
+                    key={post._id}
+                    to={`/blog/${post.slug}`}
+                    className="block rounded-xl border overflow-hidden card-hover"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
+                  >
+                    {post.coverImage && (
+                      <img src={post.coverImage} alt="" className="w-full h-20 object-cover" />
+                    )}
+                    <div className="p-3">
+                      <p className="text-sm font-medium leading-snug">{post.title}</p>
+                      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                        <Clock size={10} /> {post.readTimeMinutes} min
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* CENTER — Article (only this scrolls on desktop) */}
+        <div ref={scrollRef} className="order-1 lg:order-2 lg:overflow-y-auto py-6 lg:min-h-0">
           <article className="max-w-3xl mx-auto w-full">
+            {/* Header */}
             <div className="text-center mb-10">
               <span className="text-xs font-mono-display" style={{ color: 'var(--accent)' }}>{blog.category}</span>
               <h1 className="text-3xl sm:text-4xl font-bold mt-2 mb-2 glow-title">{blog.title}</h1>
-              {blog.subtitle && <p className="text-lg mb-6" style={{ color: 'var(--text-muted)' }}>{blog.subtitle}</p>}
+              {blog.subtitle && (
+                <p className="text-lg mb-6" style={{ color: 'var(--text-muted)' }}>{blog.subtitle}</p>
+              )}
 
               <div className="flex items-center justify-center gap-2.5 mb-6">
-                <img src={blog.author?.avatar} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover" />
+                <img
+                  src={blog.author?.avatar}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="w-9 h-9 rounded-full object-cover"
+                />
                 <div className="text-left">
                   <p className="text-sm font-medium">{blog.author?.name}</p>
                   <p className="text-xs flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
@@ -147,10 +236,13 @@ const BlogDetail = () => {
               </div>
 
               {blog.coverImage && (
-                <img src={blog.coverImage} alt={blog.title} className="w-full rounded-2xl object-cover max-h-96" />
+                <div className="image-glow rounded-2xl overflow-hidden">
+                  <img src={blog.coverImage} alt={blog.title} className="w-full rounded-2xl object-cover max-h-96" />
+                </div>
               )}
             </div>
 
+            {/* Body */}
             {blog.contentBlocks?.length > 0 ? (
               <BlockNoteRenderer blocks={blog.contentBlocks} />
             ) : (
@@ -159,15 +251,24 @@ const BlogDetail = () => {
               </div>
             )}
 
+            {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-8 mt-8">
               {blog.tags?.map((tag) => (
-                <span key={tag} className="text-xs px-2.5 py-1 rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                <span
+                  key={tag}
+                  className="text-xs px-2.5 py-1 rounded-full border"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                >
                   #{tag}
                 </span>
               ))}
             </div>
 
-            <div className="flex items-center gap-4 mb-10 pb-8 border-b" style={{ borderColor: 'var(--border)' }}>
+            {/* Like */}
+            <div
+              className="flex items-center gap-4 mb-10 pb-8 border-b"
+              style={{ borderColor: 'var(--border)' }}
+            >
               <button
                 onClick={user ? handleLike : undefined}
                 disabled={!user}
@@ -176,14 +277,12 @@ const BlogDetail = () => {
               >
                 <Heart size={15} fill={liked ? 'var(--danger)' : 'none'} /> {likeCount}
               </button>
-              {user && (
-                <button onClick={handleBookmark} className="p-2 rounded-lg border btn-press" style={{ borderColor: 'var(--border)' }}>
-                  {bookmarked ? <BookmarkCheck size={17} style={{ color: 'var(--accent)' }} /> : <Bookmark size={17} />}
-                </button>
+              {!user && (
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Sign in to like and comment</span>
               )}
-              {!user && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Sign in to like and comment</span>}
             </div>
 
+            {/* Comments */}
             <div>
               <h3 className="font-semibold mb-4">{comments.length} Comments</h3>
 
@@ -196,7 +295,11 @@ const BlogDetail = () => {
                     className="flex-1 px-3 py-2.5 rounded-xl border text-sm outline-none input-focus"
                     style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
                   />
-                  <button type="submit" className="px-4 py-2.5 rounded-xl btn-press" style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 rounded-xl btn-press"
+                    style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
+                  >
                     <Send size={15} />
                   </button>
                 </form>
@@ -207,7 +310,12 @@ const BlogDetail = () => {
               <div className="flex flex-col gap-4">
                 {comments.map((c) => (
                   <div key={c._id} className="flex gap-3">
-                    <img src={c.user?.avatar} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    <img
+                      src={c.user?.avatar}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
                     <div>
                       <p className="text-sm font-medium">{c.user?.name}</p>
                       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{c.text}</p>
@@ -219,10 +327,10 @@ const BlogDetail = () => {
           </article>
         </div>
 
-        {/* Right rail — sticky, TOC with internal scroll so "Up Next" is always visible */}
-        <aside className="order-2 py-8 lg:overflow-hidden">
-          <div className="toc-panel">
-            {headings.length > 0 && (
+        {/* RIGHT sidebar — On This Page TOC */}
+        <aside className="order-2 lg:order-3 py-6 lg:overflow-hidden">
+          {headings.length > 0 && (
+            <div className="toc-panel">
               <div
                 className="rounded-xl border p-4"
                 style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
@@ -230,9 +338,12 @@ const BlogDetail = () => {
                 {/* TOC header — click to collapse/expand */}
                 <button
                   onClick={() => setTocCollapsed((v) => !v)}
-                  className="flex items-center justify-between w-full text-left mb-3 group"
+                  className="flex items-center justify-between w-full text-left mb-3"
                 >
-                  <p className="flex items-center gap-1.5 text-xs font-mono-display uppercase" style={{ color: 'var(--text-muted)' }}>
+                  <p
+                    className="flex items-center gap-1.5 text-xs font-mono-display uppercase"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
                     <List size={13} /> On this page
                   </p>
                   {tocCollapsed
@@ -241,21 +352,18 @@ const BlogDetail = () => {
                   }
                 </button>
 
-                {/* Reading progress mini-bar */}
-                <div className="progress-bar-track mb-3">
-                  <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
-                </div>
-
                 {!tocCollapsed && (
-                  <div className="toc-list flex flex-col gap-0.5">
+                  <div className="toc-list flex flex-col gap-1">
                     {headings.map((h) => {
                       const isActive = h.id === activeHeadingId;
                       return (
                         <button
                           key={h.id}
                           onClick={() => scrollToHeading(h.id)}
-                          className="text-left text-sm py-1.5 pl-3 border-l-2 transition-all duration-200 rounded-r"
+                          className="text-left py-2 pl-3 border-l-2 transition-all duration-200 rounded-r"
                           style={{
+                            fontSize: '0.8rem',
+                            lineHeight: '1.4',
                             color: isActive ? 'var(--accent)' : 'var(--text-muted)',
                             borderColor: isActive ? 'var(--accent)' : 'var(--border)',
                             fontWeight: isActive ? 600 : 400,
@@ -269,35 +377,8 @@ const BlogDetail = () => {
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Up Next — always visible below TOC, not inside the scrollable list */}
-            {upNext.length > 0 && (
-              <div>
-                <p className="text-xs font-mono-display uppercase mb-3" style={{ color: 'var(--text-muted)' }}>Up next</p>
-                <div className="flex flex-col gap-3">
-                  {upNext.map((post) => (
-                    <Link
-                      key={post._id}
-                      to={`/blog/${post.slug}`}
-                      className="block rounded-xl border overflow-hidden card-hover"
-                      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
-                    >
-                      {post.coverImage && (
-                        <img src={post.coverImage} alt="" className="w-full h-20 object-cover" />
-                      )}
-                      <div className="p-3">
-                        <p className="text-sm font-medium leading-snug">{post.title}</p>
-                        <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                          <Clock size={10} /> {post.readTimeMinutes} min
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
       </div>
     </div>

@@ -432,4 +432,90 @@ Socket.io event: the server emits `liveUserCount` (a number) to every connected 
 **Newsletter subscribers aren't receiving emails when I publish a post**
 → Check the server console for a `[Mailer]` warning — if `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` aren't set, emails are skipped (not an error) so the rest of the app keeps working. If using Gmail, confirm you're using a 16-character **App Password**, not your normal account password — Gmail rejects normal passwords for SMTP. Also confirm the post actually transitioned from **draft to published** — editing an already-published post again does not re-trigger emails.
 
-#latest-project  okay
+---
+
+## Performance & Caching
+
+### How it works (current — in-memory TTL cache)
+
+The server uses a lightweight **in-memory Map-based cache** (no external dependency) to avoid repeated database hits on the most expensive public reads:
+
+| Endpoint | Cache key | TTL |
+|---|---|---|
+| `GET /api/content/subjects` | `subjects:all` | 5 min |
+| `GET /api/content/subjects/:slug` | `subject:<slug>` | 5 min |
+| `GET /api/content/topics/:id/tracks` | `tracks:<topicId>` | 3 min |
+
+User-specific reads (chapter content, progress, bookmarks) are **never cached** so every user always sees their own live data.
+
+Cache source: [`server/src/utils/cache.js`](./server/src/utils/cache.js)
+
+### Upgrading to Redis (optional)
+
+When you need horizontal scaling (multiple server instances), replace the in-memory cache with Redis:
+
+1. **Install ioredis**:
+   ```bash
+   cd server
+   npm install ioredis
+   ```
+
+2. **Update `server/.env`**:
+   ```
+   REDIS_URL=redis://localhost:6379
+   # or for Redis Cloud / Upstash:
+   REDIS_URL=rediss://:password@hostname:6380
+   ```
+
+3. **Replace `server/src/utils/cache.js`** with:
+   ```js
+   const Redis = require('ioredis');
+   const client = new Redis(process.env.REDIS_URL);
+
+   const get = async (key) => {
+     const val = await client.get(key);
+     return val ? JSON.parse(val) : null;
+   };
+
+   const set = async (key, value, ttlMs = 300000) => {
+     await client.set(key, JSON.stringify(value), 'PX', ttlMs);
+   };
+
+   const del = async (keyOrPrefix) => {
+     if (keyOrPrefix.endsWith('*')) {
+       const keys = await client.keys(keyOrPrefix);
+       if (keys.length) await client.del(...keys);
+     } else {
+       await client.del(keyOrPrefix);
+     }
+   };
+
+   const flush = async () => client.flushdb();
+
+   module.exports = { get, set, del, flush };
+   ```
+
+4. The rest of the codebase (`contentController.js`) **stays exactly the same** — the cache interface is identical.
+
+> **Note**: With Redis, `get`/`set`/`del` become async. You'll need to add `await` in the controller. The current in-memory version is synchronous.
+
+---
+
+## Recent Feature Additions (tanish branch)
+
+| Feature | Description |
+|---|---|
+| Blog Series on Home | Series cards with water-droplet ripple animation |
+| Sparkle hero title | Shimmer sweep + floating star particles on home `<h1>` |
+| Workspace section on Home | Shows your latest todos & notes when logged in |
+| Notes (new) | Full notes tab on `/todos` with title, subject, color |
+| Reading layout | No header/footer on blog and topic reading pages |
+| Circular progress ring | SVG reading progress ring on blog pages |
+| Up Next on left | Blog sidebar reorganized: Up Next left, TOC right |
+| Explore Further dropdown | Track sidebar is now a collapsible dropdown with chapter sub-list |
+| Content tree breadcrumb | `Home > Subject > Topic > Track` clickable nav |
+| No confirm dialogs | Delete is instant with 5-second undo toast |
+| Focus mode editors | Fullscreen writing in blog & chapter admin editors |
+| In-memory cache | Faster repeat loads for subjects, topics, tracks |
+| Image glow effect | Ambient light behind all cover images |
+| Fade-up animations | Section cards animate in on scroll |
