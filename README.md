@@ -432,4 +432,4 @@ Socket.io event: the server emits `liveUserCount` (a number) to every connected 
 **Newsletter subscribers aren't receiving emails when I publish a post**
 → Check the server console for a `[Mailer]` warning — if `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` aren't set, emails are skipped (not an error) so the rest of the app keeps working. If using Gmail, confirm you're using a 16-character **App Password**, not your normal account password — Gmail rejects normal passwords for SMTP. Also confirm the post actually transitioned from **draft to published** — editing an already-published post again does not re-trigger emails.
 
-#latest-project
+#latest-project  okay
