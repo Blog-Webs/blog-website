@@ -1,6 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Lock, ExternalLink, Bookmark, BookmarkCheck, Check } from 'lucide-react';
+import { Lock, ExternalLink, Bookmark, BookmarkCheck, Check, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import GoogleSignInButton from '../ui/GoogleSignInButton';
 import BlockNoteRenderer from '../ui/BlockNoteRenderer';
@@ -11,6 +11,11 @@ const SOURCE_LABEL = {
   other: 'External resource',
 };
 
+/**
+ * ChapterReader — renders the active chapter in the center reading pane.
+ * Styled after the reference design: clean header badge, large title,
+ * reading-like typography, and a prominent "Mark as Studied" CTA.
+ */
 const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark, isBookmarked, onLoginSuccess }) => {
   const [busy, setBusy] = useState(false);
 
@@ -44,24 +49,53 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
   };
 
   return (
-    <article className="rounded-2xl border p-6 sm:p-8" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+    <article
+      className="rounded-2xl border chapter-reading-area"
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+        width: '100%',
+        padding: '2rem 2.5rem',
+      }}
+    >
+      {/* Chapter header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <p className="text-xs font-mono-display mb-1" style={{ color: 'var(--accent)' }}>
+          {/* Chapter badge */}
+          <div className="chapter-title-badge">
+            <BookOpen size={11} />
             Chapter {chapter.chapterNumber}
-          </p>
-          <h1 className="text-2xl font-bold glow-title">{chapter.title}</h1>
+          </div>
+          {/* Chapter title */}
+          <h1
+            className="text-2xl sm:text-3xl font-bold glow-title leading-tight"
+            style={{ maxWidth: '600px' }}
+          >
+            {chapter.title}
+          </h1>
         </div>
+
+        {/* Bookmark */}
         <button
           onClick={() => onToggleBookmark(chapter._id)}
           aria-label="Bookmark this chapter"
-          className="p-2 rounded-lg border shrink-0 btn-press"
-          style={{ borderColor: 'var(--border)' }}
+          className="p-2.5 rounded-xl border shrink-0 btn-press transition-all duration-200"
+          style={{
+            borderColor: isBookmarked ? 'var(--accent)' : 'var(--border)',
+            backgroundColor: isBookmarked ? 'var(--accent-soft)' : 'transparent',
+          }}
         >
-          {isBookmarked ? <BookmarkCheck size={17} style={{ color: 'var(--accent)' }} /> : <Bookmark size={17} />}
+          {isBookmarked
+            ? <BookmarkCheck size={17} style={{ color: 'var(--accent)' }} />
+            : <Bookmark size={17} style={{ color: 'var(--text-muted)' }} />
+          }
         </button>
       </div>
 
+      {/* Divider */}
+      <div className="mb-8" style={{ borderBottom: '1px solid var(--border)' }} />
+
+      {/* Content */}
       {chapter.contentBlocks?.length > 0 ? (
         <BlockNoteRenderer blocks={chapter.contentBlocks} />
       ) : (
@@ -70,6 +104,7 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
         </div>
       )}
 
+      {/* Code snippets */}
       {chapter.codeSnippets?.map((snippet, i) => (
         <div key={i} className="mb-4">
           {snippet.caption && <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{snippet.caption}</p>}
@@ -77,6 +112,7 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
         </div>
       ))}
 
+      {/* External links */}
       {chapter.externalLinks?.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
           {chapter.externalLinks.map((link, i) => (
@@ -94,18 +130,26 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
         </div>
       )}
 
-      <button
-        onClick={handleToggleStudied}
-        disabled={busy}
-        className="mt-8 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 btn-press"
-        style={{
-          backgroundColor: studied ? 'var(--accent-soft)' : 'var(--accent)',
-          color: studied ? 'var(--accent)' : 'var(--bg)',
-        }}
-      >
-        <Check size={15} />
-        {studied ? 'Marked as studied' : 'Mark as studied'}
-      </button>
+      {/* Mark as Studied CTA */}
+      <div className="mt-10 pt-8 border-t flex items-center justify-between gap-4" style={{ borderColor: 'var(--border)' }}>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {studied ? 'Great work! You\'ve studied this chapter.' : 'Done reading? Mark it as studied to track your progress.'}
+        </p>
+        <button
+          onClick={handleToggleStudied}
+          disabled={busy}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 btn-press shrink-0"
+          style={{
+            backgroundColor: studied ? 'var(--accent-soft)' : 'var(--accent)',
+            color: studied ? 'var(--accent)' : 'var(--bg)',
+            border: studied ? '1px solid var(--accent)' : 'none',
+            boxShadow: studied ? '0 0 16px var(--accent-soft)' : '0 4px 20px rgba(62,126,198,0.4)',
+          }}
+        >
+          <Check size={15} strokeWidth={studied ? 3 : 2} />
+          {studied ? 'Studied ✓' : 'Mark as studied'}
+        </button>
+      </div>
     </article>
   );
 };

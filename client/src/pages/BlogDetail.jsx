@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, Heart, Bookmark, BookmarkCheck, Clock, Eye, Send, List } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, BookmarkCheck, Clock, Eye, Send, List, ChevronDown, ChevronUp } from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { bookmarkApi } from '../api/userFeatures';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +26,7 @@ const BlogDetail = () => {
   const [bookmarked, setBookmarked] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [tocCollapsed, setTocCollapsed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -110,18 +111,25 @@ const BlogDetail = () => {
         />
       </div>
 
-      <div className="flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[1fr_260px] gap-8">
+      {/* Fixed back button — pinned to top-left, OUTSIDE the scroll container */}
+      <div
+        className="shrink-0 px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border btn-press"
+          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+        >
+          <ArrowLeft size={14} /> Back
+        </button>
+      </div>
+
+      {/* Main reading shell */}
+      <div className="flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-8">
         {/* Center: scrolls on its own on desktop; normal flow on mobile */}
         <div ref={scrollRef} className="order-1 lg:overflow-y-auto py-8 lg:min-h-0">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-sm mb-6 px-3 py-1.5 rounded-lg border btn-press"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-          >
-            <ArrowLeft size={14} /> Back
-          </button>
-
-          <article className="max-w-2xl mx-auto w-full">
+          <article className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-10">
               <span className="text-xs font-mono-display" style={{ color: 'var(--accent)' }}>{blog.category}</span>
               <h1 className="text-3xl sm:text-4xl font-bold mt-2 mb-2 glow-title">{blog.title}</h1>
@@ -211,61 +219,85 @@ const BlogDetail = () => {
           </article>
         </div>
 
-        {/* Right rail: On This Page (scroll-spy) + Up Next, stacked. This
-            column does NOT scroll — only the center article does. */}
-        <aside className="order-2 flex flex-col gap-8 py-8 lg:overflow-hidden">
-          {headings.length > 0 && (
-            <div>
-              <p className="flex items-center gap-1.5 text-xs font-mono-display uppercase mb-3" style={{ color: 'var(--text-muted)' }}>
-                <List size={13} /> On this page
-              </p>
-              <div className="flex flex-col gap-1">
-                {headings.map((h) => {
-                  const isActive = h.id === activeHeadingId;
-                  return (
-                    <button
-                      key={h.id}
-                      onClick={() => scrollToHeading(h.id)}
-                      className="text-left text-sm py-1.5 pl-3 border-l-2 transition-all duration-200"
-                      style={{
-                        color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-                        borderColor: isActive ? 'var(--accent)' : 'var(--border)',
-                        fontWeight: isActive ? 600 : 400,
-                      }}
-                    >
-                      {h.text}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        {/* Right rail — sticky, TOC with internal scroll so "Up Next" is always visible */}
+        <aside className="order-2 py-8 lg:overflow-hidden">
+          <div className="toc-panel">
+            {headings.length > 0 && (
+              <div
+                className="rounded-xl border p-4"
+                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+              >
+                {/* TOC header — click to collapse/expand */}
+                <button
+                  onClick={() => setTocCollapsed((v) => !v)}
+                  className="flex items-center justify-between w-full text-left mb-3 group"
+                >
+                  <p className="flex items-center gap-1.5 text-xs font-mono-display uppercase" style={{ color: 'var(--text-muted)' }}>
+                    <List size={13} /> On this page
+                  </p>
+                  {tocCollapsed
+                    ? <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />
+                    : <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} />
+                  }
+                </button>
 
-          {upNext.length > 0 && (
-            <div>
-              <p className="text-xs font-mono-display uppercase mb-3" style={{ color: 'var(--text-muted)' }}>Up next</p>
-              <div className="flex flex-col gap-4">
-                {upNext.map((post) => (
-                  <Link
-                    key={post._id}
-                    to={`/blog/${post.slug}`}
-                    className="block rounded-xl border overflow-hidden card-hover"
-                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
-                  >
-                    {post.coverImage && (
-                      <img src={post.coverImage} alt="" className="w-full h-24 object-cover" />
-                    )}
-                    <div className="p-3">
-                      <p className="text-sm font-medium leading-snug">{post.title}</p>
-                      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                        <Clock size={10} /> {post.readTimeMinutes} min
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {/* Reading progress mini-bar */}
+                <div className="progress-bar-track mb-3">
+                  <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
+                </div>
+
+                {!tocCollapsed && (
+                  <div className="toc-list flex flex-col gap-0.5">
+                    {headings.map((h) => {
+                      const isActive = h.id === activeHeadingId;
+                      return (
+                        <button
+                          key={h.id}
+                          onClick={() => scrollToHeading(h.id)}
+                          className="text-left text-sm py-1.5 pl-3 border-l-2 transition-all duration-200 rounded-r"
+                          style={{
+                            color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+                            borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+                            fontWeight: isActive ? 600 : 400,
+                            backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
+                          }}
+                        >
+                          {h.text}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Up Next — always visible below TOC, not inside the scrollable list */}
+            {upNext.length > 0 && (
+              <div>
+                <p className="text-xs font-mono-display uppercase mb-3" style={{ color: 'var(--text-muted)' }}>Up next</p>
+                <div className="flex flex-col gap-3">
+                  {upNext.map((post) => (
+                    <Link
+                      key={post._id}
+                      to={`/blog/${post.slug}`}
+                      className="block rounded-xl border overflow-hidden card-hover"
+                      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
+                    >
+                      {post.coverImage && (
+                        <img src={post.coverImage} alt="" className="w-full h-20 object-cover" />
+                      )}
+                      <div className="p-3">
+                        <p className="text-sm font-medium leading-snug">{post.title}</p>
+                        <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                          <Clock size={10} /> {post.readTimeMinutes} min
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </div>

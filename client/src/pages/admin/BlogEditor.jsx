@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Image as ImageIcon, X, Save, Send, Layers } from 'lucide-react';
+import { Image as ImageIcon, X, Save, Send, Layers, Maximize2, Minimize2, Type, Clock } from 'lucide-react';
 import { blogApi } from '../../api/blog';
 import { seriesApi } from '../../api/series';
 import BlockEditor from '../../components/ui/BlockEditor';
@@ -30,6 +30,11 @@ const BlogEditor = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(!isEditing);
+  const [focusMode, setFocusMode] = useState(false);
+
+  // Live word count & read time
+  const wordCount = post.content ? post.content.trim().split(/\s+/).filter(Boolean).length : 0;
+  const readTime = Math.max(1, Math.round(wordCount / 200));
 
   useEffect(() => {
     seriesApi.getAll().then(({ data }) => setSeriesList(data.series)).catch(() => {});
@@ -56,6 +61,12 @@ const BlogEditor = () => {
     });
   }, [id, isEditing]);
 
+  // Lock body scroll when focus mode is active
+  useEffect(() => {
+    document.body.style.overflow = focusMode ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [focusMode]);
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -63,7 +74,7 @@ const BlogEditor = () => {
     try {
       const { data } = await blogApi.uploadImage(file);
       setPost((p) => ({ ...p, coverImage: data.url }));
-    } catch (err) {
+    } catch {
       alert('Image upload failed. Check your Cloudinary configuration.');
     } finally {
       setUploading(false);
@@ -97,10 +108,9 @@ const BlogEditor = () => {
 
   if (!loaded) return <p style={{ color: 'var(--text-muted)' }}>Loading…</p>;
 
-  return (
-    <div className="max-w-4xl">
-      <h1 className="text-2xl font-bold mb-6">{isEditing ? 'Edit post' : 'New post'}</h1>
-
+  /* ── Shared editor fields (used in both normal and focus mode) ── */
+  const editorFields = (
+    <>
       {/* Cover image */}
       <div className="mb-6">
         {post.coverImage ? (
@@ -138,9 +148,21 @@ const BlogEditor = () => {
         value={post.subtitle}
         onChange={(e) => setPost((p) => ({ ...p, subtitle: e.target.value }))}
         placeholder="Subtitle (optional)"
-        className="w-full text-lg mb-6 outline-none bg-transparent"
+        className="w-full text-lg mb-4 outline-none bg-transparent"
         style={{ color: 'var(--text-muted)' }}
       />
+
+      {/* Live stats */}
+      <div className="flex items-center gap-4 mb-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span className="flex items-center gap-1.5">
+          <Type size={12} style={{ color: 'var(--accent)' }} />
+          {wordCount.toLocaleString()} words
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Clock size={12} style={{ color: 'var(--accent)' }} />
+          ~{readTime} min read
+        </span>
+      </div>
 
       <p className="text-xs font-mono-display uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Body</p>
 
@@ -153,7 +175,7 @@ const BlogEditor = () => {
             const { data } = await blogApi.uploadImage(file);
             return data.url;
           }}
-          minHeight="640px"
+          minHeight={focusMode ? '70vh' : '800px'}
         />
       </div>
 
@@ -208,25 +230,79 @@ const BlogEditor = () => {
           />
         )}
       </div>
+    </>
+  );
 
-      <div className="flex gap-3">
+  /* ── Action bar (reused in both modes) ── */
+  const actionBar = (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={() => handleSave('draft')}
+        disabled={saving}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border btn-press"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <Save size={15} /> Save draft
+      </button>
+      <button
+        onClick={() => handleSave('published')}
+        disabled={saving}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
+        style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
+      >
+        <Send size={15} /> Publish
+      </button>
+    </div>
+  );
+
+  /* ── Focus / Fullscreen Mode ── */
+  if (focusMode) {
+    return (
+      <div className="focus-mode-overlay">
+        {/* Sticky top bar */}
+        <div className="focus-mode-bar">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+            {isEditing ? 'Editing post' : 'New post'} &nbsp;·&nbsp;
+            <span style={{ color: 'var(--accent)' }}>{wordCount} words</span>
+          </span>
+          <div className="flex items-center gap-3">
+            {actionBar}
+            <button
+              onClick={() => setFocusMode(false)}
+              className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border btn-press"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+              title="Exit focus mode"
+            >
+              <Minimize2 size={14} /> Exit focus
+            </button>
+          </div>
+        </div>
+
+        {/* Centered writing area */}
+        <div className="focus-mode-inner">
+          {editorFields}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Normal mode ── */
+  return (
+    <div className="max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">{isEditing ? 'Edit post' : 'New post'}</h1>
         <button
-          onClick={() => handleSave('draft')}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border btn-press"
-          style={{ borderColor: 'var(--border)' }}
+          onClick={() => setFocusMode(true)}
+          className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-xl border btn-press"
+          style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
+          title="Enter focus / fullscreen writing mode"
         >
-          <Save size={15} /> Save draft
-        </button>
-        <button
-          onClick={() => handleSave('published')}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-        >
-          <Send size={15} /> Publish
+          <Maximize2 size={14} /> Focus mode
         </button>
       </div>
+
+      {editorFields}
+      {actionBar}
     </div>
   );
 };
