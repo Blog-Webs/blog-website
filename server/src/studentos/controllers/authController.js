@@ -2,6 +2,12 @@ const GoogleApiService = require('../services/GoogleApiService');
 const StudentOSToken = require('../models/StudentOSToken');
 const CryptoService = require('../services/CryptoService');
 const { google } = require('googleapis');
+// Resolve User model correctly — direct default export (not destructured)
+const User = require('../../../models/User');
+
+if (!process.env.GOOGLE_CLIENT_SECRET) {
+  console.warn('[StudentOS] ⚠️  GOOGLE_CLIENT_SECRET is not set. OAuth token exchange will fail.');
+}
 
 const studentOSAuthController = {
   // GET /api/studentos/auth/url  — returns the Google OAuth consent URL
@@ -12,21 +18,27 @@ const studentOSAuthController = {
 
   // GET /api/studentos/auth/callback  — OAuth2 callback from Google
   async handleCallback(req, res) {
+    const CLIENT = process.env.CLIENT_URL || 'http://localhost:5173';
     try {
       const { code, error } = req.query;
+
       if (error) {
-        return res.redirect(
-          `${process.env.CLIENT_URL || 'http://localhost:5173'}/student-os?error=access_denied`
-        );
+        console.error('[StudentOS callback] Google returned error:', error);
+        return res.redirect(`${CLIENT}/student-os?error=access_denied`);
       }
       if (!code) {
-        return res.redirect(
-          `${process.env.CLIENT_URL || 'http://localhost:5173'}/student-os?error=no_code`
-        );
+        console.error('[StudentOS callback] No code in query params');
+        return res.redirect(`${CLIENT}/student-os?error=no_code`);
       }
 
       // Exchange code for tokens
+      console.log('[StudentOS callback] Exchanging code for tokens...');
       const tokens = await GoogleApiService.exchangeCode(code);
+
+      if (!tokens.access_token) {
+        console.error('[StudentOS callback] No access_token in exchange response');
+        return res.redirect(`${CLIENT}/student-os?error=oauth_failed`);
+      }
 
       // Get the Google email for this token
       const authClient = GoogleApiService.createOAuthClient();
@@ -34,17 +46,15 @@ const studentOSAuthController = {
       const oauth2 = google.oauth2({ version: 'v2', auth: authClient });
       const { data: profile } = await oauth2.userinfo.get();
 
-      // We need req.user to attach the token to — but the callback comes
-      // from Google, not from our authenticated frontend. Pass userId via state param.
-      // The frontend should encode userId in the 'state' param before redirecting.
-      // For simplicity, we find the user by the Google email (they must be logged in).
-      const { User } = require('../../../models');
+      console.log('[StudentOS callback] Google profile email:', profile.email);
+
+      // Find the matching httpTechNex user by email
       const user = await User.findOne({ email: profile.email });
 
       if (!user) {
-        return res.redirect(
-          `${process.env.CLIENT_URL || 'http://localhost:5173'}/student-os?error=user_not_found`
-        );
+        console.error('[StudentOS callback] No httpTechNex account found for:', profile.email,
+          '— user must sign into httpTechNex first with this Google account.');
+        return res.redirect(`${CLIENT}/student-os?error=user_not_found`);
       }
 
       // Save/update encrypted tokens
@@ -62,15 +72,14 @@ const studentOSAuthController = {
         { upsert: true, new: true }
       );
 
-      // Redirect to StudentOS with success
-      res.redirect(
-        `${process.env.CLIENT_URL || 'http://localhost:5173'}/student-os?connected=true`
-      );
+      console.log('[StudentOS callback] Connected successfully for user:', user.email);
+
+      // Redirect to StudentOS frontend with success flag
+      res.redirect(`${CLIENT}/student-os?connected=true`);
     } catch (err) {
-      console.error('[StudentOS OAuth callback]', err.message);
-      res.redirect(
-        `${process.env.CLIENT_URL || 'http://localhost:5173'}/student-os?error=oauth_failed`
-      );
+      console.error('[StudentOS OAuth callback] Error:', err.message);
+      const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+      res.redirect(`${CLIENT_URL}/student-os?error=oauth_failed`);
     }
   },
 
@@ -90,7 +99,7 @@ const studentOSAuthController = {
     try {
       const tokenDoc = await StudentOSToken.findOne({ user: req.user._id });
       if (tokenDoc) {
-        // Try to revoke with Google
+        // Try to revoke with Google (best-effort)
         try {
           const authClient = GoogleApiService.createOAuthClient();
           authClient.setCredentials({
