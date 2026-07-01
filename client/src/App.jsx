@@ -26,6 +26,8 @@ const ChapterEditor = lazy(() => import('./pages/admin/ChapterEditor'));
 const MigrationTool = lazy(() => import('./pages/admin/MigrationTool'));
 const Subscribers = lazy(() => import('./pages/admin/Subscribers'));
 const ContactSubmissions = lazy(() => import('./pages/admin/ContactSubmissions'));
+// StudentOS — completely isolated module
+const StudentOSRoutes = lazy(() => import('./modules/StudentOS/routes/StudentOSRoutes'));
 
 const PageFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
@@ -70,6 +72,9 @@ function App() {
             <Route path="contact" element={<ContactSubmissions />} />
           </Route>
         </Route>
+
+        {/* StudentOS — AI Academic Hub, completely isolated from the main site */}
+        <Route path="/student-os/*" element={<StudentOSRoutes />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

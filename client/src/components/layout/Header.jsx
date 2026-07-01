@@ -64,6 +64,24 @@ const Header = () => {
           <NavLink to="/learn/aptitude" className={navLinkClass}>Aptitude</NavLink>
           <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
           <NavLink to="/todos" className={navLinkClass}>To-Do</NavLink>
+          <NavLink
+            to="/student-os"
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all ${
+                isActive
+                  ? 'text-[var(--accent)] bg-[var(--accent-soft)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+              }`
+            }
+          >
+            StudentOS
+            <span
+              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ background: 'linear-gradient(90deg, var(--accent), #5EEAD4)', color: 'white' }}
+            >
+              AI
+            </span>
+          </NavLink>
         </nav>
 
         {/* Right cluster */}
@@ -168,10 +186,15 @@ const Header = () => {
       {mobileOpen && (
         <div className="md:hidden border-t px-4 py-3 flex flex-col gap-1" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}>
           <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>DSA</NavLink>
-          <NavLink to="/learn/java-advanced-java" className={navLinkClass} onClick={() => setMobileOpen(false)}>Java & Advanced Java</NavLink>
+          <NavLink to="/learn/java-advanced-java" className={navLinkClass} onClick={() => setMobileOpen(false)}>Java &amp; Advanced Java</NavLink>
           <NavLink to="/learn/aptitude" className={navLinkClass} onClick={() => setMobileOpen(false)}>Aptitude</NavLink>
           <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>To-Do</NavLink>
+          <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+            StudentOS{' '}
+            <span className="text-[9px] font-bold px-1 py-0.5 rounded-full ml-1"
+              style={{ background: 'linear-gradient(90deg, var(--accent), #5EEAD4)', color: 'white' }}>AI</span>
+          </NavLink>
           {!user && <div className="pt-2"><GoogleSignInButton /></div>}
         </div>
       )}

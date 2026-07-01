@@ -21,6 +21,8 @@ const searchRoutes = require('./routes/searchRoutes');
 const adminContentRoutes = require('./routes/adminContentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const noteRoutes = require('./routes/noteRoutes');
+const studentOSRoutes = require('./studentos/routes/index');
+
 
 const app = express();
 
@@ -92,6 +94,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/admin/content', adminContentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/studentos', studentOSRoutes);
+
 
 // 404 handler
 app.use('/api', (req, res) => {
