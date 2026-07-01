@@ -1,22 +1,43 @@
 const { Subject, Topic, Track, Chapter, Progress } = require('../models');
+const cache = require('../utils/cache');
+
+const SUBJECTS_TTL = 5 * 60 * 1000;  // 5 min
+const SUBJECT_TTL  = 5 * 60 * 1000;
+const TRACK_TTL    = 3 * 60 * 1000;
 
 // GET /api/content/subjects
 const getSubjects = async (req, res) => {
+  const cacheKey = 'subjects:all';
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+
   const subjects = await Subject.find().sort({ order: 1 });
-  res.json({ subjects });
+  const payload = { subjects };
+  cache.set(cacheKey, payload, SUBJECTS_TTL);
+  res.json(payload);
 };
 
 // GET /api/content/subjects/:slug
 const getSubjectBySlug = async (req, res) => {
+  const cacheKey = `subject:${req.params.slug}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+
   const subject = await Subject.findOne({ slug: req.params.slug });
   if (!subject) return res.status(404).json({ message: 'Subject not found.' });
 
   const topics = await Topic.find({ subject: subject._id }).sort({ order: 1 });
-  res.json({ subject, topics });
+  const payload = { subject, topics };
+  cache.set(cacheKey, payload, SUBJECT_TTL);
+  res.json(payload);
 };
 
 // GET /api/content/topics/:topicId/tracks
 const getTracksForTopic = async (req, res) => {
+  const cacheKey = `tracks:${req.params.topicId}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+
   const topic = await Topic.findById(req.params.topicId).populate('subject', 'name slug color');
   if (!topic) return res.status(404).json({ message: 'Topic not found.' });
 
@@ -30,7 +51,9 @@ const getTracksForTopic = async (req, res) => {
     })
   );
 
-  res.json({ topic, tracks: tracksWithCounts });
+  const payload = { topic, tracks: tracksWithCounts };
+  cache.set(cacheKey, payload, TRACK_TTL);
+  res.json(payload);
 };
 
 // GET /api/content/tracks/:trackId/chapters

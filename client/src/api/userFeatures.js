@@ -16,3 +16,10 @@ export const todoApi = {
   update: (id, patch) => api.patch(`/todos/${id}`, patch),
   remove: (id) => api.delete(`/todos/${id}`),
 };
+
+export const noteApi = {
+  getAll: () => api.get('/notes'),
+  create: (payload) => api.post('/notes', payload),
+  update: (id, patch) => api.patch(`/notes/${id}`, patch),
+  remove: (id) => api.delete(`/notes/${id}`),
+};

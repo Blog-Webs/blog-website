@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+const ReadingLayout = lazy(() => import('./components/layout/ReadingLayout'));
 
 // Every page is lazy-loaded so a visitor reading the blog or browsing
 // chapters never downloads the rich-text editor bundle (BlockNote +
@@ -36,20 +37,24 @@ function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        {/* Public site */}
+        {/* Public site — with global header + footer */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/learn/:subjectSlug" element={<SubjectPage />} />
-          <Route path="/learn/:subjectSlug/:topicSlug" element={<TopicPage />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
         </Route>
 
-        {/* Blog reading is its own layout: no footer, only the content pane
-            scrolls (see BlogDetail.jsx), so it intentionally skips <Layout />'s
-            page-level scroll container. The header still renders inside it. */}
-        <Route path="/blog/:slug" element={<BlogDetail />} />
+        {/* Topic reading — no header/footer (immersive reading layout) */}
+        <Route element={<ReadingLayout />}>
+          <Route path="/learn/:subjectSlug/:topicSlug" element={<TopicPage />} />
+        </Route>
+
+        {/* Blog reading — no header/footer, only center pane scrolls */}
+        <Route element={<ReadingLayout />}>
+          <Route path="/blog/:slug" element={<BlogDetail />} />
+        </Route>
 
         {/* Hidden admin portal - guarded server-side, 404s for non-admins */}
         <Route path="/admin-portal" element={<AdminGuard />}>
