@@ -4,6 +4,9 @@ const app = require('./app');
 const connectDB = require('./config/db');
 const { initSocket } = require('./sockets/liveUsers');
 
+// Initialize background workers
+require('./studentos/services/RagWorker');
+
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
