@@ -9,13 +9,12 @@ const mongoose = require('mongoose');
 const redisOptions = {
   host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || 6379,
+  maxRetriesPerRequest: null,
 };
-if (process.env.REDIS_URL) {
-  // Use connection string if available (simplification, real URL parsing could be done)
-  // ioredis accepts URL in the constructor, but bullmq accepts connection object.
-  // We'll just pass the URL as connection.
-}
-const connection = process.env.REDIS_URL ? new (require('ioredis'))(process.env.REDIS_URL) : redisOptions;
+
+const connection = process.env.REDIS_URL 
+  ? new (require('ioredis'))(process.env.REDIS_URL, { maxRetriesPerRequest: null }) 
+  : new (require('ioredis'))(redisOptions);
 
 const ragQueue = new Queue('rag-processing', { connection });
 
