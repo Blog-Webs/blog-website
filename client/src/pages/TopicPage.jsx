@@ -5,8 +5,9 @@ import { contentApi } from '../api/content';
 import { progressApi, bookmarkApi } from '../api/userFeatures';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import TrackSidebar from '../components/learn/TrackSidebar';
-import ChapterList from '../components/learn/ChapterList';
+import NestedSidebar from '../components/learn/NestedSidebar';
+import StickyTableOfContents from '../components/learn/StickyTableOfContents';
+import FloatingActionBar from '../components/learn/FloatingActionBar';
 import ChapterReader from '../components/learn/ChapterReader';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { useReadingProgress } from '../hooks/useReadingProgress';
@@ -26,6 +27,7 @@ const TopicPage = () => {
   const [chapterData, setChapterData] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
+  const [isReadingMode, setIsReadingMode] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -105,7 +107,25 @@ const TopicPage = () => {
   };
 
   const headings = chapterData?.chapter?.headings || [];
+  const activeHeadingId = useScrollSpy(headings, scrollRef);
   const progress = useReadingProgress(scrollRef);
+
+  // Prev / Next logic
+  const currentChapterIndex = chapters.findIndex(c => c._id === activeChapterId);
+  const hasPrev = currentChapterIndex > 0;
+  const hasNext = currentChapterIndex >= 0 && currentChapterIndex < chapters.length - 1;
+  
+  const handlePrev = () => {
+    if (hasPrev) setActiveChapterId(chapters[currentChapterIndex - 1]._id);
+  };
+  
+  const handleNext = () => {
+    if (hasNext) setActiveChapterId(chapters[currentChapterIndex + 1]._id);
+  };
+
+  const scrollToHeading = (id) => {
+    scrollRef.current?.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Progress calculation
   const studiedCount = chapters.filter((c) => c.studied).length;
@@ -140,7 +160,7 @@ const TopicPage = () => {
       style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}
     >
       {/* ── Reading progress bar ── */}
-      <div className="h-0.5 shrink-0" style={{ backgroundColor: 'var(--border)' }}>
+      <div className="h-0.5 shrink-0 z-50 relative" style={{ backgroundColor: 'var(--border)' }}>
         <div
           className="h-full transition-[width] duration-150 ease-out"
           style={{ width: `${progress}%`, backgroundColor: 'var(--accent)' }}
@@ -149,8 +169,8 @@ const TopicPage = () => {
 
       {/* ── Minimal sticky header (replaces global Header) ── */}
       <div
-        className="shrink-0 px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between gap-4"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="shrink-0 px-4 sm:px-6 py-3 max-w-[1400px] mx-auto w-full flex items-center justify-between gap-4 z-40 relative"
+        style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}
       >
         {/* Back breadcrumb */}
         <div className="flex items-center gap-3 min-w-0">
@@ -197,47 +217,66 @@ const TopicPage = () => {
       </div>
 
       {/* ── Three-column layout ── */}
-      <div className="flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[200px_1fr_260px] gap-5 py-4">
+      <div 
+        className={`flex-1 lg:min-h-0 max-w-[1400px] mx-auto w-full flex flex-col lg:grid gap-0 transition-all duration-300 ease-in-out ${
+          isReadingMode ? 'lg:grid-cols-[0px_1fr_0px]' : 'lg:grid-cols-[280px_1fr_260px]'
+        }`}
+      >
 
-        {/* Left rail — "Explore Further" dropdown + tracks */}
-        <aside className="order-1 lg:overflow-y-auto">
-          <TrackSidebar
-            tracks={tracks}
-            activeTrackId={activeTrack?._id}
-            onSelect={(track) => {
-              setActiveTrack(track);
-            }}
-            chapters={chapters}
-            activeChapterId={activeChapterId}
-            onSelectChapter={(ch) => setActiveChapterId(ch._id)}
-          />
+        {/* Left rail — Nested Sidebar */}
+        <aside className={`order-1 overflow-hidden transition-all duration-300 ease-in-out ${isReadingMode ? 'opacity-0 w-0' : 'opacity-100'}`}>
+          <div className="h-full lg:overflow-y-auto">
+            <NestedSidebar
+              topicName={topic.name}
+              tracks={tracks}
+              activeTrackId={activeTrack?._id}
+              chapters={chapters}
+              activeChapterId={activeChapterId}
+              onSelectTrack={setActiveTrack}
+              onSelectChapter={(ch) => setActiveChapterId(ch._id)}
+            />
+          </div>
         </aside>
 
-        {/* Center — Chapter content (only this scrolls) */}
-        <section ref={scrollRef} className="order-2 lg:overflow-y-auto lg:min-h-0">
+        {/* Center — Chapter content */}
+        <section 
+          ref={scrollRef} 
+          className="order-2 lg:overflow-y-auto lg:min-h-0 relative pb-32 pt-6 px-4 sm:px-8"
+        >
           {chapterData && (
-            <ChapterReader
-              chapterData={chapterData}
-              locked={chapterData.locked}
-              onToggleStudied={handleToggleStudied}
-              onToggleBookmark={handleToggleBookmark}
-              isBookmarked={bookmarkedIds.has(activeChapterId)}
-              onLoginSuccess={handleLoginSuccess}
-            />
+            <>
+              <ChapterReader
+                chapterData={chapterData}
+                locked={chapterData.locked}
+                onToggleStudied={handleToggleStudied}
+                onToggleBookmark={handleToggleBookmark}
+                isBookmarked={bookmarkedIds.has(activeChapterId)}
+                onLoginSuccess={handleLoginSuccess}
+              />
+              
+              <FloatingActionBar
+                onPrev={handlePrev}
+                onNext={handleNext}
+                hasPrev={hasPrev}
+                hasNext={hasNext}
+                isBookmarked={bookmarkedIds.has(activeChapterId)}
+                onToggleBookmark={() => handleToggleBookmark(activeChapterId)}
+                isReadingMode={isReadingMode}
+                onToggleReadingMode={() => setIsReadingMode(!isReadingMode)}
+              />
+            </>
           )}
         </section>
 
-        {/* Right rail — Chapter navigator */}
-        <aside className="order-3 flex flex-col gap-4 lg:overflow-y-auto">
-          <ChapterList
-            chapters={chapters}
-            activeChapterId={activeChapterId}
-            onSelect={(c) => setActiveChapterId(c._id)}
-            onToggleStudied={(c) => handleToggleStudied(c._id)}
-            isLoggedIn={!!user}
-            studiedCount={studiedCount}
-            totalCount={totalCount}
-          />
+        {/* Right rail — Sticky TOC */}
+        <aside className={`order-3 overflow-hidden transition-all duration-300 ease-in-out hidden lg:block ${isReadingMode ? 'opacity-0 w-0' : 'opacity-100'}`}>
+          <div className="h-full lg:overflow-y-auto">
+            <StickyTableOfContents 
+              headings={headings}
+              activeHeadingId={activeHeadingId}
+              onHeadingClick={scrollToHeading}
+            />
+          </div>
         </aside>
       </div>
     </div>
