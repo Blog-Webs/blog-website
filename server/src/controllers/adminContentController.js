@@ -1,5 +1,5 @@
 const slugify = require('slugify');
-const { Subject, Topic, Track, Chapter, Progress, Bookmark } = require('../models');
+const { Subject, Topic, Track, Chapter, Progress, Bookmark, IconOption } = require('../models');
 
 // Deletes Progress and Bookmark rows that reference any of the given
 // chapter ids, so removing content upstream never leaves dangling
@@ -210,10 +210,42 @@ const deleteChapter = async (req, res) => {
 
   res.json({ message: 'Chapter deleted.' });
 };
+// ---------- Icon Options ----------
+const getIconOptions = async (req, res) => {
+  const icons = await IconOption.find().sort({ label: 1 });
+  res.json({ icons });
+};
+
+const createIconOption = async (req, res) => {
+  const { label, iconUrl } = req.body;
+  if (!label || !iconUrl) return res.status(400).json({ message: 'Label and icon URL are required.' });
+
+  const icon = await IconOption.create({ label, iconUrl });
+  res.status(201).json({ icon });
+};
+
+const updateIconOption = async (req, res) => {
+  const icon = await IconOption.findById(req.params.id);
+  if (!icon) return res.status(404).json({ message: 'Icon option not found.' });
+
+  const { label, iconUrl } = req.body;
+  if (label !== undefined) icon.label = label;
+  if (iconUrl !== undefined) icon.iconUrl = iconUrl;
+
+  await icon.save();
+  res.json({ icon });
+};
+
+const deleteIconOption = async (req, res) => {
+  const icon = await IconOption.findByIdAndDelete(req.params.id);
+  if (!icon) return res.status(404).json({ message: 'Icon option not found.' });
+  res.json({ message: 'Icon option deleted.' });
+};
 
 module.exports = {
   createSubject, updateSubject, deleteSubject,
   createTopic, updateTopic, deleteTopic,
   createTrack, updateTrack, deleteTrack,
   createChapter, updateChapter, deleteChapter,
+  getIconOptions, createIconOption, updateIconOption, deleteIconOption,
 };

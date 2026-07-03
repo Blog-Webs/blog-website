@@ -5,6 +5,7 @@ const {
   createTopic, updateTopic, deleteTopic,
   createTrack, updateTrack, deleteTrack,
   createChapter, updateChapter, deleteChapter,
+  getIconOptions, createIconOption, updateIconOption, deleteIconOption
 } = require('../controllers/adminContentController');
 const { requireAdmin } = require('../middleware/auth');
 
@@ -25,5 +26,10 @@ router.delete('/tracks/:id', deleteTrack);
 router.post('/chapters', createChapter);
 router.patch('/chapters/:id', updateChapter);
 router.delete('/chapters/:id', deleteChapter);
+
+router.get('/icons', getIconOptions);
+router.post('/icons', createIconOption);
+router.patch('/icons/:id', updateIconOption);
+router.delete('/icons/:id', deleteIconOption);
 
 module.exports = router;

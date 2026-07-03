@@ -15,11 +15,13 @@ const ICONS = {
 };
 
 const SubjectCard = ({ subject }) => {
+  const isCustomIcon = subject.icon?.startsWith('http') || subject.icon?.startsWith('/');
+  
   return (
     <FeatureCard 
       title={subject.name}
       description={subject.description}
-      icon={ICONS[subject.icon] || Binary}
+      icon={isCustomIcon ? subject.icon : (ICONS[subject.icon] || Binary)}
       image={subject.coverImage}
       color={subject.color}
       to={`/learn/${subject.slug}`}

@@ -13,4 +13,5 @@ module.exports = {
   Note: require('./Note'),
   Contact: require('./Contact'),
   Series: require('./Series'),
+  IconOption: require('./IconOption'),
 };
