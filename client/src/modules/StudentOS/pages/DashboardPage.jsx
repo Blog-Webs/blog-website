@@ -100,7 +100,7 @@ const DashboardPage = () => {
             <Calendar size={15} style={{ color: 'var(--accent)' }} /> Today's Schedule
           </h2>
           {loading ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} h="12" />)}</div>
-            : (data?.todayEvents?.length === 0
+            : (!data?.todayEvents?.length
               ? <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No events today</p>
               : <div className="space-y-2">
                 {data.todayEvents.map((ev) => (
@@ -136,7 +136,7 @@ const DashboardPage = () => {
             <BookOpen size={15} style={{ color: 'var(--accent)' }} /> Due Soon
           </h2>
           {loading ? <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} h="14" />)}</div>
-            : (data?.upcomingAssignments?.length === 0
+            : (!data?.upcomingAssignments?.length
               ? <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No upcoming assignments</p>
               : <div className="space-y-2">
                 {data.upcomingAssignments.map((a) => {
@@ -180,7 +180,7 @@ const DashboardPage = () => {
             <Bell size={15} style={{ color: 'var(--accent)' }} /> Teacher Announcements
           </h2>
           {loading ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} h="16" />)}</div>
-            : (data?.recentAnnouncements?.length === 0
+            : (!data?.recentAnnouncements?.length
               ? <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No announcements</p>
               : <div className="space-y-3">
                 {data.recentAnnouncements.map((a) => (
@@ -201,7 +201,7 @@ const DashboardPage = () => {
             <FolderOpen size={15} style={{ color: 'var(--accent)' }} /> Recent Files
           </h2>
           {loading ? <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} h="12" />)}</div>
-            : (data?.recentFiles?.length === 0
+            : (!data?.recentFiles?.length
               ? <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No recent files</p>
               : <div className="space-y-2">
                 {data.recentFiles.map((f) => (
