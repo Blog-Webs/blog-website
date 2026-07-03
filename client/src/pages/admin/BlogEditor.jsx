@@ -17,6 +17,7 @@ const emptyPost = {
   category: 'General',
   series: '',
   seriesOrder: 0,
+  publishedAt: '',
 };
 
 const BlogEditor = () => {
@@ -56,6 +57,7 @@ const BlogEditor = () => {
         category: found.category || 'General',
         series: found.series?._id || '',
         seriesOrder: found.seriesOrder || 0,
+        publishedAt: found.publishedAt ? new Date(found.publishedAt).toISOString().slice(0, 16) : '',
       });
       setLoaded(true);
     });
@@ -92,6 +94,11 @@ const BlogEditor = () => {
     }
     setSaving(true);
     const payload = { ...post, series: post.series || null, status };
+    if (post.publishedAt) {
+      payload.publishedAt = new Date(post.publishedAt).toISOString();
+    } else {
+      payload.publishedAt = new Date().toISOString();
+    }
     try {
       if (isEditing) {
         await blogApi.update(id, payload);
@@ -203,6 +210,16 @@ const BlogEditor = () => {
           className="px-3.5 py-2.5 rounded-xl border outline-none text-sm input-focus"
           style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
         />
+        <div className="relative">
+          <input
+            type="datetime-local"
+            value={post.publishedAt}
+            onChange={(e) => setPost((p) => ({ ...p, publishedAt: e.target.value }))}
+            className="w-full px-3.5 py-2.5 rounded-xl border outline-none text-sm input-focus"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+            title="Schedule post (Leave blank for immediate)"
+          />
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-8">

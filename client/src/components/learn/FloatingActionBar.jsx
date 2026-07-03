@@ -20,18 +20,13 @@ const FloatingActionBar = ({
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-transform duration-300">
       <div 
-        className="flex items-center gap-1.5 p-1.5 rounded-full border shadow-xl backdrop-blur-md"
-        style={{
-          backgroundColor: theme === 'dark' ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-          borderColor: 'var(--border)',
-        }}
+        className="flex items-center gap-1.5 p-1.5 rounded-full border shadow-2xl glass-panel"
       >
         {/* Previous Button */}
         <button
           onClick={onPrev}
           disabled={!hasPrev}
-          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ backgroundColor: 'var(--surface)' }}
+          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press disabled:opacity-30 disabled:cursor-not-allowed glass-btn hover:bg-black/10 dark:hover:bg-white/10"
           title="Previous Document"
         >
           <ArrowLeft size={16} />
@@ -42,9 +37,8 @@ const FloatingActionBar = ({
         {/* Bookmark */}
         <button
           onClick={onToggleBookmark}
-          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press"
+          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press glass-btn"
           style={{
-            backgroundColor: isBookmarked ? 'var(--accent-soft)' : 'transparent',
             color: isBookmarked ? 'var(--accent)' : 'var(--text-muted)'
           }}
           title="Bookmark"
@@ -55,7 +49,7 @@ const FloatingActionBar = ({
         {/* Share (Mock function) */}
         <button
           onClick={() => navigator.clipboard.writeText(window.location.href)}
-          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press hover:bg-black/5 dark:hover:bg-white/5"
+          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press glass-btn hover:bg-black/10 dark:hover:bg-white/10"
           style={{ color: 'var(--text-muted)' }}
           title="Copy Link"
         >
@@ -65,7 +59,7 @@ const FloatingActionBar = ({
         {/* Reading Mode Toggle */}
         <button
           onClick={onToggleReadingMode}
-          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press hover:bg-black/5 dark:hover:bg-white/5"
+          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press glass-btn hover:bg-black/10 dark:hover:bg-white/10"
           style={{ color: isReadingMode ? 'var(--accent)' : 'var(--text-muted)' }}
           title={isReadingMode ? "Exit Reading Mode" : "Focus / Reading Mode"}
         >
@@ -74,15 +68,14 @@ const FloatingActionBar = ({
 
         <div className="w-px h-6 bg-black/10 dark:bg-white/10 mx-1" />
 
-        {/* Next Button */}
+        {/* Next Button - Emphasized with scale animation */}
         <button
           onClick={onNext}
           disabled={!hasNext}
-          className="flex items-center justify-center w-10 h-10 rounded-full transition-all btn-press disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ backgroundColor: 'var(--surface)', color: 'var(--text)' }}
+          className="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed glass-btn group"
           title="Next Document"
         >
-          <ArrowRight size={16} />
+          <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
         </button>
       </div>
     </div>

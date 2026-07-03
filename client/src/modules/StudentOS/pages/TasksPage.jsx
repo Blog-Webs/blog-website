@@ -117,7 +117,7 @@ const TasksPage = () => {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 flex-1">
               <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
-              <input type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)}
+              <input type="datetime-local" value={newDue} onChange={(e) => setNewDue(e.target.value)}
                 className="bg-transparent text-xs outline-none" style={{ color: 'var(--text-muted)' }} />
             </div>
             <button onClick={handleCreate} disabled={saving || !newTitle.trim()}
@@ -158,7 +158,7 @@ const TasksPage = () => {
                   {t.due && (
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                       <Calendar size={10} className="inline mr-1" />
-                      {new Date(t.due).toLocaleDateString()}
+                      {new Date(t.due).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   )}
                 </div>

@@ -51,10 +51,8 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
 
   return (
     <article
-      className="rounded-2xl border chapter-reading-area relative"
+      className="rounded-3xl chapter-reading-area relative glass-panel shadow-xl"
       style={{
-        backgroundColor: 'var(--surface)',
-        borderColor: 'var(--border)',
         width: '100%',
         maxWidth: '850px',
         margin: '0 auto',

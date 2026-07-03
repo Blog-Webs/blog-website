@@ -46,7 +46,7 @@ const getBlogs = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const { tag, category, search } = req.query;
 
-  const filter = { status: 'published' };
+  const filter = { status: 'published', publishedAt: { $lte: new Date() } };
   if (tag) filter.tags = tag;
   if (category) filter.category = category;
   if (search) filter.$text = { $search: search };
@@ -66,7 +66,7 @@ const getBlogs = async (req, res) => {
 
 // GET /api/blogs/:slug
 const getBlogBySlug = async (req, res) => {
-  const blog = await Blog.findOne({ slug: req.params.slug, status: 'published' })
+  const blog = await Blog.findOne({ slug: req.params.slug, status: 'published', publishedAt: { $lte: new Date() } })
     .populate('author', 'name avatar')
     .populate('series', 'title slug description');
   if (!blog) return res.status(404).json({ message: 'Post not found.' });
@@ -76,14 +76,14 @@ const getBlogBySlug = async (req, res) => {
 
   const comments = await Comment.find({ blog: blog._id }).populate('user', 'name avatar').sort({ createdAt: -1 });
 
-  const upNext = await Blog.find({ status: 'published', _id: { $ne: blog._id } })
+  const upNext = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() }, _id: { $ne: blog._id } })
     .select('title subtitle slug coverImage readTimeMinutes publishedAt')
     .sort({ publishedAt: -1 })
     .limit(4);
 
   let seriesPosts = [];
   if (blog.series) {
-    seriesPosts = await Blog.find({ series: blog.series._id, status: 'published' })
+    seriesPosts = await Blog.find({ series: blog.series._id, status: 'published', publishedAt: { $lte: new Date() } })
       .select('title slug coverImage readTimeMinutes seriesOrder')
       .sort({ seriesOrder: 1 });
   }
@@ -127,7 +127,7 @@ const addComment = async (req, res) => {
 
 // GET /api/blogs/meta/tags-categories
 const getTagsAndCategories = async (req, res) => {
-  const blogs = await Blog.find({ status: 'published' }).select('tags category');
+  const blogs = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() } }).select('tags category');
   const tags = new Set();
   const categories = new Set();
   blogs.forEach((b) => {
