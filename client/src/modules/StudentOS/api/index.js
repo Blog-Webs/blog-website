@@ -43,4 +43,8 @@ export const studentOSApi = {
   chat: (message) => api.post(`${BASE}/ai/chat`, { message }),
   flashcards: (content, topic) => api.post(`${BASE}/ai/flashcards`, { content, topic }),
   quiz: (content, topic) => api.post(`${BASE}/ai/quiz`, { content, topic }),
+
+  // RAG Files
+  uploadDocument: (formData) => api.post(`${BASE}/files/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getDocuments: () => api.get(`${BASE}/files`),
 };

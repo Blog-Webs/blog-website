@@ -14,4 +14,6 @@ module.exports = {
   Contact: require('./Contact'),
   Series: require('./Series'),
   IconOption: require('./IconOption'),
+  Document: require('./Document'),
+  DocumentChunk: require('./DocumentChunk'),
 };

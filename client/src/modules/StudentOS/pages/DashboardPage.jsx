@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen, FolderOpen, Mail, Calendar, AlertTriangle,
-  Sparkles, Bell, ExternalLink, CheckCircle2, ArrowRight
+  Sparkles, Bell, ExternalLink, CheckCircle2, ArrowRight, Upload
 } from 'lucide-react';
 import { studentOSApi } from '../api';
 import { useStudentOS } from '../context/StudentOSContext';
@@ -49,6 +49,24 @@ const DashboardPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      await studentOSApi.uploadDocument(formData);
+      alert('Document uploaded and queued for processing! The AI will be able to read it shortly.');
+    } catch (err) {
+      alert('Failed to upload document.');
+    } finally {
+      setUploading(false);
+      e.target.value = null; // reset
+    }
+  };
 
   useEffect(() => {
     if (!connected) { setLoading(false); return; }
@@ -99,9 +117,17 @@ const DashboardPage = () => {
           <p className="text-xs font-mono-display uppercase tracking-widest mb-1" style={{ color: 'var(--accent)' }}>// Overview</p>
           <h1 className="text-4xl font-bold glow-title">{greeting}!</h1>
         </div>
-        <p className="font-mono-display text-sm px-4 py-2 rounded-xl glass-panel text-[var(--text-muted)]">
-          {now.toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-        </p>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors"
+            style={{ backgroundColor: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+            {uploading ? <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)' }} /> : <Upload size={16} />}
+            {uploading ? 'Uploading...' : 'Upload Course PDF'}
+            <input type="file" className="hidden" accept="application/pdf" onChange={handleUpload} disabled={uploading} />
+          </label>
+          <p className="font-mono-display text-sm px-4 py-2 rounded-xl glass-panel text-[var(--text-muted)]">
+            {now.toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
       </div>
 
       {error && (

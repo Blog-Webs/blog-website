@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const DocumentChunk = require('../../models/DocumentChunk');
 
 const MODEL_NAME = 'gemini-1.5-flash';
 
@@ -60,6 +61,37 @@ Summary (use bullet points):`;
     const ctx = context || {};
 
     const parts = [];
+
+    // --- RAG RETRIEVAL ---
+    try {
+      const embeddingModel = ai.getGenerativeModel({ model: 'text-embedding-004' });
+      const embedResult = await embeddingModel.embedContent(message);
+      const queryEmbedding = embedResult.embedding.values;
+
+      const vectorResults = await DocumentChunk.aggregate([
+        {
+          $vectorSearch: {
+            index: 'vector_index',
+            path: 'embedding',
+            queryVector: queryEmbedding,
+            numCandidates: 100,
+            limit: 5,
+          }
+        },
+        {
+          $project: { _id: 0, text: 1, score: { $meta: 'vectorSearchScore' } }
+        }
+      ]);
+
+      if (vectorResults && vectorResults.length > 0) {
+        const docTexts = vectorResults.map(r => r.text).join('\n---\n');
+        parts.push(`Information from uploaded course documents:\n${docTexts}`);
+      }
+    } catch (err) {
+      console.error('[RAG Retrieval Error]', err);
+    }
+    // ---------------------
+
     if (ctx.assignments && ctx.assignments.length) {
       const list = ctx.assignments.slice(0, 5).map((a) =>
         `- "${a.title}" due ${a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'no date'}`
@@ -84,12 +116,12 @@ Summary (use bullet points):`;
     }
 
     const contextStr = parts.length
-      ? `Student context:\n${parts.join('\n\n')}\n\n`
+      ? `Use the following context to help answer the student's question if relevant:\n\n${parts.join('\n\n')}\n\n`
       : '';
 
     const prompt = `You are StudentOS AI, a helpful and friendly academic assistant for students.
 ${contextStr}
-Answer the following question in a clear, helpful way. Keep it concise.
+Answer the following question in a clear, helpful way. Keep it concise and use the context provided above to ground your answer.
 
 Student: ${message}
 Assistant:`;

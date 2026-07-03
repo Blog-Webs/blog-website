@@ -11,6 +11,11 @@ const gmailCtrl = require('../controllers/gmailController');
 const calendarCtrl = require('../controllers/calendarController');
 const tasksCtrl = require('../controllers/tasksController');
 const aiCtrl = require('../controllers/aiController');
+const filesCtrl = require('../controllers/filesController');
+
+const multer = require('multer');
+const os = require('os');
+const upload = multer({ dest: os.tmpdir() });
 
 // ── Auth (no StudentOS token required, just httpTechNex login) ──
 router.get('/auth/url', requireAuth, authCtrl.getAuthUrl);
@@ -58,6 +63,10 @@ router.post('/ai/chat', asyncWrap(aiCtrl.chat));
 router.get('/ai/summarize-email/:messageId', asyncWrap(aiCtrl.summarizeEmail));
 router.post('/ai/flashcards', asyncWrap(aiCtrl.generateFlashcards));
 router.post('/ai/quiz', asyncWrap(aiCtrl.generateQuiz));
+
+// Files (RAG Uploads)
+router.post('/files/upload', upload.single('file'), asyncWrap(filesCtrl.uploadDocument));
+router.get('/files', asyncWrap(filesCtrl.getDocuments));
 
 // Async error wrapper — passes thrown errors to Express error handler
 function asyncWrap(fn) {
