@@ -4,6 +4,7 @@ import { Lock, ExternalLink, Bookmark, BookmarkCheck, Check, BookOpen } from 'lu
 import { useState } from 'react';
 import GoogleSignInButton from '../ui/GoogleSignInButton';
 import BlockNoteRenderer from '../ui/BlockNoteRenderer';
+import AuthorMetaCard from './AuthorMetaCard';
 
 const SOURCE_LABEL = {
   geeksforgeeks: 'GeeksforGeeks',
@@ -50,50 +51,28 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
 
   return (
     <article
-      className="rounded-2xl border chapter-reading-area"
+      className="rounded-2xl border chapter-reading-area relative"
       style={{
         backgroundColor: 'var(--surface)',
         borderColor: 'var(--border)',
         width: '100%',
+        maxWidth: '850px',
+        margin: '0 auto',
         padding: '2rem 2.5rem',
       }}
     >
-      {/* Chapter header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          {/* Chapter badge */}
-          <div className="chapter-title-badge">
-            <BookOpen size={11} />
-            Chapter {chapter.chapterNumber}
-          </div>
-          {/* Chapter title */}
-          <h1
-            className="text-2xl sm:text-3xl font-bold glow-title leading-tight"
-            style={{ maxWidth: '600px' }}
-          >
-            {chapter.title}
-          </h1>
-        </div>
+      {/* Chapter title */}
+      <h1
+        className="text-3xl sm:text-4xl font-bold glow-title leading-tight mb-4"
+      >
+        {chapter.title}
+      </h1>
 
-        {/* Bookmark */}
-        <button
-          onClick={() => onToggleBookmark(chapter._id)}
-          aria-label="Bookmark this chapter"
-          className="p-2.5 rounded-xl border shrink-0 btn-press transition-all duration-200"
-          style={{
-            borderColor: isBookmarked ? 'var(--accent)' : 'var(--border)',
-            backgroundColor: isBookmarked ? 'var(--accent-soft)' : 'transparent',
-          }}
-        >
-          {isBookmarked
-            ? <BookmarkCheck size={17} style={{ color: 'var(--accent)' }} />
-            : <Bookmark size={17} style={{ color: 'var(--text-muted)' }} />
-          }
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="mb-8" style={{ borderBottom: '1px solid var(--border)' }} />
+      <AuthorMetaCard 
+        authorName="HttpTechNex Team"
+        lastUpdated={chapter.updatedAt || chapter.createdAt}
+        readTimeMinutes={Math.max(1, Math.round((chapter.content?.length || 500) / 1000))} 
+      />
 
       {/* Content */}
       {chapter.contentBlocks?.length > 0 ? (
