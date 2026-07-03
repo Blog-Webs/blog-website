@@ -23,6 +23,8 @@ const FeatureCard = ({ title, description, badge, icon: Icon, image, to, onClick
 
         {image ? (
           <img src={image} alt={title} className="w-full h-full object-cover opacity-80" />
+        ) : typeof Icon === 'string' ? (
+          <img src={Icon} alt={title} className="w-12 h-12 object-contain opacity-90 drop-shadow-md" />
         ) : Icon ? (
           <Icon size={40} style={{ color }} className="opacity-80 drop-shadow-md" />
         ) : null}

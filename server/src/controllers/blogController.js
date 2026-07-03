@@ -143,6 +143,8 @@ const addComment = async (req, res) => {
     parentComment: parentComment || null,
   });
   await comment.populate('user', 'name avatar');
+  
+  await cache.del(`blog:${req.params.slug}`);
 
   res.status(201).json({ comment });
 };

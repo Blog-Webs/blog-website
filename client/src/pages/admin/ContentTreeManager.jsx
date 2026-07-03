@@ -8,6 +8,8 @@ import {
 import { contentApi } from '../../api/content';
 import { adminApi } from '../../api/admin';
 import { blogApi } from '../../api/blog';
+import IconManagerModal from '../../components/admin/IconManagerModal';
+import { ContentTreeSkeleton } from '../../components/admin/AdminSkeleton';
 
 const ICON_OPTIONS = [
   { key: 'binary-tree', icon: Binary, label: 'DSA' },
@@ -22,9 +24,9 @@ const ICON_OPTIONS = [
 
 const COLOR_OPTIONS = ['#5EEAD4', '#FFB454', '#A78BFA', '#F87171', '#60A5FA', '#34D399'];
 
-const inputClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full input-focus';
+const inputClass = 'px-4 py-3.5 rounded-xl border text-[15px] outline-none w-full input-focus shadow-sm';
 const inputStyle = { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)' };
-const textareaClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full input-focus resize-none';
+const textareaClass = 'px-4 py-3.5 rounded-xl border text-[15px] outline-none w-full input-focus resize-none shadow-sm';
 
 const emptySubjectForm = { name: '', description: '', icon: 'layers', color: '#5EEAD4', coverImage: '' };
 const emptyTopicForm = { name: '', description: '', difficulty: 'beginner', estimatedMinutes: 30 };
@@ -64,7 +66,9 @@ const UndoToast = ({ message, onUndo, onDismiss }) => (
 );
 
 const ContentTreeManager = () => {
+  const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState([]);
+  const [iconOptions, setIconOptions] = useState([]);
   const [expandedSubject, setExpandedSubject] = useState(null);
   const [topics, setTopics] = useState({});
   const [expandedTopic, setExpandedTopic] = useState(null);
@@ -88,6 +92,8 @@ const ContentTreeManager = () => {
   const [trackForm, setTrackForm] = useState(emptyTrackForm);
   const [editingTrackId, setEditingTrackId] = useState(null);
 
+  const [isIconManagerOpen, setIsIconManagerOpen] = useState(false);
+
   // Undo toast state
   const [toast, setToast] = useState(null); // { message, onUndo }
   const toastTimer = useRef(null);
@@ -106,9 +112,15 @@ const ContentTreeManager = () => {
     setToast(null);
   };
 
-  const loadSubjects = () => contentApi.getSubjects().then(({ data }) => setSubjects(data.subjects));
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([
+      contentApi.getSubjects().then(({ data }) => setSubjects(data.subjects)),
+      adminApi.getIconOptions().then(({ data }) => setIconOptions(data.icons))
+    ]).finally(() => setLoading(false));
+  };
 
-  useEffect(() => { loadSubjects(); }, []);
+  useEffect(() => { loadData(); }, []);
 
   const toggleSubject = async (subject) => {
     if (expandedSubject === subject._id) {
@@ -355,29 +367,33 @@ const ContentTreeManager = () => {
         Click the pencil on any item to rename or edit it.
       </p>
 
-      <div className="mb-6">
-        {addingSubject ? (
-          <InlineForm onSave={handleAddSubject} onCancel={() => { setAddingSubject(false); setSubjectForm(emptySubjectForm); }} saveLabel="Create subject">
-            <SubjectFields form={subjectForm} setForm={setSubjectForm} />
-          </InlineForm>
-        ) : (
-          <button
-            onClick={() => setAddingSubject(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-          >
-            <Plus size={16} /> Add subject
-          </button>
-        )}
-      </div>
+      {loading ? (
+        <ContentTreeSkeleton />
+      ) : (
+        <>
+          <div className="mb-6">
+            {addingSubject ? (
+              <InlineForm onSave={handleAddSubject} onCancel={() => { setAddingSubject(false); setSubjectForm(emptySubjectForm); }} saveLabel="Create subject">
+                <SubjectFields form={subjectForm} setForm={setSubjectForm} iconOptions={iconOptions} openIconManager={() => setIsIconManagerOpen(true)} />
+              </InlineForm>
+            ) : (
+              <button
+                onClick={() => setAddingSubject(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium btn-press"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
+              >
+                <Plus size={16} /> Add subject
+              </button>
+            )}
+          </div>
 
-      <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
         {subjects.map((subject) => (
           <div key={subject._id} className="rounded-xl border card-hover" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}>
             {editingSubjectId === subject._id ? (
               <div className="p-4">
                 <InlineForm onSave={handleSaveSubjectEdit} onCancel={() => { setEditingSubjectId(null); setSubjectForm(emptySubjectForm); }}>
-                  <SubjectFields form={subjectForm} setForm={setSubjectForm} />
+                  <SubjectFields form={subjectForm} setForm={setSubjectForm} iconOptions={iconOptions} openIconManager={() => setIsIconManagerOpen(true)} />
                 </InlineForm>
               </div>
             ) : (
@@ -525,15 +541,24 @@ const ContentTreeManager = () => {
           </div>
         ))}
       </div>
+      </>
+      )}
 
       {/* Undo toast */}
       {toast && <UndoToast message={toast.message} onUndo={toast.onUndo} onDismiss={dismissToast} />}
+      
+      <IconManagerModal
+        isOpen={isIconManagerOpen}
+        onClose={() => setIsIconManagerOpen(false)}
+        iconOptions={iconOptions}
+        reloadIcons={() => adminApi.getIconOptions().then(({ data }) => setIconOptions(data.icons))}
+      />
     </div>
   );
 };
 
 // Shared field groups — larger inputs for comfortable writing
-const SubjectFields = ({ form, setForm }) => {
+const SubjectFields = ({ form, setForm, iconOptions, openIconManager }) => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -565,7 +590,7 @@ const SubjectFields = ({ form, setForm }) => {
         value={form.description}
         onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
         placeholder="Short description shown on the homepage card"
-        rows={3}
+        rows={4}
         className={textareaClass}
         style={inputStyle}
       />
@@ -622,6 +647,31 @@ const SubjectFields = ({ form, setForm }) => {
               <Icon size={16} />
             </button>
           ))}
+          {iconOptions && iconOptions.map((iconOpt) => (
+            <button
+              key={iconOpt._id} type="button" title={iconOpt.label}
+              onClick={() => setForm((f) => ({ ...f, icon: iconOpt.iconUrl }))}
+              className="p-2.5 rounded-lg border btn-press flex items-center justify-center overflow-hidden"
+              style={{
+                borderColor: form.icon === iconOpt.iconUrl ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: form.icon === iconOpt.iconUrl ? 'var(--accent-soft)' : 'transparent',
+                width: 38,
+                height: 38
+              }}
+            >
+              <img src={iconOpt.iconUrl} alt={iconOpt.label} className="w-full h-full object-contain" />
+            </button>
+          ))}
+          {openIconManager && (
+            <button
+              type="button" title="Manage Custom Icons"
+              onClick={openIconManager}
+              className="p-2.5 rounded-lg border btn-press border-dashed flex items-center justify-center"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              <Plus size={16} />
+            </button>
+          )}
         </div>
       </div>
       <div>
@@ -653,8 +703,8 @@ const TopicFields = ({ form, setForm }) => (
     <textarea
       value={form.description}
       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-      placeholder="Short description (what will the learner understand after this topic?)"
-      rows={3}
+      placeholder="Detailed description (what will the learner understand after this topic?)"
+      rows={5}
       className={textareaClass}
       style={inputStyle}
     />

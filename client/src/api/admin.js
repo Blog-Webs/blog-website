@@ -20,4 +20,9 @@ export const adminApi = {
   createChapter: (payload) => api.post('/admin/content/chapters', payload),
   updateChapter: (id, payload) => api.patch(`/admin/content/chapters/${id}`, payload),
   deleteChapter: (id) => api.delete(`/admin/content/chapters/${id}`),
+
+  getIconOptions: () => api.get('/admin/content/icons'),
+  createIconOption: (payload) => api.post('/admin/content/icons', payload),
+  updateIconOption: (id, payload) => api.patch(`/admin/content/icons/${id}`, payload),
+  deleteIconOption: (id) => api.delete(`/admin/content/icons/${id}`),
 };

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Users, FileText, BookOpen, Layers, Mail } from 'lucide-react';
 import { adminApi } from '../../api/admin';
 import { useLiveUserCount } from '../../hooks/useLiveUserCount';
+import { StatCardSkeleton } from '../../components/admin/AdminSkeleton';
 
 const StatCard = ({ icon: Icon, label, value, color }) => (
   <div className="p-5 rounded-2xl border card-hover" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
@@ -21,7 +22,15 @@ const AdminDashboard = () => {
     adminApi.getStats().then(({ data }) => setStats(data));
   }, []);
 
-  if (!stats) return <p style={{ color: 'var(--text-muted)' }}>Loading…</p>;
+  if (!stats) return (
+    <div>
+      <h1 className="text-2xl font-bold mb-1 glow-title">Dashboard</h1>
+      <p className="mb-8" style={{ color: 'var(--text-muted)' }}>Loading live overview...</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => <StatCardSkeleton key={i} />)}
+      </div>
+    </div>
+  );
 
   return (
     <div>
