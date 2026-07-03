@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clock, ChevronRight, Map, FileSpreadsheet } from 'lucide-react';
+import SubjectHeader from '../components/learn/SubjectHeader';
+import { CardGridSkeleton } from '../components/ui/Skeleton';
 import { contentApi } from '../api/content';
 
 const DIFFICULTY_COLOR = {
@@ -29,9 +31,7 @@ const SubjectPage = () => {
       .finally(() => setLoading(false));
   }, [subjectSlug]);
 
-  if (loading) {
-    return <div className="max-w-5xl mx-auto px-4 py-20 text-center" style={{ color: 'var(--text-muted)' }}>Loading…</div>;
-  }
+  if (loading) return <div className="max-w-5xl mx-auto px-4 py-20"><CardGridSkeleton count={4} /></div>;
 
   if (error || !subject) {
     return <div className="max-w-5xl mx-auto px-4 py-20 text-center" style={{ color: 'var(--text-muted)' }}>{error || 'Not found.'}</div>;

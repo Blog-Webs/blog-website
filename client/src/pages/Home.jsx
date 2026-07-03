@@ -46,50 +46,24 @@ const useWaterRipple = () =>
     ripple.addEventListener('animationend', () => ripple.remove());
   }, []);
 
-/* ── Series card with water droplet animation ── */
+/* ── Series card using FeatureCard ── */
+import FeatureCard from '../components/ui/FeatureCard';
+
 const SeriesCard = ({ series }) => {
-  const createRipple = useWaterRipple();
   const hasMultiplePosts = (series.postCount || 0) >= 2;
   const ref = useFadeUp();
 
   return (
-    <Link
-      ref={ref}
-      to={`/series/${series.slug}`}
-      className={`series-card fade-up group block p-6 rounded-2xl border`}
-      style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-      onClick={createRipple}
-    >
-      <div className="ripple-container" />
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 shrink-0"
-          style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
-        >
-          <Layers size={20} />
-        </div>
-        <div className="flex items-center gap-2 mb-2">
-          <span
-            className="text-[10px] font-mono-display uppercase tracking-widest px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
-          >
-            Series
-          </span>
-          {hasMultiplePosts && (
-            <span className="text-[10px] font-mono-display px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(94,234,212,0.1)', color: '#5EEAD4' }}>
-              {series.postCount} parts
-            </span>
-          )}
-        </div>
-        <h3 className="text-lg font-semibold mb-1.5 leading-snug">{series.title}</h3>
-        {series.description && (
-          <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-muted)' }}>{series.description}</p>
-        )}
-        <div className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--accent)' }}>
-          Read series <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-        </div>
-      </div>
-    </Link>
+    <div ref={ref} className="fade-up">
+      <FeatureCard 
+        title={series.title}
+        description={series.description}
+        icon={Layers}
+        color="#5EEAD4"
+        badge={hasMultiplePosts ? `${series.postCount} parts` : 'Series'}
+        to={`/series/${series.slug}`}
+      />
+    </div>
   );
 };
 

@@ -700,5 +700,29 @@ a {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
-  user-select: none;
+}
+
+/* ============================================================
+   Feature Card Component
+   ============================================================ */
+
+.feature-card {
+  background-color: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.feature-card:hover {
+  border-color: var(--hover-color, var(--accent));
+  box-shadow: 0 0 20px -5px var(--hover-color, var(--accent)), 0 8px 24px -8px var(--shadow);
+}
+
+/* ============================================================
+   Skeleton Shimmer
+   ============================================================ */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }

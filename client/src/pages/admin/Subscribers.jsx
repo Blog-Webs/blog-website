@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { adminApi } from '../../api/admin';
+import { ListSkeleton } from '../../components/ui/Skeleton';
 
 const Subscribers = () => {
   const [subscribers, setSubscribers] = useState([]);
@@ -15,7 +17,7 @@ const Subscribers = () => {
       <p className="mb-8" style={{ color: 'var(--text-muted)' }}>{subscribers.length} active subscribers.</p>
 
       {loading ? (
-        <p style={{ color: 'var(--text-muted)' }}>Loading…</p>
+        <ListSkeleton count={5} />
       ) : (
         <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
           {subscribers.map((s, i) => (

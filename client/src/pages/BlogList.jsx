@@ -5,6 +5,7 @@ import BlogCard from '../components/blog/BlogCard';
 import Pagination from '../components/ui/Pagination';
 import { blogApi } from '../api/blog';
 import { seriesApi } from '../api/series';
+import { CardGridSkeleton } from '../components/ui/Skeleton';
 
 const PAGE_SIZE = 9;
 
@@ -108,7 +109,7 @@ const BlogList = () => {
       </div>
 
       {loading ? (
-        <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>Loading…</p>
+        <CardGridSkeleton count={6} />
       ) : blogs.length === 0 ? (
         <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>No posts found.</p>
       ) : (

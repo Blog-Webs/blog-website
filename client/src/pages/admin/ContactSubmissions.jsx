@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bug, LifeBuoy, Star, Mail } from 'lucide-react';
 import { contactApi } from '../../api/contact';
+import { ListSkeleton } from '../../components/ui/Skeleton';
 
 const TYPE_META = {
   bug: { label: 'Bug report', icon: Bug, color: '#F87171' },
@@ -55,7 +56,7 @@ const ContactSubmissions = () => {
       </div>
 
       {loading ? (
-        <p style={{ color: 'var(--text-muted)' }}>Loading…</p>
+        <ListSkeleton count={5} />
       ) : contacts.length === 0 ? (
         <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>Nothing here yet.</p>
       ) : (
