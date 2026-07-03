@@ -302,6 +302,7 @@ const BlogDetail = () => {
                 ))}
               </div>
             </div>
+            </div>
           </article>
 
           {/* Floating Action Bar */}
