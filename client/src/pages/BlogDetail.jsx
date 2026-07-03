@@ -34,6 +34,8 @@ const BlogDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [noteContent, setNoteContent] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState({});
 
   useEffect(() => {
     setLoading(true);
@@ -69,14 +71,35 @@ const BlogDetail = () => {
   const progress = useReadingProgress(scrollRef);
 
   const handleLike = async () => {
-    const { data } = await blogApi.toggleLike(slug);
-    setLiked(data.liked);
-    setLikeCount(data.likeCount);
+    // Optimistic Update
+    const prevLiked = liked;
+    const prevCount = likeCount;
+    setLiked(!prevLiked);
+    setLikeCount((prev) => (prevLiked ? prev - 1 : prev + 1));
+    
+    try {
+      const { data } = await blogApi.toggleLike(slug);
+      // Sync with server source of truth
+      setLiked(data.liked);
+      setLikeCount(data.likeCount);
+    } catch {
+      // Revert on error
+      setLiked(prevLiked);
+      setLikeCount(prevCount);
+    }
   };
 
   const handleBookmark = async () => {
-    const { data } = await bookmarkApi.toggle('blog', blog._id);
-    setBookmarked(data.bookmarked);
+    // Optimistic Update
+    const prevBookmarked = bookmarked;
+    setBookmarked(!prevBookmarked);
+    
+    try {
+      const { data } = await bookmarkApi.toggle('blog', blog._id);
+      setBookmarked(data.bookmarked);
+    } catch {
+      setBookmarked(prevBookmarked);
+    }
   };
 
   const handleNoteChange = async (newContent) => {
@@ -88,17 +111,109 @@ const BlogDetail = () => {
     }
   };
 
-  const handleComment = async (e) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-    const { data } = await blogApi.addComment(slug, commentText);
-    setComments((prev) => [data.comment, ...prev]);
-    setCommentText('');
+  const handleComment = async (e, parentId = null) => {
+    e?.preventDefault();
+    const text = parentId ? replyText[parentId] : commentText;
+    if (!text?.trim()) return;
+
+    // Optimistic Update
+    const tempId = Date.now().toString();
+    const newComment = {
+      _id: tempId,
+      text: text.trim(),
+      parentComment: parentId,
+      user: { _id: user.id, name: user.name, avatar: user.picture },
+      createdAt: new Date().toISOString()
+    };
+    
+    setComments((prev) => [newComment, ...prev]);
+    if (parentId) {
+      setReplyText((prev) => ({ ...prev, [parentId]: '' }));
+      setReplyingTo(null);
+    } else {
+      setCommentText('');
+    }
+
+    try {
+      const { data } = await blogApi.addComment(slug, text, parentId);
+      // Replace temp with real
+      setComments((prev) => prev.map((c) => c._id === tempId ? data.comment : c));
+    } catch {
+      // Revert on error
+      setComments((prev) => prev.filter((c) => c._id !== tempId));
+    }
   };
 
   const scrollToHeading = (id) => {
     scrollRef.current?.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const topLevelComments = comments.filter((c) => !c.parentComment);
+  const repliesByParent = comments.reduce((acc, c) => {
+    if (c.parentComment) {
+      if (!acc[c.parentComment]) acc[c.parentComment] = [];
+      acc[c.parentComment].push(c);
+    }
+    return acc;
+  }, {});
+
+  const renderComment = (c, isReply = false) => (
+    <div key={c._id} className={`flex flex-col gap-3 group ${isReply ? 'ml-8 sm:ml-12 mt-4' : ''}`}>
+      <div className="flex gap-4">
+        <img
+          src={c.user?.avatar || c.user?.picture}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="w-10 h-10 rounded-full object-cover shrink-0"
+        />
+        <div className="flex-1">
+          <div className="bg-black/5 dark:bg-white/5 px-4 py-3 rounded-2xl rounded-tl-none inline-block max-w-full">
+            <p className="text-sm font-semibold mb-1">{c.user?.name}</p>
+            <p className="text-sm leading-relaxed opacity-90 break-words">{c.text}</p>
+          </div>
+          
+          <div className="flex items-center gap-4 mt-1.5 ml-2">
+            {!isReply && user && (
+              <button
+                onClick={() => setReplyingTo(replyingTo === c._id ? null : c._id)}
+                className="text-[13px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+              >
+                Reply
+              </button>
+            )}
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              {new Date(c.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+          
+          {replyingTo === c._id && user && (
+            <div className="flex gap-3 mt-4 mb-2">
+              <img src={user?.picture} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+              <div className="flex-1 flex gap-2">
+                <input
+                  value={replyText[c._id] || ''}
+                  onChange={(e) => setReplyText({ ...replyText, [c._id]: e.target.value })}
+                  placeholder="Write a reply..."
+                  className="flex-1 px-4 py-2 rounded-xl border text-sm outline-none input-focus shadow-sm"
+                  style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+                <button
+                  onClick={(e) => handleComment(e, c._id)}
+                  disabled={!replyText[c._id]?.trim()}
+                  className="px-4 py-2 rounded-xl btn-press font-medium disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {repliesByParent[c._id]?.map(reply => renderComment(reply, true))}
+        </div>
+      </div>
+    </div>
+  );
 
   // Compute Prev / Next based on "upNext"
   const hasNext = upNext.length > 0;
@@ -306,21 +421,8 @@ const BlogDetail = () => {
                 <div className="mb-8"><GoogleSignInButton /></div>
               )}
 
-              <div className="flex flex-col gap-6">
-                {comments.map((c) => (
-                  <div key={c._id} className="flex gap-4 group">
-                    <img
-                      src={c.user?.avatar}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="w-10 h-10 rounded-full object-cover shrink-0"
-                    />
-                    <div className="bg-black/5 dark:bg-white/5 px-4 py-3 rounded-2xl rounded-tl-none flex-1">
-                      <p className="text-sm font-semibold mb-1">{c.user?.name}</p>
-                      <p className="text-sm leading-relaxed opacity-90">{c.text}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-8">
+                {topLevelComments.map((c) => renderComment(c))}
               </div>
             </div>
             </div>

@@ -1,5 +1,6 @@
 const slugify = require('slugify');
 const { Subject, Topic, Track, Chapter, Progress, Bookmark, IconOption } = require('../models');
+const cache = require('../utils/cache');
 
 // Deletes Progress and Bookmark rows that reference any of the given
 // chapter ids, so removing content upstream never leaves dangling
@@ -19,6 +20,9 @@ const createSubject = async (req, res) => {
 
   const slug = slugify(name, { lower: true, strict: true });
   const subject = await Subject.create({ name, slug, description, icon, coverImage, color, order, hasRoadmap, hasCheatsheet });
+  
+  await cache.del('subjects:all');
+  
   res.status(201).json({ subject });
 };
 
@@ -28,7 +32,9 @@ const updateSubject = async (req, res) => {
 
   const { name, description, icon, coverImage, color, order, hasRoadmap, hasCheatsheet } = req.body;
 
+  let oldSlug = null;
   if (name && name !== subject.name) {
+    oldSlug = subject.slug;
     subject.name = name;
     let slug = slugify(name, { lower: true, strict: true });
     const existingCount = await Subject.countDocuments({ slug: new RegExp(`^${slug}`), _id: { $ne: subject._id } });
@@ -43,6 +49,13 @@ const updateSubject = async (req, res) => {
   if (hasCheatsheet !== undefined) subject.hasCheatsheet = hasCheatsheet;
 
   await subject.save();
+
+  await cache.del('subjects:all');
+  await cache.del(`subject:${subject.slug}`);
+  if (oldSlug && oldSlug !== subject.slug) {
+    await cache.del(`subject:${oldSlug}`);
+  }
+
   res.json({ subject });
 };
 
@@ -59,7 +72,11 @@ const deleteSubject = async (req, res) => {
   await Track.deleteMany({ topic: { $in: topicIds } });
   await Topic.deleteMany({ subject: subject._id });
 
-  res.json({ message: 'Subject and all of its topics, tracks, and chapters were deleted.' });
+  await cache.del('subjects:all');
+  await cache.del(`subject:${subject.slug}`);
+  await cache.del('tracks:*'); // To be safe, clear tracks as well
+
+  res.json({ message: 'Subject and all related content deleted.' });
 };
 
 // ---------- Topics ----------
@@ -71,6 +88,9 @@ const createTopic = async (req, res) => {
   const topic = await Topic.create({
     subject, name, slug, description, order, difficulty, estimatedMinutes, hasVisualizer, visualizerType,
   });
+  
+  await cache.del('subject:*'); // Clear subject caches so topic list updates
+  
   res.status(201).json({ topic });
 };
 
@@ -96,6 +116,7 @@ const updateTopic = async (req, res) => {
   if (visualizerType !== undefined) topic.visualizerType = visualizerType;
 
   await topic.save();
+  await cache.del('subject:*');
   res.json({ topic });
 };
 
@@ -110,6 +131,9 @@ const deleteTopic = async (req, res) => {
   await Chapter.deleteMany({ track: { $in: trackIds } });
   await Track.deleteMany({ topic: topic._id });
 
+  await cache.del('subject:*');
+  await cache.del('tracks:*');
+
   res.json({ message: 'Topic and all of its tracks and chapters were deleted.' });
 };
 
@@ -120,6 +144,7 @@ const createTrack = async (req, res) => {
 
   const slug = slugify(name, { lower: true, strict: true });
   const track = await Track.create({ topic, name, slug, order, icon });
+  await cache.del('tracks:*');
   res.status(201).json({ track });
 };
 
@@ -141,6 +166,7 @@ const updateTrack = async (req, res) => {
   if (icon !== undefined) track.icon = icon;
 
   await track.save();
+  await cache.del('tracks:*');
   res.json({ track });
 };
 
@@ -151,6 +177,8 @@ const deleteTrack = async (req, res) => {
   const chapterIds = (await Chapter.find({ track: track._id }).select('_id')).map((c) => c._id);
   await cleanupChapterReferences(chapterIds);
   await Chapter.deleteMany({ track: track._id });
+
+  await cache.del('tracks:*');
 
   res.json({ message: 'Track and all of its chapters were deleted.' });
 };
@@ -172,6 +200,9 @@ const createChapter = async (req, res) => {
     headings: Array.isArray(headings) ? headings : [],
     codeSnippets, isFreePreview, estimatedMinutes, order, externalLinks,
   });
+  
+  await cache.del('tracks:*'); // Updates chapter count
+  
   res.status(201).json({ chapter });
 };
 
@@ -199,6 +230,8 @@ const updateChapter = async (req, res) => {
   if (chapterNumber !== undefined) chapter.chapterNumber = chapterNumber;
 
   await chapter.save();
+  await cache.del(`chapter:${chapter._id}`);
+  await cache.del('tracks:*'); // Updates chapter titles/order
   res.json({ chapter });
 };
 
@@ -207,6 +240,9 @@ const deleteChapter = async (req, res) => {
   if (!chapter) return res.status(404).json({ message: 'Chapter not found.' });
 
   await cleanupChapterReferences([chapter._id]);
+
+  await cache.del(`chapter:${chapter._id}`);
+  await cache.del('tracks:*');
 
   res.json({ message: 'Chapter deleted.' });
 };
