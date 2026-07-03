@@ -175,8 +175,18 @@ const BlogDetail = () => {
 
         {/* CENTER — Article */}
         <div ref={scrollRef} className="order-1 lg:order-2 lg:overflow-y-auto py-8 lg:min-h-0 relative pb-32 px-4 sm:px-8">
-          <article className="max-w-[850px] mx-auto w-full glass-panel p-6 sm:p-10 md:p-12 rounded-3xl">
-            {/* Header */}
+          <article className="max-w-[850px] mx-auto w-full mac-window">
+            <div className="mac-window-header">
+              <div className="mac-window-controls">
+                <div className="mac-dot-close"></div>
+                <div className="mac-dot-min"></div>
+                <div className="mac-dot-max"></div>
+              </div>
+              <div className="mac-window-title">{blog.title}</div>
+            </div>
+            
+            <div className="p-6 sm:p-10 md:p-12">
+              {/* Header */}
             <div className="mb-6">
               <span className="text-xs font-mono-display px-2 py-1 rounded-full border mb-4 inline-block" style={{ color: 'var(--accent)', borderColor: 'var(--accent-soft)' }}>
                 {blog.category}

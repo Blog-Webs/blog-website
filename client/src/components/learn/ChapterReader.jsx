@@ -52,14 +52,23 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
 
   return (
     <article
-      className="rounded-3xl chapter-reading-area relative glass-panel shadow-xl"
+      className="chapter-reading-area relative mac-window"
       style={{
         width: '100%',
         maxWidth: '850px',
         margin: '0 auto',
-        padding: '2rem 2.5rem',
       }}
     >
+      <div className="mac-window-header">
+        <div className="mac-window-controls">
+          <div className="mac-dot-close"></div>
+          <div className="mac-dot-min"></div>
+          <div className="mac-dot-max"></div>
+        </div>
+        <div className="mac-window-title">Chapter {chapter.chapterNumber}</div>
+      </div>
+      
+      <div style={{ padding: '2rem 2.5rem' }}>
       {/* Chapter title */}
       <h1
         className="text-3xl sm:text-4xl font-bold glow-title leading-tight mb-4"
@@ -132,6 +141,7 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
           <Check size={15} strokeWidth={studied ? 3 : 2} />
           {studied ? 'Studied ✓' : 'Mark as studied'}
         </button>
+      </div>
       </div>
     </article>
   );
