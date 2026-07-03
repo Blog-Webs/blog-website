@@ -26,6 +26,7 @@ const uploadDocument = async (req, res) => {
     res.status(201).json({ message: 'Document uploaded and queued for RAG processing.', document: doc });
   } catch (error) {
     console.error('[Upload Document]', error);
+    try { if (req.file) fs.unlinkSync(req.file.path); } catch (e) {}
     res.status(500).json({ message: 'Failed to upload document.' });
   }
 };
