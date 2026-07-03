@@ -519,3 +519,34 @@ When you need horizontal scaling (multiple server instances), replace the in-mem
 | In-memory cache | Faster repeat loads for subjects, topics, tracks |
 | Image glow effect | Ambient light behind all cover images |
 | Fade-up animations | Section cards animate in on scroll |
+
+---
+
+## Upgrading StudentOS AI to a Real RAG Agent
+
+The current StudentOS AI is a **basic prompt-based assistant**. It uses `@google/generative-ai` and injects only the 5 most recent emails, events, and file *names* into the prompt. It **cannot** read the actual content of your files, so queries like "Find DBMS notes" will fail.
+
+To make the AI Assistant truly intelligent and capable of searching your actual course material, you need to upgrade it to an **Agentic RAG (Retrieval-Augmented Generation)** architecture. Here is the blueprint for what you need to implement:
+
+### 1. Vector Database (Pinecone, ChromaDB, or MongoDB Atlas Vector Search)
+Instead of just fetching file names from Google Drive, you need to download the *content* of the files, chunk the text, convert it into mathematical embeddings (using an embeddings model), and store them in a Vector Database. 
+* **Implementation:** When a user uploads a note or syncs a Drive file, run a background job to extract text, generate embeddings, and upsert them into your Vector DB with metadata (like `userId` and `filename`).
+
+### 2. LangChain (Node.js)
+Replace the direct `@google/generative-ai` calls in `AiService.js` with **LangChain**. LangChain provides built-in tools to manage memory (chat history), connect to your Vector DB (Retriever), and format prompts dynamically.
+* **Implementation:** `npm install langchain @langchain/google-genai`. Create a conversational retrieval chain that takes the user's question, searches the Vector DB for the most relevant chunks of their notes, and passes those chunks to the LLM to generate a contextual answer.
+
+### 3. LangGraph (For Agentic Workflows)
+To handle complex queries like *"What's due tomorrow and do I have notes for it?"*, the AI needs to make decisions. LangGraph allows you to create a state machine (workflow) for the AI.
+* **Implementation:** Create a graph with different "nodes" (Tools):
+  - `CalendarTool`: Calls Google Calendar API.
+  - `DriveTool`: Performs semantic search on the Vector DB.
+  - `GmailTool`: Fetches emails.
+  The LLM acts as the "Router". When the user asks a question, LangGraph asks the LLM which tool to use. The LLM might decide to use the `CalendarTool` to find out what's due, and then route to the `DriveTool` to fetch the notes for that specific assignment.
+
+### Quick Fix (To get the current basic AI working immediately):
+If your AI is currently returning errors or saying it's unavailable, it's because you haven't added the Gemini API key to your backend hosting (Render).
+1. Get a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Go to your Render Dashboard → Environment Variables.
+3. Add `GEMINI_API_KEY` and paste your key.
+4. Restart your Render server.
