@@ -3,7 +3,7 @@ const StudentOSToken = require('../models/StudentOSToken');
 const CryptoService = require('../services/CryptoService');
 const { google } = require('googleapis');
 // Resolve User model correctly — direct default export (not destructured)
-const User = require('../../../models/User');
+const User = require('../../models/User');
 
 if (!process.env.GOOGLE_CLIENT_SECRET) {
   console.warn('[StudentOS] ⚠️  GOOGLE_CLIENT_SECRET is not set. OAuth token exchange will fail.');
