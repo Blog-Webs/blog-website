@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bookmark, Users, Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
+import { Sun, Moon, Bookmark, Users, Menu, X, LogOut, LayoutDashboard, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useLiveUserCount } from '../../hooks/useLiveUserCount';
 import GoogleSignInButton from '../ui/GoogleSignInButton';
 import BookmarksDropdown from './BookmarksDropdown';
+import GlobalSearchModal from '../ui/GlobalSearchModal';
 
 const navLinkClass = ({ isActive }) =>
   `text-sm font-medium px-3 py-2 rounded-lg transition-colors ${
@@ -21,6 +22,7 @@ const Header = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const profileRef = useRef(null);
 
   useEffect(() => {
@@ -29,8 +31,20 @@ const Header = () => {
         setProfileOpen(false);
       }
     };
+    
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -99,6 +113,19 @@ const Header = () => {
             <Users size={13} />
             {liveCount}
           </div>
+
+          {/* Search Button */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search (Cmd+K)"
+            className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-lg border transition-colors hover:bg-[var(--surface)] btn-press"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <Search size={16} />
+            <span className="hidden sm:inline text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+              Search... <kbd className="ml-1 px-1.5 py-0.5 rounded border border-current opacity-70 font-mono-display text-[9px]">⌘K</kbd>
+            </span>
+          </button>
 
           {/* Theme toggle */}
           <button
@@ -198,6 +225,9 @@ const Header = () => {
           {!user && <div className="pt-2"><GoogleSignInButton /></div>}
         </div>
       )}
+      
+      {/* Global Search Modal */}
+      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 };

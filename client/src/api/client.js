@@ -21,12 +21,46 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
+// Simple in-memory cache for GET requests
+const requestCache = new Map();
+const CACHE_TTL = 60 * 1000; // 60 seconds
+
 api.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Check cache for GET requests
+  if (config.method?.toLowerCase() === 'get') {
+    const key = `${config.url}?${new URLSearchParams(config.params || {}).toString()}`;
+    const cached = requestCache.get(key);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      // Return a custom adapter that resolves immediately with cached data
+      config.adapter = () => Promise.resolve({
+        data: cached.data,
+        status: 200,
+        statusText: 'OK',
+        headers: cached.headers,
+        config,
+        request: {}
+      });
+    }
+  }
+
   return config;
+});
+
+api.interceptors.response.use((response) => {
+  if (response.config.method?.toLowerCase() === 'get') {
+    const key = `${response.config.url}?${new URLSearchParams(response.config.params || {}).toString()}`;
+    requestCache.set(key, {
+      data: response.data,
+      headers: response.headers,
+      timestamp: Date.now()
+    });
+  }
+  return response;
 });
 
 export default api;

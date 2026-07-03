@@ -13,6 +13,8 @@ import { useReadingProgress } from '../hooks/useReadingProgress';
 import StickyTableOfContents from '../components/learn/StickyTableOfContents';
 import FloatingActionBar from '../components/learn/FloatingActionBar';
 import AuthorMetaCard from '../components/learn/AuthorMetaCard';
+import { optimizeImage } from '../utils/image';
+import CodeBlock from '../components/ui/CodeBlock';
 
 const BlogDetail = () => {
   const { slug } = useParams();
@@ -155,7 +157,7 @@ const BlogDetail = () => {
                       style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
                     >
                       {post.coverImage && (
-                        <img src={post.coverImage} alt="" className="w-full h-24 object-cover" />
+                        <img src={optimizeImage(post.coverImage)} alt="" className="w-full h-24 object-cover" />
                       )}
                       <div className="p-3.5">
                         <p className="text-sm font-semibold leading-snug line-clamp-2">{post.title}</p>
@@ -193,7 +195,7 @@ const BlogDetail = () => {
 
               {blog.coverImage && (
                 <div className="image-glow rounded-2xl overflow-hidden mb-10 border border-black/5 dark:border-white/5">
-                  <img src={blog.coverImage} alt={blog.title} className="w-full object-cover max-h-[500px]" />
+                  <img src={optimizeImage(blog.coverImage)} alt={blog.title} className="w-full object-cover max-h-[500px]" />
                 </div>
               )}
             </div>
@@ -203,7 +205,12 @@ const BlogDetail = () => {
               <BlockNoteRenderer blocks={blog.contentBlocks} />
             ) : (
               <div className="prose-content mb-8">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{blog.content}</ReactMarkdown>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{ code: CodeBlock }}
+                >
+                  {blog.content}
+                </ReactMarkdown>
               </div>
             )}
 

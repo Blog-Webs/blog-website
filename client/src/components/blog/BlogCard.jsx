@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clock, Eye, Heart } from 'lucide-react';
+import { optimizeImage } from '../../utils/image';
 
 const BlogCard = ({ blog }) => {
   return (
@@ -10,7 +11,7 @@ const BlogCard = ({ blog }) => {
     >
       {blog.coverImage && (
         <div className="h-44 overflow-hidden">
-          <img src={blog.coverImage} alt={blog.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+          <img src={optimizeImage(blog.coverImage)} alt={blog.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
         </div>
       )}
       <div className="p-5 flex-1 flex flex-col">

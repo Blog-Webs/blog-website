@@ -1,6 +1,7 @@
 const slugify = require('slugify');
 const { Blog, Comment, Newsletter } = require('../models');
 const cloudinary = require('../config/cloudinary');
+const cache = require('../utils/cache');
 const { sendBulkMail } = require('../utils/mailer');
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -46,6 +47,10 @@ const getBlogs = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const { tag, category, search } = req.query;
 
+  const cacheKey = `blogs:page:${page}:limit:${limit}:tag:${tag || 'all'}:category:${category || 'all'}:search:${search || 'all'}`;
+  const cached = await cache.get(cacheKey);
+  if (cached) return res.json(cached);
+
   const filter = { status: 'published', publishedAt: { $lte: new Date() } };
   if (tag) filter.tags = tag;
   if (category) filter.category = category;
@@ -61,34 +66,48 @@ const getBlogs = async (req, res) => {
     Blog.countDocuments(filter),
   ]);
 
-  res.json({ blogs, total, page, pages: Math.ceil(total / limit) });
+  const payload = { blogs, total, page, pages: Math.ceil(total / limit) };
+  await cache.set(cacheKey, payload, 5 * 60 * 1000); // 5 minutes
+  res.json(payload);
 };
 
 // GET /api/blogs/:slug
 const getBlogBySlug = async (req, res) => {
-  const blog = await Blog.findOne({ slug: req.params.slug, status: 'published', publishedAt: { $lte: new Date() } })
-    .populate('author', 'name avatar')
-    .populate('series', 'title slug description');
-  if (!blog) return res.status(404).json({ message: 'Post not found.' });
+  const cacheKey = `blog:${req.params.slug}`;
+  let payload = await cache.get(cacheKey);
 
-  blog.views += 1;
-  await blog.save();
+  if (!payload) {
+    const blog = await Blog.findOne({ slug: req.params.slug, status: 'published', publishedAt: { $lte: new Date() } })
+      .populate('author', 'name avatar')
+      .populate('series', 'title slug description');
+    if (!blog) return res.status(404).json({ message: 'Post not found.' });
 
-  const comments = await Comment.find({ blog: blog._id }).populate('user', 'name avatar').sort({ createdAt: -1 });
+    const comments = await Comment.find({ blog: blog._id }).populate('user', 'name avatar').sort({ createdAt: -1 });
 
-  const upNext = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() }, _id: { $ne: blog._id } })
-    .select('title subtitle slug coverImage readTimeMinutes publishedAt')
-    .sort({ publishedAt: -1 })
-    .limit(4);
+    const upNext = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() }, _id: { $ne: blog._id } })
+      .select('title subtitle slug coverImage readTimeMinutes publishedAt')
+      .sort({ publishedAt: -1 })
+      .limit(4);
 
-  let seriesPosts = [];
-  if (blog.series) {
-    seriesPosts = await Blog.find({ series: blog.series._id, status: 'published', publishedAt: { $lte: new Date() } })
-      .select('title slug coverImage readTimeMinutes seriesOrder')
-      .sort({ seriesOrder: 1 });
+    let seriesPosts = [];
+    if (blog.series) {
+      seriesPosts = await Blog.find({ series: blog.series._id, status: 'published', publishedAt: { $lte: new Date() } })
+        .select('title slug coverImage readTimeMinutes seriesOrder')
+        .sort({ seriesOrder: 1 });
+    }
+
+    payload = { blog, comments, likeCount: blog.likes.length, upNext, seriesPosts };
+    await cache.set(cacheKey, payload, 5 * 60 * 1000); // 5 minutes
+
+    // Update views asynchronously
+    blog.views += 1;
+    blog.save().catch(() => {});
+  } else {
+    // Increment view directly in DB in background if returning from cache
+    Blog.updateOne({ slug: req.params.slug }, { $inc: { views: 1 } }).exec();
   }
 
-  res.json({ blog, comments, likeCount: blog.likes.length, upNext, seriesPosts });
+  res.json(payload);
 };
 
 // POST /api/blogs/:slug/like  (requires auth)
@@ -127,14 +146,21 @@ const addComment = async (req, res) => {
 
 // GET /api/blogs/meta/tags-categories
 const getTagsAndCategories = async (req, res) => {
-  const blogs = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() } }).select('tags category');
-  const tags = new Set();
-  const categories = new Set();
-  blogs.forEach((b) => {
-    b.tags.forEach((t) => tags.add(t));
-    categories.add(b.category);
-  });
-  res.json({ tags: [...tags], categories: [...categories] });
+  const cacheKey = 'blogs:tags-categories';
+  let payload = await cache.get(cacheKey);
+
+  if (!payload) {
+    const blogs = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() } }).select('tags category');
+    const tags = new Set();
+    const categories = new Set();
+    blogs.forEach((b) => {
+      b.tags.forEach((t) => tags.add(t));
+      categories.add(b.category);
+    });
+    payload = { tags: [...tags], categories: [...categories] };
+    await cache.set(cacheKey, payload, 10 * 60 * 1000); // 10 minutes
+  }
+  res.json(payload);
 };
 
 // ---------- Admin ----------
