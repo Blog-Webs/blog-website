@@ -39,7 +39,7 @@ const NestedSidebar = ({
       </div>
 
       {/* Navigation Tree */}
-      <nav className="flex-1 overflow-y-auto px-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-2 space-y-1" aria-label="Course Navigation">
         {tracks.map(track => {
           const isExpanded = expandedTracks.has(track._id);
           const isActiveTrack = track._id === activeTrackId;
@@ -53,6 +53,8 @@ const NestedSidebar = ({
                   onSelectTrack(track);
                   if (!isExpanded) toggleTrack(track._id);
                 }}
+                aria-expanded={isExpanded}
+                aria-controls={`track-content-${track._id}`}
                 className="flex items-center w-full px-2 py-1.5 rounded-lg transition-colors group"
                 style={{
                   backgroundColor: isActiveTrack ? 'var(--surface-raised)' : 'transparent',
@@ -60,6 +62,7 @@ const NestedSidebar = ({
                 }}
               >
                 <div className="flex items-center justify-center w-5 h-5 mr-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  aria-label={isExpanded ? "Collapse track" : "Expand track"}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleTrack(track._id);
@@ -73,6 +76,7 @@ const NestedSidebar = ({
 
               {/* Chapters / Document Level (Accordion) */}
               <div 
+                id={`track-content-${track._id}`}
                 className="overflow-hidden transition-all duration-300 ease-in-out"
                 style={{
                   maxHeight: isExpanded ? `${trackChapters.length * 40 + 20}px` : '0px',

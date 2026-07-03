@@ -16,6 +16,7 @@
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.4.0",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",

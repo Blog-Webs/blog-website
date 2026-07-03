@@ -59,16 +59,26 @@ const getTracksForTopic = async (req, res) => {
 // GET /api/content/tracks/:trackId/chapters
 // Returns chapter list (titles only, not full content) + studied status if logged in
 const getChaptersForTrack = async (req, res) => {
-  const track = await Track.findById(req.params.trackId).populate({
-    path: 'topic',
-    select: 'name slug subject',
-    populate: { path: 'subject', select: 'name slug color' },
-  });
-  if (!track) return res.status(404).json({ message: 'Track not found.' });
+  const cacheKey = `track:${req.params.trackId}:chapters`;
+  let payload = await cache.get(cacheKey);
 
-  const chapters = await Chapter.find({ track: track._id })
-    .select('-content -codeSnippets -contentBlocks')
-    .sort({ chapterNumber: 1 });
+  if (!payload) {
+    const track = await Track.findById(req.params.trackId).populate({
+      path: 'topic',
+      select: 'name slug subject',
+      populate: { path: 'subject', select: 'name slug color' },
+    });
+    if (!track) return res.status(404).json({ message: 'Track not found.' });
+
+    const chapters = await Chapter.find({ track: track._id })
+      .select('-content -codeSnippets -contentBlocks')
+      .sort({ chapterNumber: 1 });
+      
+    payload = { track, chapters };
+    await cache.set(cacheKey, payload, TRACK_TTL);
+  }
+
+  const { track, chapters } = payload;
 
   let studiedChapterIds = new Set();
   if (req.user) {
@@ -91,16 +101,22 @@ const getChaptersForTrack = async (req, res) => {
 // Core gating logic: free preview chapters are open to everyone.
 // Everything else requires a logged-in user.
 const getChapterContent = async (req, res) => {
-  const chapter = await Chapter.findById(req.params.chapterId).populate({
-    path: 'track',
-    select: 'name slug topic',
-    populate: {
-      path: 'topic',
-      select: 'name slug subject',
-      populate: { path: 'subject', select: 'name slug color' },
-    },
-  });
-  if (!chapter) return res.status(404).json({ message: 'Chapter not found.' });
+  const cacheKey = `chapter:${req.params.chapterId}`;
+  let chapter = await cache.get(cacheKey);
+
+  if (!chapter) {
+    chapter = await Chapter.findById(req.params.chapterId).populate({
+      path: 'track',
+      select: 'name slug topic',
+      populate: {
+        path: 'topic',
+        select: 'name slug subject',
+        populate: { path: 'subject', select: 'name slug color' },
+      },
+    });
+    if (!chapter) return res.status(404).json({ message: 'Chapter not found.' });
+    await cache.set(cacheKey, chapter, TRACK_TTL);
+  }
 
   if (!chapter.isFreePreview && !req.user) {
     return res.status(401).json({

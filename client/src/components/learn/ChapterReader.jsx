@@ -5,6 +5,7 @@ import { useState } from 'react';
 import GoogleSignInButton from '../ui/GoogleSignInButton';
 import BlockNoteRenderer from '../ui/BlockNoteRenderer';
 import AuthorMetaCard from './AuthorMetaCard';
+import CodeBlock from '../ui/CodeBlock';
 
 const SOURCE_LABEL = {
   geeksforgeeks: 'GeeksforGeeks',
@@ -77,7 +78,12 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
         <BlockNoteRenderer blocks={chapter.contentBlocks} />
       ) : (
         <div className="prose-content">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{chapter.content}</ReactMarkdown>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={{ code: CodeBlock }}
+          >
+            {chapter.content}
+          </ReactMarkdown>
         </div>
       )}
 

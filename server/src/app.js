@@ -24,7 +24,10 @@ const noteRoutes = require('./routes/noteRoutes');
 const studentOSRoutes = require('./studentos/routes/index');
 
 
+const compression = require('compression');
+
 const app = express();
+app.use(compression());
 
 app.set('trust proxy', 1);
 
