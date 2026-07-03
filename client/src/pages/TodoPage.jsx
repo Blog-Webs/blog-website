@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Check, StickyNote, ListTodo, X, Tag } from 'lucide-react';
 import { todoApi, noteApi } from '../api/userFeatures';
+import { ListSkeleton } from '../components/ui/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import GoogleSignInButton from '../components/ui/GoogleSignInButton';
 
@@ -171,7 +172,7 @@ const TodoPage = () => {
           </form>
 
           {loading ? (
-            <p style={{ color: 'var(--text-muted)' }}>Loading…</p>
+            <ListSkeleton count={3} />
           ) : todos.length === 0 ? (
             <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>Nothing here yet — add your first task above.</p>
           ) : (
@@ -275,7 +276,7 @@ const TodoPage = () => {
           </form>
 
           {loading ? (
-            <p style={{ color: 'var(--text-muted)' }}>Loading…</p>
+            <ListSkeleton count={2} />
           ) : notes.length === 0 ? (
             <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>No notes yet — write your first one above.</p>
           ) : (

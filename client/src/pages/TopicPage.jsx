@@ -3,12 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Circle, Sun, Moon } from 'lucide-react';
 import { contentApi } from '../api/content';
 import { progressApi, bookmarkApi } from '../api/userFeatures';
+import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import NestedSidebar from '../components/learn/NestedSidebar';
 import StickyTableOfContents from '../components/learn/StickyTableOfContents';
 import FloatingActionBar from '../components/learn/FloatingActionBar';
 import ChapterReader from '../components/learn/ChapterReader';
+import { ArticleSkeleton } from '../components/ui/Skeleton';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { useReadingProgress } from '../hooks/useReadingProgress';
 
@@ -28,6 +30,7 @@ const TopicPage = () => {
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [isReadingMode, setIsReadingMode] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -62,6 +65,10 @@ const TopicPage = () => {
 
   useEffect(() => {
     if (!activeChapterId) return;
+    
+    // Clear note when switching chapters
+    setNoteContent('');
+    
     contentApi
       .getChapterContent(activeChapterId)
       .then(({ data }) => {
@@ -73,7 +80,16 @@ const TopicPage = () => {
           setChapterData({ ...err.response.data, locked: true });
         }
       });
-  }, [activeChapterId]);
+
+    // Fetch inline note for chapter if user is logged in
+    if (user) {
+      api.get(`/notes/article/${activeChapterId}`).then((res) => {
+        if (res.data.note) {
+          setNoteContent(res.data.note.content);
+        }
+      }).catch(() => {});
+    }
+  }, [activeChapterId, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -100,6 +116,15 @@ const TopicPage = () => {
       return next;
     });
   }, []);
+
+  const handleNoteChange = async (newContent) => {
+    setNoteContent(newContent);
+    try {
+      await api.put(`/notes/article/${activeChapterId}`, { content: newContent });
+    } catch (err) {
+      console.error('Failed to save note');
+    }
+  };
 
   const handleLoginSuccess = async () => {
     await refreshUser();
@@ -134,11 +159,8 @@ const TopicPage = () => {
 
   if (loading && !topic) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: 'var(--bg)', color: 'var(--text-muted)' }}
-      >
-        Loading…
+      <div className="min-h-screen pt-20" style={{ backgroundColor: 'var(--bg)' }}>
+        <ArticleSkeleton />
       </div>
     );
   }
@@ -263,6 +285,8 @@ const TopicPage = () => {
                 onToggleBookmark={() => handleToggleBookmark(activeChapterId)}
                 isReadingMode={isReadingMode}
                 onToggleReadingMode={() => setIsReadingMode(!isReadingMode)}
+                noteContent={noteContent}
+                onNoteChange={user ? handleNoteChange : undefined}
               />
             </>
           )}

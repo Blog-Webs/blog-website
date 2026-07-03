@@ -44,4 +44,23 @@ const deleteNote = async (req, res) => {
   res.json({ message: 'Note deleted.' });
 };
 
-module.exports = { getNotes, createNote, updateNote, deleteNote };
+// GET /api/notes/article/:articleId
+const getArticleNote = async (req, res) => {
+  const note = await Note.findOne({ user: req.user._id, articleId: req.params.articleId });
+  res.json({ note });
+};
+
+// PUT /api/notes/article/:articleId
+const upsertArticleNote = async (req, res) => {
+  const { content } = req.body;
+  if (!content && content !== '') return res.status(400).json({ message: 'Content is required.' });
+
+  const note = await Note.findOneAndUpdate(
+    { user: req.user._id, articleId: req.params.articleId },
+    { content: content.trim(), title: 'Article Note' },
+    { new: true, upsert: true }
+  );
+  res.json({ note });
+};
+
+module.exports = { getNotes, createNote, updateNote, deleteNote, getArticleNote, upsertArticleNote };

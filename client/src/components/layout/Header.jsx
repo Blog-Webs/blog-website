@@ -55,10 +55,15 @@ const Header = () => {
 
   return (
     <header
-      className="sticky top-0 z-50 border-b backdrop-blur-md"
-      style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg) 85%, transparent)' }}
+      className="sticky top-0 z-50 border-b glass-panel"
+      style={{
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'color-mix(in srgb, var(--bg) 60%, transparent)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)'
+      }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex flex-col shrink-0 leading-none">
           <span className="flex items-center gap-2">

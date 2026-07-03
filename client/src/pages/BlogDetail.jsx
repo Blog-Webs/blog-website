@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { ArrowLeft, Clock, Heart, Send } from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { bookmarkApi } from '../api/userFeatures';
+import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import GoogleSignInButton from '../components/ui/GoogleSignInButton';
 import BlockNoteRenderer from '../components/ui/BlockNoteRenderer';
@@ -15,6 +16,7 @@ import FloatingActionBar from '../components/learn/FloatingActionBar';
 import AuthorMetaCard from '../components/learn/AuthorMetaCard';
 import { optimizeImage } from '../utils/image';
 import CodeBlock from '../components/ui/CodeBlock';
+import { ArticleSkeleton } from '../components/ui/Skeleton';
 
 const BlogDetail = () => {
   const { slug } = useParams();
@@ -31,6 +33,7 @@ const BlogDetail = () => {
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
   const [isReadingMode, setIsReadingMode] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -42,6 +45,15 @@ const BlogDetail = () => {
       setLiked(user ? data.blog.likes.includes(user.id) : false);
       setLoading(false);
       scrollRef.current?.scrollTo({ top: 0 });
+
+      // Fetch inline note if user is logged in
+      if (user && data.blog) {
+        api.get(`/notes/article/${data.blog._id}`).then((res) => {
+          if (res.data.note) {
+            setNoteContent(res.data.note.content);
+          }
+        }).catch(() => {});
+      }
     });
   }, [slug, user]);
 
@@ -67,6 +79,15 @@ const BlogDetail = () => {
     setBookmarked(data.bookmarked);
   };
 
+  const handleNoteChange = async (newContent) => {
+    setNoteContent(newContent);
+    try {
+      await api.put(`/notes/article/${blog._id}`, { content: newContent });
+    } catch (err) {
+      console.error('Failed to save note');
+    }
+  };
+
   const handleComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -87,8 +108,8 @@ const BlogDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--bg)', color: 'var(--text-muted)' }}>
-        Loading…
+      <div className="min-h-screen pt-20" style={{ backgroundColor: 'var(--bg)' }}>
+        <ArticleSkeleton />
       </div>
     );
   }
@@ -175,8 +196,18 @@ const BlogDetail = () => {
 
         {/* CENTER — Article */}
         <div ref={scrollRef} className="order-1 lg:order-2 lg:overflow-y-auto py-8 lg:min-h-0 relative pb-32 px-4 sm:px-8">
-          <article className="max-w-[850px] mx-auto w-full glass-panel p-6 sm:p-10 md:p-12 rounded-3xl">
-            {/* Header */}
+          <article className="max-w-[850px] mx-auto w-full mac-window">
+            <div className="mac-window-header">
+              <div className="mac-window-controls">
+                <div className="mac-dot-close"></div>
+                <div className="mac-dot-min"></div>
+                <div className="mac-dot-max"></div>
+              </div>
+              <div className="mac-window-title">{blog.title}</div>
+            </div>
+            
+            <div className="p-6 sm:p-10 md:p-12">
+              {/* Header */}
             <div className="mb-6">
               <span className="text-xs font-mono-display px-2 py-1 rounded-full border mb-4 inline-block" style={{ color: 'var(--accent)', borderColor: 'var(--accent-soft)' }}>
                 {blog.category}
@@ -292,9 +323,9 @@ const BlogDetail = () => {
                 ))}
               </div>
             </div>
+            </div>
           </article>
 
-          {/* Floating Action Bar */}
           <FloatingActionBar 
             onPrev={() => navigate(-1)} 
             onNext={handleNext} 
@@ -304,6 +335,11 @@ const BlogDetail = () => {
             onToggleBookmark={user ? handleBookmark : () => {}}
             isReadingMode={isReadingMode}
             onToggleReadingMode={() => setIsReadingMode(!isReadingMode)}
+            isLiked={liked}
+            likeCount={likeCount}
+            onToggleLike={user ? handleLike : () => {}}
+            noteContent={noteContent}
+            onNoteChange={user ? handleNoteChange : undefined}
           />
         </div>
 
