@@ -59,6 +59,7 @@ const SeriesCard = ({ series }) => {
         title={series.title}
         description={series.description}
         icon={Layers}
+        image={series.coverImage}
         color="#5EEAD4"
         badge={hasMultiplePosts ? `${series.postCount} parts` : 'Series'}
         to={`/series/${series.slug}`}

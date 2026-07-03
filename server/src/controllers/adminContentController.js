@@ -14,11 +14,11 @@ const cleanupChapterReferences = async (chapterIds) => {
 
 // ---------- Subjects ----------
 const createSubject = async (req, res) => {
-  const { name, description, icon, color, order, hasRoadmap, hasCheatsheet } = req.body;
+  const { name, description, icon, coverImage, color, order, hasRoadmap, hasCheatsheet } = req.body;
   if (!name) return res.status(400).json({ message: 'Name is required.' });
 
   const slug = slugify(name, { lower: true, strict: true });
-  const subject = await Subject.create({ name, slug, description, icon, color, order, hasRoadmap, hasCheatsheet });
+  const subject = await Subject.create({ name, slug, description, icon, coverImage, color, order, hasRoadmap, hasCheatsheet });
   res.status(201).json({ subject });
 };
 
@@ -26,7 +26,7 @@ const updateSubject = async (req, res) => {
   const subject = await Subject.findById(req.params.id);
   if (!subject) return res.status(404).json({ message: 'Subject not found.' });
 
-  const { name, description, icon, color, order, hasRoadmap, hasCheatsheet } = req.body;
+  const { name, description, icon, coverImage, color, order, hasRoadmap, hasCheatsheet } = req.body;
 
   if (name && name !== subject.name) {
     subject.name = name;
@@ -36,6 +36,7 @@ const updateSubject = async (req, res) => {
   }
   if (description !== undefined) subject.description = description;
   if (icon !== undefined) subject.icon = icon;
+  if (coverImage !== undefined) subject.coverImage = coverImage;
   if (color !== undefined) subject.color = color;
   if (order !== undefined) subject.order = order;
   if (hasRoadmap !== undefined) subject.hasRoadmap = hasRoadmap;
