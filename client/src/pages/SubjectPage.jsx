@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clock, ChevronRight, Map, FileSpreadsheet } from 'lucide-react';
-import SubjectHeader from '../components/learn/SubjectHeader';
 import { CardGridSkeleton } from '../components/ui/Skeleton';
 import { contentApi } from '../api/content';
 
