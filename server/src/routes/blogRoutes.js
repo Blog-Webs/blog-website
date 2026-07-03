@@ -15,9 +15,10 @@ const {
 } = require('../controllers/blogController');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const cache = require('../middleware/cacheMiddleware');
 
 // --- Specific/static paths FIRST, before the /:slug catch-all ---
-router.get('/meta/tags-categories', getTagsAndCategories);
+router.get('/meta/tags-categories', cache('blogs:tags', 600), getTagsAndCategories);
 router.get('/admin/all', requireAuth, requireAdmin, getAllBlogsAdmin);
 router.get('/admin/:id', requireAuth, requireAdmin, getBlogByIdAdmin);
 router.post('/upload-image', requireAuth, requireAdmin, upload.single('image'), uploadImage);
@@ -28,8 +29,8 @@ router.patch('/:id', requireAuth, requireAdmin, updateBlog);
 router.delete('/:id', requireAuth, requireAdmin, deleteBlog);
 
 // --- Public reads + interactions (operate on :slug) ---
-router.get('/', getBlogs);
-router.get('/:slug', getBlogBySlug);
+router.get('/', cache('blogs', 300), getBlogs);
+router.get('/:slug', cache('blog', 300), getBlogBySlug);
 router.post('/:slug/like', requireAuth, toggleLike);
 router.post('/:slug/comments', requireAuth, addComment);
 
