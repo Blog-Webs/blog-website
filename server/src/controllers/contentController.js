@@ -11,7 +11,7 @@ const getSubjects = async (req, res) => {
   const cached = await cache.get(cacheKey);
   if (cached) return res.json(cached);
 
-  const subjects = await Subject.find().sort({ order: 1 });
+  const subjects = await Subject.find().sort({ order: 1 }).lean();
   const payload = { subjects };
   await cache.set(cacheKey, payload, SUBJECTS_TTL);
   res.json(payload);
@@ -23,10 +23,10 @@ const getSubjectBySlug = async (req, res) => {
   const cached = await cache.get(cacheKey);
   if (cached) return res.json(cached);
 
-  const subject = await Subject.findOne({ slug: req.params.slug });
+  const subject = await Subject.findOne({ slug: req.params.slug }).lean();
   if (!subject) return res.status(404).json({ message: 'Subject not found.' });
 
-  const topics = await Topic.find({ subject: subject._id }).sort({ order: 1 });
+  const topics = await Topic.find({ subject: subject._id }).sort({ order: 1 }).lean();
   const payload = { subject, topics };
   await cache.set(cacheKey, payload, SUBJECT_TTL);
   res.json(payload);
@@ -38,16 +38,16 @@ const getTracksForTopic = async (req, res) => {
   const cached = await cache.get(cacheKey);
   if (cached) return res.json(cached);
 
-  const topic = await Topic.findById(req.params.topicId).populate('subject', 'name slug color');
+  const topic = await Topic.findById(req.params.topicId).populate('subject', 'name slug color').lean();
   if (!topic) return res.status(404).json({ message: 'Topic not found.' });
 
-  const tracks = await Track.find({ topic: topic._id }).sort({ order: 1 });
+  const tracks = await Track.find({ topic: topic._id }).sort({ order: 1 }).lean();
 
   // Attach chapter count per track for the left sidebar UI
   const tracksWithCounts = await Promise.all(
     tracks.map(async (track) => {
       const chapterCount = await Chapter.countDocuments({ track: track._id });
-      return { ...track.toObject(), chapterCount };
+      return { ...track, chapterCount };
     })
   );
 
@@ -67,12 +67,13 @@ const getChaptersForTrack = async (req, res) => {
       path: 'topic',
       select: 'name slug subject',
       populate: { path: 'subject', select: 'name slug color' },
-    });
+    }).lean();
     if (!track) return res.status(404).json({ message: 'Track not found.' });
 
     const chapters = await Chapter.find({ track: track._id })
       .select('-content -codeSnippets -contentBlocks')
-      .sort({ chapterNumber: 1 });
+      .sort({ chapterNumber: 1 })
+      .lean();
       
     payload = { track, chapters };
     await cache.set(cacheKey, payload, TRACK_TTL);
@@ -90,7 +91,7 @@ const getChaptersForTrack = async (req, res) => {
   }
 
   const chaptersWithStatus = chapters.map((c) => ({
-    ...c.toObject(),
+    ...c,
     studied: studiedChapterIds.has(c._id.toString()),
   }));
 
@@ -113,7 +114,7 @@ const getChapterContent = async (req, res) => {
         select: 'name slug subject',
         populate: { path: 'subject', select: 'name slug color' },
       },
-    });
+    }).lean();
     if (!chapter) return res.status(404).json({ message: 'Chapter not found.' });
     await cache.set(cacheKey, chapter, TRACK_TTL);
   }

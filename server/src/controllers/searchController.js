@@ -13,7 +13,8 @@ const globalSearch = async (req, res) => {
   const [blogs, chapters, topics] = await Promise.all([
     Blog.find({ status: 'published', $text: { $search: q } })
       .select('title subtitle slug coverImage category')
-      .limit(5),
+      .limit(5)
+      .lean(),
 
     Chapter.find({ $text: { $search: q } })
       .select('title chapterNumber track')
@@ -22,12 +23,14 @@ const globalSearch = async (req, res) => {
         select: 'name slug topic',
         populate: { path: 'topic', select: 'name slug subject', populate: { path: 'subject', select: 'name slug color' } },
       })
-      .limit(6),
+      .limit(6)
+      .lean(),
 
     Topic.find({ name: { $regex: q, $options: 'i' } })
       .select('name slug subject description')
       .populate('subject', 'name slug color')
-      .limit(5),
+      .limit(5)
+      .lean(),
   ]);
 
   res.json({ blogs, chapters, topics });

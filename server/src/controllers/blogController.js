@@ -62,7 +62,8 @@ const getBlogs = async (req, res) => {
       .populate('author', 'name avatar')
       .sort({ publishedAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     Blog.countDocuments(filter),
   ]);
 
@@ -79,29 +80,31 @@ const getBlogBySlug = async (req, res) => {
   if (!payload) {
     const blog = await Blog.findOne({ slug: req.params.slug, status: 'published', publishedAt: { $lte: new Date() } })
       .populate('author', 'name avatar')
-      .populate('series', 'title slug description');
+      .populate('series', 'title slug description')
+      .lean();
     if (!blog) return res.status(404).json({ message: 'Post not found.' });
 
-    const comments = await Comment.find({ blog: blog._id }).populate('user', 'name avatar').sort({ createdAt: -1 });
+    const comments = await Comment.find({ blog: blog._id }).populate('user', 'name avatar').sort({ createdAt: -1 }).lean();
 
     const upNext = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() }, _id: { $ne: blog._id } })
       .select('title subtitle slug coverImage readTimeMinutes publishedAt')
       .sort({ publishedAt: -1 })
-      .limit(4);
+      .limit(4)
+      .lean();
 
     let seriesPosts = [];
     if (blog.series) {
       seriesPosts = await Blog.find({ series: blog.series._id, status: 'published', publishedAt: { $lte: new Date() } })
         .select('title slug coverImage readTimeMinutes seriesOrder')
-        .sort({ seriesOrder: 1 });
+        .sort({ seriesOrder: 1 })
+        .lean();
     }
 
     payload = { blog, comments, likeCount: blog.likes.length, upNext, seriesPosts };
     await cache.set(cacheKey, payload, 5 * 60 * 1000); // 5 minutes
 
     // Update views asynchronously
-    blog.views += 1;
-    blog.save().catch(() => {});
+    Blog.updateOne({ _id: blog._id }, { $inc: { views: 1 } }).exec();
   } else {
     // Increment view directly in DB in background if returning from cache
     Blog.updateOne({ slug: req.params.slug }, { $inc: { views: 1 } }).exec();
@@ -150,7 +153,9 @@ const getTagsAndCategories = async (req, res) => {
   let payload = await cache.get(cacheKey);
 
   if (!payload) {
-    const blogs = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() } }).select('tags category');
+    const blogs = await Blog.find({ status: 'published', publishedAt: { $lte: new Date() } })
+      .select('tags category')
+      .lean();
     const tags = new Set();
     const categories = new Set();
     blogs.forEach((b) => {
@@ -201,7 +206,8 @@ const getAllBlogsAdmin = async (req, res) => {
       .populate('series', 'title slug')
       .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     Blog.countDocuments(),
   ]);
 
