@@ -604,3 +604,9 @@ a {
   background: linear-gradient(90deg, var(--note-color, var(--accent)), transparent);
 }
 
+
+/* Global Glassmorphism */
+.glass-panel { backdrop-filter: blur(16px); background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+.glass-btn { backdrop-filter: blur(12px); background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s ease; }
+.glass-btn:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+.dark .glass-panel { background-color: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.05); }

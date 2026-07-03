@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import BackToTop from './components/ui/BackToTop';
 const ReadingLayout = lazy(() => import('./components/layout/ReadingLayout'));
 
 // Every page is lazy-loaded so a visitor reading the blog or browsing
@@ -78,6 +79,7 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <BackToTop />
     </Suspense>
   );
 }
