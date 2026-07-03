@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, Pencil, ChevronRight, ChevronDown, Binary, Coffee, Calculator,
   Network, Database, Cpu, Globe, Layers, Undo2, Home, ChevronRight as Breadcrumb,
+  Image as ImageIcon, Loader2, X
 } from 'lucide-react';
 import { contentApi } from '../../api/content';
 import { adminApi } from '../../api/admin';
+import { blogApi } from '../../api/blog';
 
 const ICON_OPTIONS = [
   { key: 'binary-tree', icon: Binary, label: 'DSA' },
@@ -24,7 +26,7 @@ const inputClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full inpu
 const inputStyle = { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)' };
 const textareaClass = 'px-4 py-3 rounded-lg border text-sm outline-none w-full input-focus resize-none';
 
-const emptySubjectForm = { name: '', description: '', icon: 'layers', color: '#5EEAD4' };
+const emptySubjectForm = { name: '', description: '', icon: 'layers', color: '#5EEAD4', coverImage: '' };
 const emptyTopicForm = { name: '', description: '', difficulty: 'beginner', estimatedMinutes: 30 };
 const emptyTrackForm = { name: '' };
 
@@ -168,7 +170,13 @@ const ContentTreeManager = () => {
   };
 
   const startEditSubject = (subject) => {
-    setSubjectForm({ name: subject.name, description: subject.description || '', icon: subject.icon || 'layers', color: subject.color || '#5EEAD4' });
+    setSubjectForm({ 
+      name: subject.name, 
+      description: subject.description || '', 
+      icon: subject.icon || 'layers', 
+      color: subject.color || '#5EEAD4',
+      coverImage: subject.coverImage || ''
+    });
     setEditingSubjectId(subject._id);
   };
 
@@ -525,58 +533,113 @@ const ContentTreeManager = () => {
 };
 
 // Shared field groups — larger inputs for comfortable writing
-const SubjectFields = ({ form, setForm }) => (
-  <>
-    <p className="text-sm font-semibold">Subject</p>
-    <input
-      value={form.name}
-      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-      placeholder="Subject name (e.g. System Design)"
-      className={inputClass}
-      style={inputStyle}
-    />
-    <textarea
-      value={form.description}
-      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-      placeholder="Short description shown on the homepage card"
-      rows={3}
-      className={textareaClass}
-      style={inputStyle}
-    />
-    <div>
-      <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Icon</p>
-      <div className="flex flex-wrap gap-2">
-        {ICON_OPTIONS.map(({ key, icon: Icon, label }) => (
+const SubjectFields = ({ form, setForm }) => {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { data } = await blogApi.uploadImage(file);
+      setForm((f) => ({ ...f, coverImage: data.url }));
+    } catch {
+      alert('Image upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <>
+      <p className="text-sm font-semibold">Subject</p>
+      <input
+        value={form.name}
+        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        placeholder="Subject name (e.g. System Design)"
+        className={inputClass}
+        style={inputStyle}
+      />
+      <textarea
+        value={form.description}
+        onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        placeholder="Short description shown on the homepage card"
+        rows={3}
+        className={textareaClass}
+        style={inputStyle}
+      />
+      
+      {/* Cover Image Upload */}
+      <div>
+        <p className="text-xs mb-2 font-medium" style={{ color: 'var(--text-muted)' }}>Cover Image (Optional)</p>
+        {form.coverImage ? (
+          <div className="relative rounded-xl overflow-hidden h-32 border" style={{ borderColor: 'var(--border)' }}>
+            <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, coverImage: '' }))}
+              className="absolute top-2 right-2 p-1.5 rounded-lg btn-press bg-black/50 hover:bg-black/70 text-white"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
           <button
-            key={key} type="button" title={label}
-            onClick={() => setForm((f) => ({ ...f, icon: key }))}
-            className="p-2.5 rounded-lg border btn-press"
-            style={{
-              borderColor: form.icon === key ? 'var(--accent)' : 'var(--border)',
-              backgroundColor: form.icon === key ? 'var(--accent-soft)' : 'transparent',
-              color: form.icon === key ? 'var(--accent)' : 'var(--text-muted)',
-            }}
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 btn-press"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
           >
-            <Icon size={16} />
+            {uploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+            <span className="text-xs">{uploading ? 'Uploading...' : 'Upload Image'}</span>
           </button>
-        ))}
+        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          accept="image/*"
+          className="hidden"
+        />
       </div>
-    </div>
-    <div>
-      <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Accent color</p>
-      <div className="flex flex-wrap gap-2">
-        {COLOR_OPTIONS.map((color) => (
-          <button
-            key={color} type="button"
-            onClick={() => setForm((f) => ({ ...f, color }))}
-            className="w-7 h-7 rounded-full border-2 btn-press"
-            style={{ backgroundColor: color, borderColor: form.color === color ? 'var(--text)' : 'transparent' }}
-          />
-        ))}
+
+      <div>
+        <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Icon (Used if no Cover Image)</p>
+        <div className="flex flex-wrap gap-2">
+          {ICON_OPTIONS.map(({ key, icon: Icon, label }) => (
+            <button
+              key={key} type="button" title={label}
+              onClick={() => setForm((f) => ({ ...f, icon: key }))}
+              className="p-2.5 rounded-lg border btn-press"
+              style={{
+                borderColor: form.icon === key ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: form.icon === key ? 'var(--accent-soft)' : 'transparent',
+                color: form.icon === key ? 'var(--accent)' : 'var(--text-muted)',
+              }}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  </>
-);
+      <div>
+        <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Accent color</p>
+        <div className="flex flex-wrap gap-2">
+          {COLOR_OPTIONS.map((color) => (
+            <button
+              key={color} type="button"
+              onClick={() => setForm((f) => ({ ...f, color }))}
+              className="w-7 h-7 rounded-full border-2 btn-press"
+              style={{ backgroundColor: color, borderColor: form.color === color ? 'var(--text)' : 'transparent' }}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
 
 const TopicFields = ({ form, setForm }) => (
   <>

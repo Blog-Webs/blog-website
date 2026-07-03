@@ -20,6 +20,7 @@ const SubjectCard = ({ subject }) => {
       title={subject.name}
       description={subject.description}
       icon={ICONS[subject.icon] || Binary}
+      image={subject.coverImage}
       color={subject.color}
       to={`/learn/${subject.slug}`}
       badge={subject.badge || null}
