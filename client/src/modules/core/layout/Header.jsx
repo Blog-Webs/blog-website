@@ -82,6 +82,7 @@ const Header = () => {
           <NavLink to="/learn/java-advanced-java" className={navLinkClass}>Java</NavLink>
           <NavLink to="/learn/aptitude" className={navLinkClass}>Aptitude</NavLink>
           <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
+          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
           <NavLink to="/todos" className={navLinkClass}>To-Do</NavLink>
           <NavLink
             to="/student-os"
@@ -221,6 +222,7 @@ const Header = () => {
           <NavLink to="/learn/java-advanced-java" className={navLinkClass} onClick={() => setMobileOpen(false)}>Java &amp; Advanced Java</NavLink>
           <NavLink to="/learn/aptitude" className={navLinkClass} onClick={() => setMobileOpen(false)}>Aptitude</NavLink>
           <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
+          <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>To-Do</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>
             StudentOS{' '}

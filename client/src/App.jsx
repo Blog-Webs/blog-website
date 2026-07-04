@@ -16,6 +16,10 @@ const SeriesDetail = lazy(() => import('./modules/blog/pages/SeriesDetail'));
 const TodoPage = lazy(() => import('./modules/workspace/pages/TodoPage'));
 const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 
+// Forum
+const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
+const CategoryPage = lazy(() => import('./modules/forum/pages/CategoryPage'));
+const TopicDetail = lazy(() => import('./modules/forum/pages/TopicDetail'));
 const AdminGuard = lazy(() => import('./modules/admin/components/AdminGuard'));
 const AdminLayout = lazy(() => import('./modules/admin/components/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
@@ -47,6 +51,9 @@ function App() {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
+          <Route path="/forum" element={<ForumHome />} />
+          <Route path="/forum/:categorySlug" element={<CategoryPage />} />
+          <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
         </Route>
 
         {/* Topic reading — no header/footer (immersive reading layout) */}

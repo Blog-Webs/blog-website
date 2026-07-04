@@ -22,7 +22,7 @@ const adminContentRoutes = require('./modules/content/adminContentRoutes');
 const adminRoutes = require('./modules/blog/adminRoutes');
 const noteRoutes = require('./modules/workspace/noteRoutes');
 const studentOSRoutes = require('./modules/studentos/routes/index');
-
+const forumRoutes = require('./modules/forum/forumRoutes');
 
 const compression = require('compression');
 
@@ -98,7 +98,7 @@ app.use('/api/admin/content', adminContentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/studentos', studentOSRoutes);
-
+app.use('/api/forum', forumRoutes);
 
 // 404 handler
 app.use('/api', (req, res) => {

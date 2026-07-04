@@ -16,4 +16,7 @@ module.exports = {
   IconOption: require('../modules/content/IconOption'),
   Document: require('../modules/studentos/models/Document'),
   DocumentChunk: require('../modules/studentos/models/DocumentChunk'),
+  ForumCategory: require('../modules/forum/Category'),
+  ForumTopic: require('../modules/forum/Topic'),
+  ForumReply: require('../modules/forum/Reply'),
 };
