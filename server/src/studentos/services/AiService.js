@@ -126,8 +126,14 @@ Answer the following question in a clear, helpful way. Keep it concise and use t
 Student: ${message}
 Assistant:`;
 
-    const result = await model.generateContent(prompt);
-    return { reply: result.response.text().trim(), available: true };
+    try {
+      const result = await model.generateContent(prompt);
+      return { reply: result.response.text().trim(), available: true };
+    } catch (err) {
+      console.error('[AI Generation Error]', err);
+      // Return a 200 OK with an error reply instead of crashing the route
+      return { reply: `Sorry, I ran into an error with the AI model: ${err.message}. Please check your Gemini API key and model name.`, available: false };
+    }
   },
 
   async generateFlashcards(content, topic) {
