@@ -7,17 +7,26 @@ const ReplyCard = ({ reply, isOp }) => {
   const { user } = useAuth();
   const [likes, setLikes] = useState(reply.likes || []);
   const [isLiking, setIsLiking] = useState(false);
+  const [animateHeart, setAnimateHeart] = useState(false);
 
   const hasLiked = user ? likes.includes(user._id) : false;
 
+  
   const handleLike = async () => {
     if (!user || isLiking) return;
     setIsLiking(true);
+    setAnimateHeart(true);
+    setTimeout(() => setAnimateHeart(false), 300);
     try {
-      const res = await forumApi.toggleLikeReply(reply._id);
+      let res;
+      if (isOp) {
+        res = await forumApi.toggleLikeTopic(reply._id);
+      } else {
+        res = await forumApi.toggleLikeReply(reply._id);
+      }
       setLikes(res.data.likes);
     } catch (err) {
-      console.error('Error liking reply', err);
+      console.error('Error liking', err);
     } finally {
       setIsLiking(false);
     }
@@ -77,7 +86,7 @@ const ReplyCard = ({ reply, isOp }) => {
           disabled={!user || isLiking}
           className={`flex items-center gap-1.5 font-medium transition-colors hover:text-red-500 ${hasLiked ? 'text-red-500' : ''}`}
         >
-          <Heart size={16} className={hasLiked ? 'fill-current' : ''} />
+          <Heart size={16} className={`${hasLiked ? 'fill-current' : ''} ${animateHeart ? 'animate-pop' : ''}`} />
           <span>{likes.length}</span>
         </button>
         <button className="flex items-center gap-1.5 font-medium transition-colors hover:text-foreground opacity-50 hover:opacity-100">

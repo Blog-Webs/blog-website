@@ -1,13 +1,41 @@
 import { useEffect, useState } from 'react';
 import { Search, MessagesSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { forumApi } from '../api/forum';
 import CategoryCard from '../components/CategoryCard';
 import TopicRow from '../components/TopicRow';
 
 const ForumHome = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [categories, setCategories] = useState([]);
   const [recentTopics, setRecentTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      // reload recent
+      setIsLoading(true);
+      const res = await forumApi.getRecentTopics();
+      setRecentTopics(res.data);
+      setIsLoading(false);
+      return;
+    }
+    setIsSearching(true);
+    setIsLoading(true);
+    try {
+      const res = await forumApi.searchTopics(searchQuery);
+      setRecentTopics(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,22 +82,24 @@ const ForumHome = () => {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto relative mb-8 group">
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative mb-8 group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
               <Search size={20} />
             </div>
             <input 
               type="text" 
-              placeholder="Search..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search conversations..." 
               className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-lg shadow-2xl"
             />
-          </div>
+          </form>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="px-8 py-3 rounded-xl font-medium flex items-center gap-2 transition-all hover:scale-105" style={{ backgroundColor: '#6366F1', color: 'white' }}>
+            <button onClick={() => window.scrollTo({ top: 500, behavior: 'smooth' })} className="px-8 py-3 rounded-xl font-medium flex items-center gap-2 transition-all hover:scale-105" style={{ backgroundColor: '#6366F1', color: 'white' }}>
               <span className="text-lg">⛳</span> Get Started
             </button>
-            <button className="px-8 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 font-medium flex items-center gap-2 transition-all hover:bg-white/20 hover:scale-105">
+            <button onClick={() => navigate('/forum/create')} className="px-8 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 font-medium flex items-center gap-2 transition-all hover:bg-white/20 hover:scale-105">
               <span className="text-lg">?</span> Ask the Community
             </button>
           </div>
@@ -121,11 +151,6 @@ const ForumHome = () => {
                 {recentTopics.map(topic => (
                   <div key={topic._id} className="relative group">
                     <TopicRow topic={topic} />
-                    {topic.category && (
-                      <div className="absolute top-4 right-4 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        {topic.category.name}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

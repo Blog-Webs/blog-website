@@ -138,6 +138,45 @@ const forumController = {
     } catch (error) {
       res.status(500).json({ message: 'Error liking reply' });
     }
+  },
+
+  toggleLikeTopic: async (req, res) => {
+    try {
+      const topic = await ForumTopic.findById(req.params.id);
+      if (!topic) return res.status(404).json({ message: 'Topic not found' });
+      
+      const userId = req.user.id;
+      const index = topic.likes.indexOf(userId);
+      if (index === -1) {
+        topic.likes.push(userId);
+      } else {
+        topic.likes.splice(index, 1);
+      }
+      await topic.save();
+      res.json({ likes: topic.likes });
+    } catch (error) {
+      res.status(500).json({ message: 'Error liking topic' });
+    }
+  },
+
+  searchTopics: async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q) return res.json([]);
+      
+      const regex = new RegExp(q, 'i');
+      const topics = await ForumTopic.find({
+        $or: [{ title: regex }, { content: regex }]
+      })
+      .populate('author', 'name avatar')
+      .populate('category', 'name slug')
+      .sort({ lastActivityAt: -1 })
+      .limit(20);
+      
+      res.json(topics);
+    } catch (error) {
+      res.status(500).json({ message: 'Error searching topics' });
+    }
   }
 };
 

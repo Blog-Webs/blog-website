@@ -5,7 +5,7 @@ import { forumApi } from '../api/forum';
 import { useAuth } from '../../core/context/AuthContext';
 import ReplyCard from '../components/ReplyCard';
 import ReplySkeleton from '../components/ReplySkeleton';
-import MarkdownEditor from '../../core/components/ui/MarkdownEditor';
+import BlockEditor from '../../core/components/ui/BlockEditor';
 
 const TopicDetail = () => {
   const { topicSlug } = useParams();
@@ -103,32 +103,38 @@ const TopicDetail = () => {
 
       {/* Reply Box (Glassmorphism) */}
       {!isLoading && !topic.isLocked && user && (
-        <div 
-          className="rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl border shadow-2xl transition-all duration-300 hover:shadow-primary/20" 
-          style={{ 
-            backgroundColor: 'color-mix(in srgb, var(--surface) 60%, transparent)', 
-            borderColor: 'color-mix(in srgb, var(--primary) 20%, var(--border))' 
-          }}
-        >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-purple-500 to-green-500 opacity-50" />
-          
-          <h3 className="font-bold mb-4 flex items-center gap-2 text-lg">
-            <Sparkles size={18} className="text-primary" /> Post a Reply
-          </h3>
-          
-          <div className="rounded-xl overflow-hidden mb-4 shadow-inner" style={{ backgroundColor: 'var(--bg)' }}>
-            <MarkdownEditor value={replyContent} onChange={setReplyContent} />
+        <div className="flex gap-4 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl mt-8">
+          {/* Left Avatar */}
+          <div className="hidden sm:block flex-shrink-0">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                {user?.name?.charAt(0) || 'U'}
+              </div>
+            )}
           </div>
           
-          <div className="flex justify-end">
-            <button
-              onClick={handlePostReply}
-              disabled={isReplying || !replyContent.trim()}
-              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 disabled:opacity-50 disabled:transform-none shadow-lg shadow-primary/30"
-            >
-              {isReplying ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-              Post Reply
-            </button>
+          {/* Right Editor */}
+          <div className="flex-1">
+            <h3 className="font-bold mb-4 flex items-center gap-2 text-lg">
+              <Sparkles size={18} className="text-primary" /> Post a Reply
+            </h3>
+            
+            <div className="rounded-xl overflow-hidden mb-4 shadow-inner" style={{ backgroundColor: 'var(--bg)' }}>
+              <BlockEditor onChange={({ plainText }) => setReplyContent(plainText)} minHeight="200px" />
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={handlePostReply}
+                disabled={isReplying || !replyContent.trim()}
+                className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 disabled:opacity-50 disabled:transform-none shadow-lg shadow-primary/30"
+              >
+                {isReplying ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                Post Reply
+              </button>
+            </div>
           </div>
         </div>
       )}

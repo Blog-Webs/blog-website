@@ -7,8 +7,10 @@ export const forumApi = {
 
   // Topics
   getRecentTopics: () => api.get('/forum/topics/recent'),
+  searchTopics: (q) => api.get(`/forum/topics/search?q=${q}`),
   createTopic: (topicData) => api.post('/forum/topics', topicData),
   getTopicBySlug: (slug) => api.get(`/forum/topics/${slug}`),
+  toggleLikeTopic: (topicId) => api.post(`/forum/topics/${topicId}/likes`),
 
   // Replies
   createReply: (topicId, content) => api.post(`/forum/topics/${topicId}/replies`, { content }),
