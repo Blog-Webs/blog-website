@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, Shield, Brain, BookOpen, Mail, Calendar, CheckSquare, FolderOpen, Plug, AlertCircle } from 'lucide-react';
 import { useStudentOS } from '../context/StudentOSContext';
-import { useAuth } from '../../../context/AuthContext';
-import GoogleSignInButton from '../../../components/ui/GoogleSignInButton';
+import { useAuth } from '../../core/context/AuthContext';
+import GoogleSignInButton from '../../core/components/ui/GoogleSignInButton';
 
 const FEATURES = [
   { icon: BookOpen, label: 'Google Classroom', desc: 'Courses, assignments, and teacher posts' },

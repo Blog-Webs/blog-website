@@ -8,21 +8,21 @@ const rateLimit = require('express-rate-limit');
 const { attachUser } = require('./middleware/auth');
 const { getLiveCount } = require('./sockets/liveUsers');
 
-const authRoutes = require('./routes/authRoutes');
-const contentRoutes = require('./routes/contentRoutes');
-const progressRoutes = require('./routes/progressRoutes');
-const bookmarkRoutes = require('./routes/bookmarkRoutes');
-const todoRoutes = require('./routes/todoRoutes');
-const blogRoutes = require('./routes/blogRoutes');
-const seriesRoutes = require('./routes/seriesRoutes');
-const newsletterRoutes = require('./routes/newsletterRoutes');
-const contactRoutes = require('./routes/contactRoutes');
-const searchRoutes = require('./routes/searchRoutes');
-const adminContentRoutes = require('./routes/adminContentRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const noteRoutes = require('./routes/noteRoutes');
-const studentOSRoutes = require('./studentos/routes/index');
-
+const authRoutes = require('./modules/auth/authRoutes');
+const contentRoutes = require('./modules/content/contentRoutes');
+const progressRoutes = require('./modules/workspace/progressRoutes');
+const bookmarkRoutes = require('./modules/workspace/bookmarkRoutes');
+const todoRoutes = require('./modules/workspace/todoRoutes');
+const blogRoutes = require('./modules/blog/blogRoutes');
+const seriesRoutes = require('./modules/series/seriesRoutes');
+const newsletterRoutes = require('./modules/newsletter/newsletterRoutes');
+const contactRoutes = require('./modules/contact/contactRoutes');
+const searchRoutes = require('./modules/search/searchRoutes');
+const adminContentRoutes = require('./modules/content/adminContentRoutes');
+const adminRoutes = require('./modules/blog/adminRoutes');
+const noteRoutes = require('./modules/workspace/noteRoutes');
+const studentOSRoutes = require('./modules/studentos/routes/index');
+const forumRoutes = require('./modules/forum/forumRoutes');
 
 const compression = require('compression');
 
@@ -98,7 +98,7 @@ app.use('/api/admin/content', adminContentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/studentos', studentOSRoutes);
-
+app.use('/api/forum', forumRoutes);
 
 // 404 handler
 app.use('/api', (req, res) => {
