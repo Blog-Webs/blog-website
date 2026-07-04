@@ -22,7 +22,7 @@ function getEmbeddingModel() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
   const ai = new GoogleGenerativeAI(key);
-  return ai.getGenerativeModel({ model: 'text-embedding-004' });
+  return ai.getGenerativeModel({ model: 'gemini-embedding-001' });
 }
 
 function chunkText(text, maxWords = 400, overlap = 50) {

@@ -64,7 +64,7 @@ Summary (use bullet points):`;
 
     // --- RAG RETRIEVAL ---
     try {
-      const embeddingModel = ai.getGenerativeModel({ model: 'text-embedding-004' });
+      const embeddingModel = ai.getGenerativeModel({ model: 'gemini-embedding-001' });
       const embedResult = await embeddingModel.embedContent(message);
       const queryEmbedding = embedResult.embedding.values;
 
