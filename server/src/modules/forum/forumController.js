@@ -38,6 +38,19 @@ const forumController = {
   },
 
   // --- Topics ---
+  getRecentTopics: async (req, res) => {
+    try {
+      const topics = await ForumTopic.find()
+        .populate('author', 'name avatar')
+        .populate('category', 'name slug')
+        .sort({ lastActivityAt: -1 })
+        .limit(10);
+      res.json(topics);
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching recent topics' });
+    }
+  },
+
   createTopic: async (req, res) => {
     try {
       const { title, content, categoryId } = req.body;

@@ -6,6 +6,7 @@ export const forumApi = {
   getCategoryBySlug: (slug) => api.get(`/forum/categories/${slug}`),
 
   // Topics
+  getRecentTopics: () => api.get('/forum/topics/recent'),
   createTopic: (topicData) => api.post('/forum/topics', topicData),
   getTopicBySlug: (slug) => api.get(`/forum/topics/${slug}`),
 

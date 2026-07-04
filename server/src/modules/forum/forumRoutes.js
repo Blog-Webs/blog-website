@@ -6,6 +6,7 @@ const { requireAuth } = require('../../middleware/auth');
 // Public routes (Read-only)
 router.get('/categories', forumController.getCategories);
 router.get('/categories/:slug', forumController.getCategoryBySlug);
+router.get('/topics/recent', forumController.getRecentTopics);
 router.get('/topics/:slug', forumController.getTopicBySlug);
 
 // Protected routes (Write)

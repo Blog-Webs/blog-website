@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, CheckCircle2 } from 'lucide-react';
+import { Heart, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../core/context/AuthContext';
 import { forumApi } from '../api/forum';
 
@@ -23,50 +23,66 @@ const ReplyCard = ({ reply, isOp }) => {
     }
   };
 
+  const timeAgo = (dateStr) => {
+    const diff = new Date() - new Date(dateStr);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days}d`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours > 0) return `${hours}h`;
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes}m`;
+  };
+
   return (
-    <div className="flex gap-4 p-6 border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
-      {/* Author Sidebar */}
-      <div className="flex flex-col items-center w-20 shrink-0">
-        <img 
-          src={reply.author?.avatar || `https://ui-avatars.com/api/?name=${reply.author?.name || 'User'}`}
-          alt={reply.author?.name}
-          className="w-12 h-12 rounded-full object-cover border-2"
-          style={{ borderColor: isOp ? 'var(--primary)' : 'var(--border)' }}
-        />
-        <span className="text-xs font-bold mt-2 text-center break-words w-full">
-          {reply.author?.name}
-        </span>
-        {isOp && <span className="text-[10px] uppercase text-primary font-bold mt-1 tracking-wider">Author</span>}
+    <div className="py-6 border-b last:border-b-0 group" style={{ borderColor: 'var(--border)' }}>
+      {/* Header Inline */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <img 
+            src={reply.author?.avatar || `https://ui-avatars.com/api/?name=${reply.author?.name || 'User'}`}
+            alt={reply.author?.name}
+            className="w-10 h-10 rounded-xl object-cover shadow-sm"
+          />
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-base">
+              {reply.author?.name}
+            </span>
+            {isOp && (
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                Author
+              </span>
+            )}
+            {reply.isAcceptedAnswer && (
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 flex items-center gap-1">
+                <CheckCircle2 size={12} /> Accepted
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-sm opacity-50" style={{ color: 'var(--text-muted)' }}>
+          {timeAgo(reply.createdAt)}
+        </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="flex items-center justify-between mb-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-          <span>{new Date(reply.createdAt).toLocaleString()}</span>
-          {reply.isAcceptedAnswer && (
-            <span className="flex items-center gap-1 text-green-500 font-medium">
-              <CheckCircle2 size={14} /> Accepted Answer
-            </span>
-          )}
-        </div>
-        
-        <div 
-          className="prose prose-sm max-w-none dark:prose-invert mb-6"
-          dangerouslySetInnerHTML={{ __html: reply.content }}
-        />
+      <div 
+        className="prose prose-sm md:prose-base max-w-none dark:prose-invert mb-4 pl-13"
+        dangerouslySetInnerHTML={{ __html: reply.content }}
+      />
 
-        {/* Action Bar */}
-        <div className="mt-auto flex items-center gap-4">
-          <button 
-            onClick={handleLike}
-            disabled={!user || isLiking}
-            className={`flex items-center gap-1.5 text-xs font-medium transition-colors hover:text-red-500 ${hasLiked ? 'text-red-500' : ''}`}
-            style={{ color: hasLiked ? undefined : 'var(--text-muted)' }}
-          >
-            <Heart size={16} className={hasLiked ? 'fill-current' : ''} />
-            {likes.length} Likes
-          </button>
-        </div>
+      {/* Action Bar */}
+      <div className="flex items-center gap-6 pl-13 text-sm" style={{ color: 'var(--text-muted)' }}>
+        <button 
+          onClick={handleLike}
+          disabled={!user || isLiking}
+          className={`flex items-center gap-1.5 font-medium transition-colors hover:text-red-500 ${hasLiked ? 'text-red-500' : ''}`}
+        >
+          <Heart size={16} className={hasLiked ? 'fill-current' : ''} />
+          <span>{likes.length}</span>
+        </button>
+        <button className="flex items-center gap-1.5 font-medium transition-colors hover:text-foreground opacity-50 hover:opacity-100">
+          <LinkIcon size={16} />
+        </button>
       </div>
     </div>
   );
