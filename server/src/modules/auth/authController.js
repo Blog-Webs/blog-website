@@ -51,6 +51,9 @@ const googleLogin = async (req, res) => {
         avatar: picture || '',
         role: shouldBeAdmin ? 'admin' : 'user',
       });
+      // Fire and forget welcome event
+      const eventBus = require('../../events/EventBus');
+      eventBus.emit('UserRegistered', user);
     }
 
     const token = signToken(user);

@@ -123,6 +123,14 @@ const toggleLike = async (req, res) => {
     blog.likes.splice(idx, 1);
   } else {
     blog.likes.push(req.user._id);
+    
+    // Emit event for Admin Notifications
+    const eventBus = require('../../events/EventBus');
+    eventBus.emit('ActionOccurred', {
+      type: 'BLOG_LIKE',
+      message: `${req.user.name} liked the blog post: ${blog.title}`,
+      metadata: { userId: req.user._id, blogId: blog._id, blogSlug: blog.slug }
+    });
   }
   await blog.save();
   res.json({ liked: idx < 0, likeCount: blog.likes.length });
@@ -145,6 +153,14 @@ const addComment = async (req, res) => {
   await comment.populate('user', 'name avatar');
   
   await cache.del(`blog:${req.params.slug}`);
+
+  // Emit event for Admin Notifications
+  const eventBus = require('../../events/EventBus');
+  eventBus.emit('ActionOccurred', {
+    type: 'COMMENT_ADDED',
+    message: `${req.user.name} commented on the blog post: ${blog.title}`,
+    metadata: { userId: req.user._id, blogId: blog._id, blogSlug: blog.slug, commentId: comment._id }
+  });
 
   res.status(201).json({ comment });
 };

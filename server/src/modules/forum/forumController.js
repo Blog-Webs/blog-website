@@ -115,6 +115,13 @@ const forumController = {
       topic.lastActivityAt = new Date();
       await topic.save();
       
+      const eventBus = require('../../events/EventBus');
+      eventBus.emit('ActionOccurred', {
+        type: 'COMMENT_ADDED',
+        message: `${req.user.name} replied to the forum topic: ${topic.title}`,
+        metadata: { userId: req.user.id, topicId: topic._id, topicSlug: topic.slug, replyId: reply._id }
+      });
+      
       res.status(201).json(reply);
     } catch (error) {
       res.status(500).json({ message: 'Error creating reply', error: error.message });
@@ -130,6 +137,13 @@ const forumController = {
       const index = reply.likes.indexOf(userId);
       if (index === -1) {
         reply.likes.push(userId);
+        
+        const eventBus = require('../../events/EventBus');
+        eventBus.emit('ActionOccurred', {
+          type: 'REPLY_LIKED',
+          message: `${req.user.name} liked a reply in a forum topic.`,
+          metadata: { userId: req.user.id, replyId: reply._id, topicId: reply.topic }
+        });
       } else {
         reply.likes.splice(index, 1);
       }
@@ -149,6 +163,13 @@ const forumController = {
       const index = topic.likes.indexOf(userId);
       if (index === -1) {
         topic.likes.push(userId);
+        
+        const eventBus = require('../../events/EventBus');
+        eventBus.emit('ActionOccurred', {
+          type: 'TOPIC_LIKED',
+          message: `${req.user.name} liked the forum topic: ${topic.title}`,
+          metadata: { userId: req.user.id, topicId: topic._id, topicSlug: topic.slug }
+        });
       } else {
         topic.likes.splice(index, 1);
       }
