@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const DocumentChunk = require('../../models/DocumentChunk');
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-2.5-flash';
 
 function getAI() {
   const key = process.env.GEMINI_API_KEY;
