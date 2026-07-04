@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { adminApi } from '../../../api/admin';
+import { adminApi } from '../api/admin';
 import { useAuth } from '../../core/context/AuthContext';
 import NotFound from '../../core/pages/NotFound';
 

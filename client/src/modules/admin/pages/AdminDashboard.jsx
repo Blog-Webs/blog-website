@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Users, FileText, BookOpen, Layers, Mail } from 'lucide-react';
-import { adminApi } from '../../../api/admin';
+import { adminApi } from '../api/admin';
 import { useLiveUserCount } from '../../core/hooks/useLiveUserCount';
 import { StatCardSkeleton } from '../components/AdminSkeleton';
 

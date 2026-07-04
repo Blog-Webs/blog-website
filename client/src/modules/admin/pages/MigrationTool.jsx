@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
-import { contentApi } from '../../../api/content';
-import { adminApi } from '../../../api/admin';
-import { blogApi } from '../../../api/blog';
+import { contentApi } from '../../learn/api/content';
+import { adminApi } from '../api/admin';
+import { blogApi } from '../../blog/api/blog';
 import { extractHeadings } from '../../core/components/ui/BlockEditor';
 
 /**

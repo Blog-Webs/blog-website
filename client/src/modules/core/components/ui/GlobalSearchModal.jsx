@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, FileText, Layout, BookOpen, X, Loader2 } from 'lucide-react';
-import api from '../../../../api/client'; // our axios instance
+import api from '../../api/client'; // our axios instance
 import { optimizeImage } from '../../../../utils/image';
 
 const GlobalSearchModal = ({ isOpen, onClose }) => {

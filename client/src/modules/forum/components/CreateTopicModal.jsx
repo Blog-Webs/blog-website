@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import MarkdownEditor from '../../core/components/ui/MarkdownEditor';
-import { forumApi } from '../../../api/forum';
+import { forumApi } from '../api/forum';
 
 const CreateTopicModal = ({ isOpen, onClose, categoryId, onTopicCreated }) => {
   const [title, setTitle] = useState('');

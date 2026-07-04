@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layers, Clock, ArrowRight } from 'lucide-react';
-import { seriesApi } from '../../../api/series';
+import { seriesApi } from '../api/series';
 import { ListSkeleton } from '../../core/components/ui/Skeleton';
 
 const SeriesDetail = () => {

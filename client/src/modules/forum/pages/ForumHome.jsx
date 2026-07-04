@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MessagesSquare } from 'lucide-react';
-import { forumApi } from '../../../api/forum';
+import { forumApi } from '../api/forum';
 import CategoryCard from '../components/CategoryCard';
 
 const ForumHome = () => {

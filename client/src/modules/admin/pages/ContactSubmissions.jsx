@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bug, LifeBuoy, Star, Mail } from 'lucide-react';
-import { contactApi } from '../../../api/contact';
+import { contactApi } from '../../core/api/contact';
 import { ListSkeleton } from '../../core/components/ui/Skeleton';
 
 const TYPE_META = {

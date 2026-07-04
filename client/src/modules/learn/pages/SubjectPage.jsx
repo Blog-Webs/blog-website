@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clock, ChevronRight, Map, FileSpreadsheet } from 'lucide-react';
 import { CardGridSkeleton } from '../../core/components/ui/Skeleton';
-import { contentApi } from '../../../api/content';
+import { contentApi } from '../api/content';
 
 const DIFFICULTY_COLOR = {
   beginner: '#5EEAD4',

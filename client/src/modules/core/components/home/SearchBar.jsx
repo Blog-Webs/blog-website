@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, FileText, BookOpen, Layers, X } from 'lucide-react';
-import { searchApi } from '../../../../api/search';
+import { searchApi } from '../../api/search';
 
 const SearchBar = () => {
   const [query, setQuery] = useState('');

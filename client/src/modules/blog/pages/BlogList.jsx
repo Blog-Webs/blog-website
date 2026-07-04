@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { Search, Layers, ChevronRight } from 'lucide-react';
 import BlogCard from '../components/BlogCard';
 import Pagination from '../../core/components/ui/Pagination';
-import { blogApi } from '../../../api/blog';
-import { seriesApi } from '../../../api/series';
+import { blogApi } from '../api/blog';
+import { seriesApi } from '../api/series';
 import { CardGridSkeleton } from '../../core/components/ui/Skeleton';
 
 const PAGE_SIZE = 9;

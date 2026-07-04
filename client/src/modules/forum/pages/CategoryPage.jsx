@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, MessageCircle } from 'lucide-react';
-import { forumApi } from '../../../api/forum';
+import { forumApi } from '../api/forum';
 import { useAuth } from '../../core/context/AuthContext';
 import TopicRow from '../components/TopicRow';
 import CreateTopicModal from '../components/CreateTopicModal';

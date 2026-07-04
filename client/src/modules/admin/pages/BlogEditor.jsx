@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Image as ImageIcon, X, Save, Send, Layers, Maximize2, Minimize2, Type, Clock } from 'lucide-react';
-import { blogApi } from '../../../api/blog';
-import { seriesApi } from '../../../api/series';
+import { blogApi } from '../../blog/api/blog';
+import { seriesApi } from '../../blog/api/series';
 import BlockEditor from '../../core/components/ui/BlockEditor';
 
 const emptyPost = {

@@ -1,4 +1,4 @@
-import api from './client';
+import api from '../../core/api/client';
 
 export const forumApi = {
   // Categories

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Eye, Layers } from 'lucide-react';
-import { blogApi } from '../../../api/blog';
+import { blogApi } from '../../blog/api/blog';
 import Pagination from '../../core/components/ui/Pagination';
 
 const PAGE_SIZE = 15;

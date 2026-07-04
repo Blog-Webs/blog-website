@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Lock, Unlock, Maximize2, Minimize2, Type, Clock } from 'lucide-react';
-import { contentApi } from '../../../api/content';
-import { adminApi } from '../../../api/admin';
-import { blogApi } from '../../../api/blog';
+import { contentApi } from '../../learn/api/content';
+import { adminApi } from '../api/admin';
+import { blogApi } from '../../blog/api/blog';
 import BlockEditor from '../../core/components/ui/BlockEditor';
 
 const emptyChapter = {

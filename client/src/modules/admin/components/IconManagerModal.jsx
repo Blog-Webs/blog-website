@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Plus, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { adminApi } from '../../../api/admin';
-import { blogApi } from '../../../api/blog';
+import { adminApi } from '../api/admin';
+import { blogApi } from '../../blog/api/blog';
 
 const IconManagerModal = ({ isOpen, onClose, iconOptions, reloadIcons }) => {
   const [uploading, setUploading] = useState(false);

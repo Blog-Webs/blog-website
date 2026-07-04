@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Circle, Sun, Moon } from 'lucide-react';
-import { contentApi } from '../../../api/content';
-import { progressApi, bookmarkApi } from '../../../api/userFeatures';
-import api from '../../../api/client';
+import { contentApi } from '../api/content';
+import { progressApi, bookmarkApi } from '../../workspace/api/userFeatures';
+import api from '../../core/api/client';
 import { useAuth } from '../../core/context/AuthContext';
 import { useTheme } from '../../core/context/ThemeContext';
 import NestedSidebar from '../components/NestedSidebar';

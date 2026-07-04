@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Lock, Send, Loader2 } from 'lucide-react';
-import { forumApi } from '../../../api/forum';
+import { forumApi } from '../api/forum';
 import { useAuth } from '../../core/context/AuthContext';
 import ReplyCard from '../components/ReplyCard';
 import MarkdownEditor from '../../core/components/ui/MarkdownEditor';

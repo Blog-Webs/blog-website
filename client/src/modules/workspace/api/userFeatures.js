@@ -1,4 +1,4 @@
-import api from './client';
+import api from '../../core/api/client';
 
 export const progressApi = {
   toggleStudied: (chapterId) => api.post(`/progress/${chapterId}`),

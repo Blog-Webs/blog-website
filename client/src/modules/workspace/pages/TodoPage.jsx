@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Check, StickyNote, ListTodo, X, Tag } from 'lucide-react';
-import { todoApi, noteApi } from '../../../api/userFeatures';
+import { todoApi, noteApi } from '../api/userFeatures';
 import { ListSkeleton } from '../../core/components/ui/Skeleton';
 import { useAuth } from '../../core/context/AuthContext';
 import GoogleSignInButton from '../../core/components/ui/GoogleSignInButton';

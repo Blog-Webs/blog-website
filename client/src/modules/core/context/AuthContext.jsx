@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { authApi } from '../../../api/auth';
-import { getToken, setToken, clearToken } from '../../../api/client';
+import { authApi } from '../api/auth';
+import { getToken, setToken, clearToken } from '../api/client';
 
 const AuthContext = createContext(null);
 

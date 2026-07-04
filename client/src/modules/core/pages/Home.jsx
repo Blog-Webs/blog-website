@@ -8,9 +8,9 @@ import SortVisualizer from '../components/home/SortVisualizer';
 import SubjectCard from '../components/home/SubjectCard';
 import SearchBar from '../components/home/SearchBar';
 import ContactModal from '../components/home/ContactModal';
-import { contentApi } from '../../../api/content';
-import { seriesApi } from '../../../api/series';
-import { todoApi, noteApi } from '../../../api/userFeatures';
+import { contentApi } from '../../learn/api/content';
+import { seriesApi } from '../../blog/api/series';
+import { todoApi, noteApi } from '../../workspace/api/userFeatures';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
 import { useAuth } from '../context/AuthContext';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Globe, MessageCircle } from 'lucide-react';
-import { newsletterApi } from '../../../api/blog';
+import { newsletterApi } from '../../blog/api/blog';
 
 const Footer = () => {
   const [email, setEmail] = useState('');

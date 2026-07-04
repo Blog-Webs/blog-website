@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Heart, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../core/context/AuthContext';
-import { forumApi } from '../../../api/forum';
+import { forumApi } from '../api/forum';
 
 const ReplyCard = ({ reply, isOp }) => {
   const { user } = useAuth();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, FileText, Bookmark as BookmarkIcon } from 'lucide-react';
-import { bookmarkApi } from '../../../api/userFeatures';
+import { bookmarkApi } from '../../workspace/api/userFeatures';
 
 const BookmarksDropdown = ({ onClose }) => {
   const [bookmarks, setBookmarks] = useState([]);

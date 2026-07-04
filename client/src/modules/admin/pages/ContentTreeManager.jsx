@@ -5,9 +5,9 @@ import {
   Network, Database, Cpu, Globe, Layers, Undo2, Home, ChevronRight as Breadcrumb,
   Image as ImageIcon, Loader2, X
 } from 'lucide-react';
-import { contentApi } from '../../../api/content';
-import { adminApi } from '../../../api/admin';
-import { blogApi } from '../../../api/blog';
+import { contentApi } from '../../learn/api/content';
+import { adminApi } from '../api/admin';
+import { blogApi } from '../../blog/api/blog';
 import IconManagerModal from '../components/IconManagerModal';
 import { ContentTreeSkeleton } from '../components/AdminSkeleton';
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Plus, Pencil, Trash2, X, Layers, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { seriesApi } from '../../../api/series';
-import { blogApi } from '../../../api/blog';
+import { seriesApi } from '../../blog/api/series';
+import { blogApi } from '../../blog/api/blog';
 
 const emptyForm = { title: '', description: '', coverImage: '' };
 

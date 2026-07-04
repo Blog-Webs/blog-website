@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Bug, LifeBuoy, Star, Send, CheckCircle2 } from 'lucide-react';
-import { contactApi } from '../../../../api/contact';
+import { contactApi } from '../../api/contact';
 
 const TYPES = [
   { key: 'bug', label: 'Bug report', icon: Bug },
