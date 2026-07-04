@@ -1,32 +1,32 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/layout/Layout';
-import BackToTop from './components/ui/BackToTop';
-const ReadingLayout = lazy(() => import('./components/layout/ReadingLayout'));
+import Layout from './modules/core/layout/Layout';
+import BackToTop from './modules/core/components/ui/BackToTop';
+const ReadingLayout = lazy(() => import('./modules/core/layout/ReadingLayout'));
 
 // Every page is lazy-loaded so a visitor reading the blog or browsing
 // chapters never downloads the rich-text editor bundle (BlockNote +
 // Mantine) that only the admin pages actually need, and vice versa.
-const Home = lazy(() => import('./pages/Home'));
-const SubjectPage = lazy(() => import('./pages/SubjectPage'));
-const TopicPage = lazy(() => import('./pages/TopicPage'));
-const BlogList = lazy(() => import('./pages/BlogList'));
-const BlogDetail = lazy(() => import('./pages/BlogDetail'));
-const SeriesDetail = lazy(() => import('./pages/SeriesDetail'));
-const TodoPage = lazy(() => import('./pages/TodoPage'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+const Home = lazy(() => import('./modules/core/pages/Home'));
+const SubjectPage = lazy(() => import('./modules/learn/pages/SubjectPage'));
+const TopicPage = lazy(() => import('./modules/learn/pages/TopicPage'));
+const BlogList = lazy(() => import('./modules/blog/pages/BlogList'));
+const BlogDetail = lazy(() => import('./modules/blog/pages/BlogDetail'));
+const SeriesDetail = lazy(() => import('./modules/blog/pages/SeriesDetail'));
+const TodoPage = lazy(() => import('./modules/workspace/pages/TodoPage'));
+const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 
-const AdminGuard = lazy(() => import('./components/admin/AdminGuard'));
-const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminBlogList = lazy(() => import('./pages/admin/AdminBlogList'));
-const BlogEditor = lazy(() => import('./pages/admin/BlogEditor'));
-const AdminSeriesList = lazy(() => import('./pages/admin/AdminSeriesList'));
-const ContentTreeManager = lazy(() => import('./pages/admin/ContentTreeManager'));
-const ChapterEditor = lazy(() => import('./pages/admin/ChapterEditor'));
-const MigrationTool = lazy(() => import('./pages/admin/MigrationTool'));
-const Subscribers = lazy(() => import('./pages/admin/Subscribers'));
-const ContactSubmissions = lazy(() => import('./pages/admin/ContactSubmissions'));
+const AdminGuard = lazy(() => import('./modules/admin/components/AdminGuard'));
+const AdminLayout = lazy(() => import('./modules/admin/components/AdminLayout'));
+const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
+const AdminBlogList = lazy(() => import('./modules/admin/pages/AdminBlogList'));
+const BlogEditor = lazy(() => import('./modules/admin/pages/BlogEditor'));
+const AdminSeriesList = lazy(() => import('./modules/admin/pages/AdminSeriesList'));
+const ContentTreeManager = lazy(() => import('./modules/admin/pages/ContentTreeManager'));
+const ChapterEditor = lazy(() => import('./modules/admin/pages/ChapterEditor'));
+const MigrationTool = lazy(() => import('./modules/admin/pages/MigrationTool'));
+const Subscribers = lazy(() => import('./modules/admin/pages/Subscribers'));
+const ContactSubmissions = lazy(() => import('./modules/admin/pages/ContactSubmissions'));
 // StudentOS — completely isolated module
 const StudentOSRoutes = lazy(() => import('./modules/StudentOS/routes/StudentOSRoutes'));
 

@@ -5,7 +5,7 @@ import {
   Sparkles, Focus, Menu, X, Plug, Unplug, ChevronRight, Zap
 } from 'lucide-react';
 import { useStudentOS } from '../context/StudentOSContext';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../core/context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/student-os', label: 'Dashboard', icon: LayoutDashboard, end: true },

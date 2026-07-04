@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { studentOSApi } from '../api';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../core/context/AuthContext';
 
 const StudentOSContext = createContext(null);
 
