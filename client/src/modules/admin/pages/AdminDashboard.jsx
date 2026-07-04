@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Bell, CheckCircle2 } from 'lucide-react';
 import { Users, FileText, BookOpen, Layers, Mail } from 'lucide-react';
 import { adminApi } from '../api/admin';
 import { useLiveUserCount } from '../../core/hooks/useLiveUserCount';
@@ -16,10 +17,12 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
+  const [notifications, setNotifications] = useState([]);
   const liveCount = useLiveUserCount();
 
   useEffect(() => {
     adminApi.getStats().then(({ data }) => setStats(data));
+    adminApi.getNotifications().then(({ data }) => setNotifications(data));
   }, []);
 
   if (!stats) return (
@@ -46,7 +49,51 @@ const AdminDashboard = () => {
         <StatCard icon={Layers} label="Topics" value={stats.totalTopics} color="#FFB454" />
         <StatCard icon={BookOpen} label="Chapters" value={stats.totalChapters} color="#A78BFA" />
         <StatCard icon={Mail} label="Newsletter subs" value={stats.totalSubscribers} color="#F87171" />
+            </div>
+
+      <div className="mt-12">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Bell size={20} className="text-primary" /> Recent Activity & Notifications
+        </h2>
+        
+        <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}>
+          {notifications.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">No recent activity.</div>
+          ) : (
+            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {notifications.map(notif => (
+                <div key={notif._id} className={`p-4 flex items-start justify-between gap-4 transition-colors ${notif.read ? 'opacity-60' : 'bg-primary/5'}`}>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                        {notif.type.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(notif.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium">{notif.message}</p>
+                  </div>
+                  
+                  {!notif.read && (
+                    <button 
+                      onClick={async () => {
+                        await adminApi.markNotificationRead(notif._id);
+                        setNotifications(notifications.map(n => n._id === notif._id ? { ...n, read: true } : n));
+                      }}
+                      className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors text-muted-foreground hover:text-green-500"
+                      title="Mark as read"
+                    >
+                      <CheckCircle2 size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
     </div>
   );
 };

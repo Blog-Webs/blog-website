@@ -24,6 +24,9 @@ const noteRoutes = require('./modules/workspace/noteRoutes');
 const studentOSRoutes = require('./modules/studentos/routes/index');
 const forumRoutes = require('./modules/forum/forumRoutes');
 
+// Load EventBus listeners
+require('./events');
+
 const compression = require('compression');
 
 const app = express();
