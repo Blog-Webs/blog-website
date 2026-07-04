@@ -35,43 +35,7 @@
 * {
   box-sizing: border-box;
 }
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
-@import "tailwindcss";
 
-:root {
-  /* Dark theme (default) */
-  --bg: #000000;
-  --surface: #1A1F2B;
-  --surface-raised: #20273A;
-  --border: #2A3142;
-  --text: #E8EAED;
-  --text-muted: #A3ADC2;
-  --accent: #3E7EC6;
-  --accent-soft: rgba(94, 234, 212, 0.12);
-  --amber: #FFB454;
-  --amber-soft: rgba(255, 180, 84, 0.12);
-  --danger: #F87171;
-  --shadow: rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="light"] {
-  --bg: #FAFAF8;
-  --surface: #FFFFFF;
-  --surface-raised: #FFFFFF;
-  --border: #E2E4E9;
-  --text: #16181D;
-  --text-muted: #4B5363;
-  --accent: #0D9488;
-  --accent-soft: rgba(13, 148, 136, 0.08);
-  --amber: #C2750C;
-  --amber-soft: rgba(194, 117, 12, 0.08);
-  --danger: #DC2626;
-  --shadow: rgba(15, 23, 42, 0.08);
-}
-
-* {
-  box-sizing: border-box;
-}
 
 html, body {
   margin: 0;

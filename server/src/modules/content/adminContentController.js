@@ -59,17 +59,20 @@ const updateSubject = async (req, res) => {
   res.json({ subject });
 };
 
+const deleteTracksAndChaptersByTopicIds = async (topicIds) => {
+  const trackIds = (await Track.find({ topic: { $in: topicIds } }).select('_id')).map((t) => t._id);
+  const chapterIds = (await Chapter.find({ track: { $in: trackIds } }).select('_id')).map((c) => c._id);
+  await cleanupChapterReferences(chapterIds);
+  await Chapter.deleteMany({ track: { $in: trackIds } });
+  await Track.deleteMany({ topic: { $in: topicIds } });
+};
+
 const deleteSubject = async (req, res) => {
   const subject = await Subject.findByIdAndDelete(req.params.id);
   if (!subject) return res.status(404).json({ message: 'Subject not found.' });
 
   const topicIds = (await Topic.find({ subject: subject._id }).select('_id')).map((t) => t._id);
-  const trackIds = (await Track.find({ topic: { $in: topicIds } }).select('_id')).map((t) => t._id);
-  const chapterIds = (await Chapter.find({ track: { $in: trackIds } }).select('_id')).map((c) => c._id);
-
-  await cleanupChapterReferences(chapterIds);
-  await Chapter.deleteMany({ track: { $in: trackIds } });
-  await Track.deleteMany({ topic: { $in: topicIds } });
+  await deleteTracksAndChaptersByTopicIds(topicIds);
   await Topic.deleteMany({ subject: subject._id });
 
   await cache.del('subjects:all');
@@ -124,12 +127,7 @@ const deleteTopic = async (req, res) => {
   const topic = await Topic.findByIdAndDelete(req.params.id);
   if (!topic) return res.status(404).json({ message: 'Topic not found.' });
 
-  const trackIds = (await Track.find({ topic: topic._id }).select('_id')).map((t) => t._id);
-  const chapterIds = (await Chapter.find({ track: { $in: trackIds } }).select('_id')).map((c) => c._id);
-
-  await cleanupChapterReferences(chapterIds);
-  await Chapter.deleteMany({ track: { $in: trackIds } });
-  await Track.deleteMany({ topic: topic._id });
+  await deleteTracksAndChaptersByTopicIds([topic._id]);
 
   await cache.del('subject:*');
   await cache.del('tracks:*');
