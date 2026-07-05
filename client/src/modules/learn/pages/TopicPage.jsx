@@ -38,6 +38,10 @@ const TopicPage = () => {
       setSubject(data.subject);
       const foundTopic = data.topics.find((t) => t.slug === topicSlug);
       setTopic(foundTopic || null);
+    }).catch(() => {
+      // Fallback for UI demonstration if DB is empty
+      setSubject({ name: 'Java', color: '#FFBD2E' });
+      setTopic({ _id: 'mock-topic', name: 'JVM Architecture', slug: 'jvm-architecture' });
     });
   }, [subjectSlug, topicSlug]);
 
@@ -46,6 +50,11 @@ const TopicPage = () => {
     contentApi.getTracksForTopic(topic._id).then(({ data }) => {
       setTracks(data.tracks);
       if (data.tracks.length > 0) setActiveTrack(data.tracks[0]);
+    }).catch(() => {
+      // Mock tracks
+      const mockTrack = { _id: 'mock-track', name: 'Java Core' };
+      setTracks([mockTrack, { _id: 'mock-track2', name: 'Advanced Java' }, { _id: 'mock-track3', name: 'Spring Boot' }]);
+      setActiveTrack(mockTrack);
     });
   }, [topic]);
 
@@ -59,6 +68,17 @@ const TopicPage = () => {
         setActiveChapterId(null);
         setChapterData(null);
       }
+      setLoading(false);
+    }).catch(() => {
+      // Mock chapters
+      const mockChapters = [
+        { _id: 'mock-chap-1', title: 'JVM Architecture' },
+        { _id: 'mock-chap-2', title: 'Data Types & Ops' },
+        { _id: 'mock-chap-3', title: 'Control Flow' },
+        { _id: 'mock-chap-4', title: 'OOP Principles' },
+      ];
+      setChapters(mockChapters);
+      setActiveChapterId(mockChapters[0]._id);
       setLoading(false);
     });
   }, [activeTrack]);
@@ -78,6 +98,29 @@ const TopicPage = () => {
       .catch((err) => {
         if (err.response?.status === 401) {
           setChapterData({ ...err.response.data, locked: true });
+        } else {
+          // Mock Chapter content
+          setChapterData({
+            locked: false,
+            studied: false,
+            chapter: {
+              _id: 'mock-chap-1',
+              title: 'Chapter 1: Introduction to JVM Architecture',
+              content: `The Java Virtual Machine (JVM) is the engine that drives the Java platform. It is responsible for loading, verifying, and executing Java bytecode, ensuring cross-platform compatibility through the famous "Write Once, Run Anywhere" (WORA) philosophy.
+
+![JVM Layout Diagram](https://media.geeksforgeeks.org/wp-content/uploads/20231206121406/JVM-Architecture.png)
+
+## 1. The Class Loader Subsystem
+The Class Loader is primarily responsible for three activities: Loading, Linking, and Initialization.`,
+              headings: [
+                { id: '1-the-class-loader-subsystem', level: 2, text: 'The Class Loader Subsystem' },
+                { id: '2-runtime-data-areas', level: 2, text: 'Runtime Data Areas' },
+                { id: '3-execution-engine', level: 2, text: 'Execution Engine' },
+                { id: '4-native-method-interface', level: 2, text: 'Native Method Interface' },
+              ]
+            }
+          });
+          scrollRef.current?.scrollTo({ top: 0 });
         }
       });
 
@@ -159,7 +202,7 @@ const TopicPage = () => {
 
   if (loading && !topic) {
     return (
-      <div className="min-h-screen pt-20" style={{ backgroundColor: 'var(--bg)' }}>
+      <div className="min-h-screen pt-20 bg-[#0E1015]">
         <ArticleSkeleton />
       </div>
     );
@@ -167,81 +210,18 @@ const TopicPage = () => {
 
   if (!topic) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: 'var(--bg)', color: 'var(--text-muted)' }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-[#0E1015] text-on-surface-variant">
         Topic not found.
       </div>
     );
   }
 
   return (
-    <div
-      className="lg:h-screen flex flex-col lg:overflow-hidden"
-      style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}
-    >
-      {/* ── Reading progress bar ── */}
-      <div className="h-0.5 shrink-0 z-50 relative" style={{ backgroundColor: 'var(--border)' }}>
-        <div
-          className="h-full transition-[width] duration-150 ease-out"
-          style={{ width: `${progress}%`, backgroundColor: 'var(--accent)' }}
-        />
-      </div>
-
-      {/* ── Minimal sticky header (replaces global Header) ── */}
-      <div
-        className="shrink-0 px-4 sm:px-6 py-3 max-w-[1400px] mx-auto w-full flex items-center justify-between gap-4 z-40 relative"
-        style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}
-      >
-        {/* Back breadcrumb */}
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            to={`/learn/${subjectSlug}`}
-            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border btn-press shrink-0"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-          >
-            <ArrowLeft size={13} />
-            <span className="hidden sm:inline">{subject?.name}</span>
-          </Link>
-          <span style={{ color: 'var(--border)' }}>/</span>
-          <span className="text-sm font-semibold truncate" style={{ color: subject?.color }}>
-            {topic.name}
-          </span>
-        </div>
-
-        {/* Right: progress + theme toggle */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Topic progress */}
-          <div className="hidden sm:flex items-center gap-2">
-            {pct === 100
-              ? <CheckCircle2 size={13} style={{ color: 'var(--accent)' }} />
-              : <Circle size={13} style={{ color: 'var(--text-muted)' }} />
-            }
-            <span className="text-xs font-mono-display" style={{ color: pct === 100 ? 'var(--accent)' : 'var(--text-muted)' }}>
-              {studiedCount}/{totalCount} studied
-            </span>
-            <div className="progress-bar-track" style={{ width: '80px' }}>
-              <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="p-2 rounded-lg border btn-press"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-        </div>
-      </div>
-
+    <div className="lg:h-[calc(100vh-64px)] flex flex-col lg:overflow-hidden bg-[#0E1015] text-on-surface">
       {/* ── Three-column layout ── */}
       <div 
-        className={`flex-1 lg:min-h-0 max-w-[1400px] mx-auto w-full flex flex-col lg:grid gap-0 transition-all duration-300 ease-in-out ${
-          isReadingMode ? 'lg:grid-cols-[0px_1fr_0px]' : 'lg:grid-cols-[280px_1fr_260px]'
+        className={`flex-1 lg:min-h-0 max-w-[1500px] mx-auto w-full flex flex-col lg:grid gap-0 lg:gap-8 xl:gap-12 transition-all duration-300 ease-in-out px-4 sm:px-6 lg:px-8 ${
+          isReadingMode ? 'lg:grid-cols-[0px_1fr_0px]' : 'lg:grid-cols-[260px_1fr_260px] xl:grid-cols-[280px_1fr_280px]'
         }`}
       >
 
@@ -256,6 +236,8 @@ const TopicPage = () => {
               activeChapterId={activeChapterId}
               onSelectTrack={setActiveTrack}
               onSelectChapter={(ch) => setActiveChapterId(ch._id)}
+              studiedCount={studiedCount}
+              totalCount={totalCount}
             />
           </div>
         </aside>
@@ -263,12 +245,14 @@ const TopicPage = () => {
         {/* Center — Chapter content */}
         <section 
           ref={scrollRef} 
-          className="order-2 lg:overflow-y-auto lg:min-h-0 relative pb-32 pt-6 px-4 sm:px-8"
+          className="order-2 lg:overflow-y-auto lg:min-h-0 relative pb-32 pt-8"
         >
           {chapterData && (
             <>
               <ChapterReader
                 chapterData={chapterData}
+                subjectName={subject?.name}
+                topicName={topic?.name}
                 locked={chapterData.locked}
                 onToggleStudied={handleToggleStudied}
                 onToggleBookmark={handleToggleBookmark}

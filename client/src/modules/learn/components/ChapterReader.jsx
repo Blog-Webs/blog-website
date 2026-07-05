@@ -1,11 +1,11 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Lock, ExternalLink, Bookmark, BookmarkCheck, Check, BookOpen } from 'lucide-react';
+import { Lock, ExternalLink, Check, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import GoogleSignInButton from '../../core/components/ui/GoogleSignInButton';
 import BlockNoteRenderer from '../../core/components/ui/BlockNoteRenderer';
-import AuthorMetaCard from './AuthorMetaCard';
 import CodeBlock from '../../core/components/ui/CodeBlock';
+import { Link } from 'react-router-dom';
 
 const SOURCE_LABEL = {
   geeksforgeeks: 'GeeksforGeeks',
@@ -13,24 +13,19 @@ const SOURCE_LABEL = {
   other: 'External resource',
 };
 
-/**
- * ChapterReader — renders the active chapter in the center reading pane.
- * Styled after the reference design: clean header badge, large title,
- * reading-like typography, and a prominent "Mark as Studied" CTA.
- */
-const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark, isBookmarked, onLoginSuccess }) => {
+const ChapterReader = ({ chapterData, subjectName, topicName, locked, onToggleStudied, onLoginSuccess }) => {
   const [busy, setBusy] = useState(false);
 
   if (locked) {
     return (
-      <div className="rounded-2xl border p-8" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-2 mb-4" style={{ color: 'var(--amber)' }}>
+      <div className="rounded-2xl border border-outline-variant/20 p-8 bg-surface-container-low mt-8">
+        <div className="flex items-center gap-2 mb-4 text-[#FFBD2E]">
           <Lock size={18} />
-          <p className="font-semibold">Sign in to keep reading</p>
+          <p className="font-bold text-sm">Sign in to keep reading</p>
         </div>
-        <p className="prose-content opacity-70 mb-6">{chapterData.preview}</p>
-        <div className="p-5 rounded-xl border text-center" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface-raised)' }}>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-on-surface-variant leading-relaxed mb-6">{chapterData.preview}</p>
+        <div className="p-6 rounded-xl border border-outline-variant/10 bg-[#161B22] text-center shadow-lg">
+          <p className="text-sm mb-6 text-on-surface-variant leading-relaxed">
             This chapter and everything beyond the free preview requires a Google account.
             It only takes a few seconds — no separate password to remember.
           </p>
@@ -51,98 +46,109 @@ const ChapterReader = ({ chapterData, locked, onToggleStudied, onToggleBookmark,
   };
 
   return (
-    <article
-      className="chapter-reading-area relative mac-window"
-      style={{
-        width: '100%',
-        maxWidth: '850px',
-        margin: '0 auto',
-      }}
-    >
-      <div className="mac-window-header">
-        <div className="mac-window-controls">
-          <div className="mac-dot-close"></div>
-          <div className="mac-dot-min"></div>
-          <div className="mac-dot-max"></div>
+    <article className="w-full max-w-[850px] mx-auto pb-16">
+      
+      {/* Breadcrumbs */}
+      <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-on-surface-variant mb-10">
+        <Link to="/" className="hover:text-white transition-colors">Home</Link>
+        <ChevronRight size={12} className="opacity-50" />
+        <Link to="/learn" className="hover:text-white transition-colors">Learning Hub</Link>
+        <ChevronRight size={12} className="opacity-50" />
+        <Link to={`/learn/${subjectName?.toLowerCase()}`} className="hover:text-white transition-colors">{subjectName || 'Subject'}</Link>
+        <ChevronRight size={12} className="opacity-50" />
+        <span className="text-white">{topicName || 'Topic'}</span>
+      </div>
+
+      {/* Track Label and Mark Complete Checkbox */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2 text-[#abc4ff]">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          <span className="text-[11px] font-bold tracking-[0.15em] uppercase">JAVA CORE TRACK</span>
         </div>
-        <div className="mac-window-title">Chapter {chapter.chapterNumber}</div>
+        
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <span className="text-sm text-on-surface-variant group-hover:text-white transition-colors">Mark as Complete</span>
+          <div className="relative flex items-center justify-center">
+            <input 
+              type="checkbox" 
+              className="sr-only" 
+              checked={studied || false}
+              onChange={handleToggleStudied}
+              disabled={busy}
+            />
+            <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+              studied 
+                ? 'bg-[#818CF8] border-[#818CF8]' 
+                : 'border-outline-variant/30 group-hover:border-white/50 bg-transparent'
+            }`}>
+              {studied && <Check size={14} className="text-white" strokeWidth={3} />}
+            </div>
+          </div>
+        </label>
       </div>
       
-      <div style={{ padding: '2rem 2.5rem' }}>
       {/* Chapter title */}
-      <h1
-        className="text-3xl sm:text-4xl font-bold glow-title leading-tight mb-4"
-      >
+      <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-display font-bold text-white leading-[1.1] tracking-tight mb-12">
         {chapter.title}
       </h1>
 
-      <AuthorMetaCard 
-        authorName="HttpTechNex Team"
-        lastUpdated={chapter.updatedAt || chapter.createdAt}
-        readTimeMinutes={Math.max(1, Math.round((chapter.content?.length || 500) / 1000))} 
-      />
-
       {/* Content */}
-      {chapter.contentBlocks?.length > 0 ? (
-        <BlockNoteRenderer blocks={chapter.contentBlocks} />
-      ) : (
-        <div className="prose-content">
+      <div 
+        className="prose prose-invert max-w-none prose-lg font-body-lg text-on-surface-variant leading-[1.8]
+          prose-p:mb-6 prose-img:rounded-xl prose-img:border prose-img:border-outline-variant/10 prose-img:shadow-lg
+          prose-h2:font-display prose-h2:font-bold prose-h2:text-3xl prose-h2:text-white prose-h2:mt-16 prose-h2:mb-6
+          prose-h3:font-display prose-h3:font-bold prose-h3:text-2xl prose-h3:text-white prose-h3:mt-12 prose-h3:mb-4
+          prose-blockquote:bg-[#161B22] prose-blockquote:border-l-[#818CF8] prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:shadow-md
+          prose-pre:bg-[#111113] prose-pre:border prose-pre:border-outline-variant/20 prose-pre:rounded-xl prose-pre:p-5
+          [&>p:first-of-type]:text-[19px] [&>p:first-of-type]:text-white/90
+        "
+      >
+        {chapter.contentBlocks?.length > 0 ? (
+          <BlockNoteRenderer blocks={chapter.contentBlocks} />
+        ) : (
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             components={{ code: CodeBlock }}
           >
             {chapter.content}
           </ReactMarkdown>
+        )}
+      </div>
+
+      {/* Code snippets (if stored separately) */}
+      {chapter.codeSnippets?.length > 0 && (
+        <div className="mt-12 space-y-6">
+          {chapter.codeSnippets.map((snippet, i) => (
+            <div key={i}>
+              {snippet.caption && <p className="text-xs mb-2 text-on-surface-variant font-mono">{snippet.caption}</p>}
+              <div className="bg-[#111113] border border-outline-variant/20 rounded-xl p-5 overflow-x-auto shadow-lg">
+                <pre><code className="text-sm font-mono text-[#E0E0E0]">{snippet.code}</code></pre>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Code snippets */}
-      {chapter.codeSnippets?.map((snippet, i) => (
-        <div key={i} className="mb-4">
-          {snippet.caption && <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{snippet.caption}</p>}
-          <pre><code>{snippet.code}</code></pre>
-        </div>
-      ))}
-
       {/* External links */}
       {chapter.externalLinks?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex flex-wrap gap-3 mt-12 pt-8 border-t border-outline-variant/10">
+          <span className="w-full text-xs font-bold tracking-wider uppercase text-on-surface-variant mb-2">External References</span>
           {chapter.externalLinks.map((link, i) => (
             <a
               key={i}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border btn-press"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-lg bg-surface-container-low border border-outline-variant/10 text-on-surface-variant hover:text-white hover:bg-surface-container transition-all shadow-sm"
             >
-              {SOURCE_LABEL[link.source]} <ExternalLink size={11} />
+              {SOURCE_LABEL[link.source] || 'Resource'} <ExternalLink size={12} />
             </a>
           ))}
         </div>
       )}
 
-      {/* Mark as Studied CTA */}
-      <div className="mt-10 pt-8 border-t flex items-center justify-between gap-4" style={{ borderColor: 'var(--border)' }}>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          {studied ? 'Great work! You\'ve studied this chapter.' : 'Done reading? Mark it as studied to track your progress.'}
-        </p>
-        <button
-          onClick={handleToggleStudied}
-          disabled={busy}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 btn-press shrink-0"
-          style={{
-            backgroundColor: studied ? 'var(--accent-soft)' : 'var(--accent)',
-            color: studied ? 'var(--accent)' : 'var(--bg)',
-            border: studied ? '1px solid var(--accent)' : 'none',
-            boxShadow: studied ? '0 0 16px var(--accent-soft)' : '0 4px 20px rgba(62,126,198,0.4)',
-          }}
-        >
-          <Check size={15} strokeWidth={studied ? 3 : 2} />
-          {studied ? 'Studied ✓' : 'Mark as studied'}
-        </button>
-      </div>
-      </div>
     </article>
   );
 };
