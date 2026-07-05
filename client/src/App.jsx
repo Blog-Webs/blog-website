@@ -27,8 +27,7 @@ const AdminLayout = lazy(() => import('./modules/admin/components/AdminLayout'))
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
 const AdminBlogStudio = lazy(() => import('./modules/blog/pages/AdminBlogStudio'));
 const AdminSeriesList = lazy(() => import('./modules/admin/pages/AdminSeriesList'));
-const ContentTreeManager = lazy(() => import('./modules/admin/pages/ContentTreeManager'));
-const ChapterEditor = lazy(() => import('./modules/admin/pages/ChapterEditor'));
+const AdminContentStudio = lazy(() => import('./modules/admin/pages/AdminContentStudio'));
 const MigrationTool = lazy(() => import('./modules/admin/pages/MigrationTool'));
 const Subscribers = lazy(() => import('./modules/admin/pages/Subscribers'));
 const ContactSubmissions = lazy(() => import('./modules/admin/pages/ContactSubmissions'));
@@ -76,8 +75,8 @@ function App() {
             <Route path="blogs" element={<AdminBlogStudio />} />
             <Route path="blogs/:id" element={<AdminBlogStudio />} />
             <Route path="series" element={<AdminSeriesList />} />
-            <Route path="content" element={<ContentTreeManager />} />
-            <Route path="content/chapters/:id" element={<ChapterEditor />} />
+            <Route path="content" element={<AdminContentStudio />} />
+            <Route path="content/chapters/:id" element={<AdminContentStudio />} />
             <Route path="migration" element={<MigrationTool />} />
             <Route path="subscribers" element={<Subscribers />} />
             <Route path="contact" element={<ContactSubmissions />} />
