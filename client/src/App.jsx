@@ -9,6 +9,7 @@ const ReadingLayout = lazy(() => import('./modules/core/layout/ReadingLayout'));
 // Mantine) that only the admin pages actually need, and vice versa.
 const Home = lazy(() => import('./modules/core/pages/Home'));
 const LearnHome = lazy(() => import('./modules/learn/pages/LearnHome'));
+const DocsPage = lazy(() => import('./modules/docs/pages/DocsPage'));
 const SubjectPage = lazy(() => import('./modules/learn/pages/SubjectPage'));
 const TopicPage = lazy(() => import('./modules/learn/pages/TopicPage'));
 const BlogList = lazy(() => import('./modules/blog/pages/BlogList'));
@@ -49,6 +50,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/learn" element={<LearnHome />} />
+          <Route path="/docs" element={<DocsPage />} />
           <Route path="/learn/:subjectSlug" element={<SubjectPage />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
