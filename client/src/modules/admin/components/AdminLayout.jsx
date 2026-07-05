@@ -1,4 +1,5 @@
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -15,6 +16,7 @@ import {
 
 const AdminLayout = () => {
   const location = useLocation();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const getBreadcrumb = () => {
     if (location.pathname.includes('/blogs') || location.pathname.includes('/editor')) {
@@ -44,41 +46,49 @@ const AdminLayout = () => {
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-[#1C202B]">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#abc4ff] to-[#818CF8] flex items-center justify-center shadow-lg shadow-[#818CF8]/20">
-              <TerminalSquare size={16} className="text-[#0E1015]" />
+            <div className="w-8 h-8 rounded-lg bg-[#4375FF] flex items-center justify-center shadow-lg shadow-[#4375FF]/20">
+              <TerminalSquare size={16} className="text-white" />
             </div>
-            <span className="font-display font-bold text-lg tracking-tight text-white">HTTPTechNex</span>
+            <span className="font-display font-bold text-sm tracking-tight text-white flex flex-col">
+              HTTPTechNex
+              <span className="text-[9px] text-on-surface-variant uppercase tracking-wider font-mono font-normal">Admin Console</span>
+            </span>
           </Link>
         </div>
 
-        {/* Action Button (Content Studio screenshot) */}
-        <div className="px-5 mt-6 mb-2">
+        {/* Action Button */}
+        <div className="px-5 mt-6 mb-4">
           <button className="w-full py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-[#4375FF]/20">
             <Plus size={16} /> New Deployment
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4">
-          {/* WORKSPACE GROUP */}
-          <div className="mb-8">
-            <h3 className="px-6 text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-3">Workspace</h3>
-            <nav className="space-y-0.5 px-3">
-              <NavLink to="/admin-portal" end className={navLinkClass}>
-                <LayoutDashboard size={16} /> Command Center
-              </NavLink>
-              <NavLink to="/admin-portal/content" className={navLinkClass}>
-                <BookOpen size={16} /> Curriculum
-              </NavLink>
-              <NavLink to="/admin-portal/blogs" className={navLinkClass}>
-                <FileText size={16} /> Blogs & Media
-              </NavLink>
-            </nav>
-          </div>
+        <div className="flex-1 overflow-y-auto py-2">
+          <nav className="space-y-0.5 px-3">
+            <NavLink to="/admin-portal" end className={navLinkClass}>
+              <TerminalSquare size={16} /> Dash Board
+            </NavLink>
+            <NavLink to="/admin-portal/content" className={navLinkClass}>
+              <BookOpen size={16} /> Curriculum
+            </NavLink>
+            <NavLink to="/admin-portal/blogs" className={navLinkClass}>
+              <FileText size={16} /> Blogs & Media
+            </NavLink>
+            <NavLink to="/admin-portal/tree" className={navLinkClass}>
+              <MessageSquare size={16} /> Content Tree
+            </NavLink>
+            <NavLink to="/admin-portal/contact" className={navLinkClass}>
+              <Cloud size={16} /> Contact Inbox
+            </NavLink>
+            <NavLink to="/admin-portal/ai" className={navLinkClass}>
+              <Bot size={16} /> AI Agent Ops
+            </NavLink>
+          </nav>
         </div>
 
         {/* BOTTOM SECTION */}
         <div className="p-4 border-t border-[#1C202B]">
-          <nav className="space-y-0.5 mb-4">
+          <nav className="space-y-0.5">
             <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:text-white transition-colors">
               <Settings size={16} /> Settings
             </a>
@@ -86,16 +96,6 @@ const AdminLayout = () => {
               <HelpIcon /> Support
             </a>
           </nav>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#161B22] border border-[#2D3342]">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#38bdf8] to-[#818CF8] p-[2px]">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=64&q=80" alt="User Avatar" className="w-full h-full rounded-full object-cover border-2 border-[#161B22]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">Developer Name</p>
-              <p className="text-[10px] text-[#abc4ff] font-mono tracking-wide uppercase">Pro Member</p>
-            </div>
-            <Settings size={14} className="text-on-surface-variant hover:text-white cursor-pointer" />
-          </div>
         </div>
       </aside>
 
@@ -106,39 +106,71 @@ const AdminLayout = () => {
         
         {/* Top Header */}
         <header className="h-16 shrink-0 border-b border-[#1C202B] bg-[#0E1015]/80 backdrop-blur-md flex items-center justify-between px-6 lg:px-10 relative z-10">
-          {/* Breadcrumb */}
+          
+          {/* Breadcrumb (Optional, shown in Dashboard but Content Studio screenshot doesn't show it here. We can keep it or hide it based on route, but let's keep it to match earlier layout unless specified) */}
           <div className="flex items-center gap-2 text-xs font-mono tracking-wide hidden sm:flex">
             {getBreadcrumb()}
           </div>
 
           {/* Search & Actions */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5 ml-auto">
             <div className="relative hidden md:block">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
               <input 
                 type="text" 
                 placeholder="Search commands, docs, or blogs..." 
-                className="w-72 bg-[#161B22] border border-[#2D3342] text-sm text-white rounded-full py-1.5 pl-9 pr-12 focus:outline-none focus:border-[#818CF8] focus:ring-1 focus:ring-[#818CF8] transition-all"
+                className="w-72 bg-[#111113] border border-[#2D3342] text-sm text-white rounded-full py-1.5 pl-9 pr-12 focus:outline-none focus:border-[#818CF8] transition-all"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <kbd className="bg-[#2D3342] text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-mono">⌘</kbd>
                 <kbd className="bg-[#2D3342] text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-mono">K</kbd>
               </div>
             </div>
-            <div className="flex items-center gap-4 border-l border-[#2D3342] pl-5">
-              <button className="text-on-surface-variant hover:text-white transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute 1 top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0E1015]"></span>
-              </button>
-              <button className="text-on-surface-variant hover:text-white transition-colors">
-                <TerminalSquare size={18} />
-              </button>
-              <button className="text-on-surface-variant hover:text-white transition-colors">
-                <LayoutDashboard size={18} />
-              </button>
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#38bdf8] to-[#818CF8] p-0.5 cursor-pointer ml-2">
+            
+            <div className="flex items-center gap-4 border-l border-[#2D3342] pl-5 relative">
+              {/* Profile Avatar Swapped to the left */}
+              <div className="w-7 h-7 rounded-full bg-[#1C202B] p-0.5 cursor-pointer flex-shrink-0">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=64&q=80" alt="Avatar" className="w-full h-full rounded-full object-cover border border-[#0E1015]" />
               </div>
+              
+              <button className="text-on-surface-variant hover:text-white transition-colors">
+                <TerminalSquare size={16} />
+              </button>
+              <button className="text-on-surface-variant hover:text-white transition-colors">
+                <LayoutDashboard size={16} />
+              </button>
+
+              {/* Notification Icon Swapped to the right */}
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="text-on-surface-variant hover:text-white transition-colors relative"
+              >
+                <Bell size={16} />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0E1015]"></span>
+              </button>
+
+              {/* Inline Notification Popup */}
+              {showNotifications && (
+                <div className="absolute top-10 right-0 w-80 bg-[#111113] border border-[#1C202B] rounded-xl shadow-2xl py-2 z-50">
+                  <div className="px-4 py-2 border-b border-[#1C202B] flex justify-between items-center">
+                    <h4 className="text-sm font-bold text-white">Notifications</h4>
+                    <span className="text-[10px] text-[#818CF8] cursor-pointer hover:underline">Mark all read</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    <div className="px-4 py-3 hover:bg-[#161B22] transition-colors cursor-pointer border-b border-[#1C202B]">
+                      <p className="text-xs text-white mb-1"><strong>System Alert:</strong> Edge nodes scaled successfully.</p>
+                      <p className="text-[10px] text-on-surface-variant">2 mins ago</p>
+                    </div>
+                    <div className="px-4 py-3 hover:bg-[#161B22] transition-colors cursor-pointer">
+                      <p className="text-xs text-white mb-1"><strong>New Publication:</strong> "System Arch Guide" draft saved.</p>
+                      <p className="text-[10px] text-on-surface-variant">1 hour ago</p>
+                    </div>
+                  </div>
+                  <div className="px-4 py-2 border-t border-[#1C202B] text-center">
+                    <a href="#" className="text-[11px] text-on-surface-variant hover:text-white">View all activity</a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -156,8 +188,8 @@ const AdminLayout = () => {
 const navLinkClass = ({ isActive }) =>
   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 relative overflow-hidden group ${
     isActive 
-      ? 'bg-[#1C202B]/80 text-white font-medium shadow-[0_4px_12px_rgba(0,0,0,0.1)]' 
-      : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+      ? 'bg-[#1C202B]/80 text-[#4375FF] font-bold border-l-2 border-[#4375FF] shadow-[0_4px_12px_rgba(0,0,0,0.1)]' 
+      : 'text-on-surface-variant hover:text-white hover:bg-white/5 border-l-2 border-transparent'
   }`;
 
 // Helper SVG icons
