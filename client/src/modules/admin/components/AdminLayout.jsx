@@ -105,7 +105,7 @@ const AdminLayout = () => {
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D3342 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: 0.3 }} />
         
         {/* Top Header */}
-        <header className="h-16 shrink-0 border-b border-[#1C202B] bg-[#0E1015]/80 backdrop-blur-md flex items-center justify-between px-6 lg:px-10 relative z-10">
+        <header className="h-16 shrink-0 border-b border-[#1C202B] bg-[#0E1015]/80 backdrop-blur-md flex items-center justify-between px-6 lg:px-10 relative z-50">
           
           {/* Breadcrumb (Optional, shown in Dashboard but Content Studio screenshot doesn't show it here. We can keep it or hide it based on route, but let's keep it to match earlier layout unless specified) */}
           <div className="flex items-center gap-2 text-xs font-mono tracking-wide hidden sm:flex">
@@ -166,9 +166,6 @@ const AdminLayout = () => {
                       <p className="text-[10px] text-on-surface-variant">1 hour ago</p>
                     </div>
                   </div>
-                  <div className="px-4 py-2 border-t border-[#1C202B] text-center">
-                    <a href="#" className="text-[11px] text-on-surface-variant hover:text-white">View all activity</a>
-                  </div>
                 </div>
               )}
             </div>
@@ -176,7 +173,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Main Outlet */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto relative z-10">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto relative z-0">
           <Outlet />
         </main>
       </div>
