@@ -84,7 +84,7 @@ const LearnHome = () => {
       id: 'devops',
       title: 'DevOps & SRE',
       description: 'Automate everything. CI/CD pipelines, Kubernetes orchestration, Docker, and...',
-      icon: 'miscellaneous_services',
+      icon: 'settings',
       iconColor: 'text-[#FBBF24]',
       iconBg: 'bg-[#FBBF24]/10',
       courses: '22 Courses',
@@ -143,7 +143,7 @@ const LearnHome = () => {
 
       {/* Bottom CTA */}
       <div className="bg-[#1C202B] border border-[#2D3342] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10">
-        <div className="flex-1 max-w-xl">
+        <div className="flex-1 w-full max-w-xl">
           <h2 className="text-3xl font-bold text-white mb-4">
             Can't decide where to start?
           </h2>
