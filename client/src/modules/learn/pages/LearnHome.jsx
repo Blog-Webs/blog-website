@@ -96,14 +96,14 @@ const LearnHome = () => {
   return (
     <div className="pt-20 pb-32 px-6 max-w-[1280px] mx-auto bg-[#0E1015]">
       {/* Header */}
-      <div className="mb-16 text-center max-w-3xl mx-auto flex flex-col items-center">
+      <div className="mb-16 text-center max-w-3xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
           Master the Modern Tech Stack
         </h1>
-        <p className="text-[#8B949E] text-[17px] leading-relaxed mb-8 max-w-2xl">
+        <p className="text-[#8B949E] text-[17px] leading-relaxed mb-8 max-w-2xl mx-auto">
           From enterprise backends to generative AI, explore curated learning paths designed by industry experts to accelerate your engineering career.
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center gap-4">
           <div className="px-5 py-2 rounded-full bg-[#3B82F6] text-white text-xs font-bold tracking-wide">
             8 LEARNING DOMAINS
           </div>
