@@ -13,6 +13,7 @@ const navLinkClass = ({ isActive }) =>
 const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const liveUsers = useLiveUserCount();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -84,6 +85,10 @@ const Header = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-6">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-[11px] font-bold text-green-400">{liveUsers} Online</span>
+          </div>
           <button className="text-gray-400 hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[18px]">notifications</span>
           </button>

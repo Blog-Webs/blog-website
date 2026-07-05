@@ -1,188 +1,192 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import BlogCard from '../components/BlogCard';
-import Pagination from '../../core/components/ui/Pagination';
-import { blogApi } from '../api/blog';
-import { seriesApi } from '../api/series';
-import { CardGridSkeleton } from '../../core/components/ui/Skeleton';
-import { optimizeImage } from '../../../utils/image';
-
-const PAGE_SIZE = 9;
 
 const BlogList = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [series, setSeries] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    blogApi.getTagsAndCategories().then(({ data }) => setCategories(data.categories)).catch(() => {});
-    seriesApi.getAll().then(({ data }) => setSeries(data.series)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, category]);
-
-  useEffect(() => {
-    setLoading(true);
-    const params = { page, limit: PAGE_SIZE };
-    if (search) params.search = search;
-    if (category) params.category = category;
-    blogApi
-      .getBlogs(params)
-      .then(({ data }) => {
-        setBlogs(data.blogs);
-        setPages(data.pages || 1);
-      })
-      .finally(() => setLoading(false));
-  }, [search, category, page]);
-
-  const handlePageChange = (next) => {
-    setPage(next);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const featuredPost = blogs.length > 0 ? blogs[0] : null;
-  const standardPosts = blogs.length > 0 ? (page === 1 ? blogs.slice(1) : blogs) : [];
-
   return (
-    <main className="pt-24 pb-24 px-[var(--spacing-gutter)] max-w-[var(--spacing-max-width)] mx-auto">
-      
-      {/* Search Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold mb-2 text-[var(--color-on-surface)]">Blogs</h1>
-          <p className="text-[var(--color-on-surface-variant)] text-sm">Engineering articles, interview strategy, and platform updates.</p>
-        </div>
-        <div className="relative w-full md:w-64">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search articles…"
-            className="w-full pl-9 pr-3 py-2 rounded-full border bg-[var(--color-surface)] border-[var(--color-outline-variant)] text-sm outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all text-[var(--color-on-surface)]"
-          />
-        </div>
-      </div>
-
-      {/* Category Filter */}
-      <section className="mb-12">
-        <div className="flex items-center gap-3 overflow-x-auto chip-scroll pb-2">
-          <button 
-            onClick={() => setCategory('')}
-            className={`px-6 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              category === '' 
-                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' 
-                : 'bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'
-            }`}
-          >
-            All Posts
-          </button>
-          {categories.map((c) => (
-            <button 
-              key={c}
-              onClick={() => setCategory(c)}
-              className={`px-6 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                category === c 
-                  ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' 
-                  : 'bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+    <div className="pt-24 pb-16 px-gutter max-w-max-width mx-auto">
+      {/* Hero Section */}
+      <section className="relative h-[614px] md:h-[716px] rounded-2xl overflow-hidden mb-16 border border-outline-variant/30 shadow-2xl">
+        <div 
+          className="absolute inset-0 bg-cover bg-center" 
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&q=80&w=1200')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full p-8 md:p-12">
+          <div className="glass max-w-2xl p-8 rounded-xl space-y-4">
+            <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-label-sm rounded-full tracking-wider font-bold">FEATURED STORY</span>
+            <Link to="/blog/the-quantum-shift">
+              <h1 className="font-display text-headline-lg-mobile md:text-display text-on-surface leading-tight hover:text-primary transition-colors">
+                The Quantum Shift: How Generative AI is Rewriting the Developer Workflow
+              </h1>
+            </Link>
+            <p className="text-on-surface-variant font-body-lg line-clamp-2">Explore the intersection of LLMs and traditional software engineering as we dive into the next decade of automated cognition.</p>
+            <div className="flex items-center gap-6 pt-4">
+              <div className="flex items-center gap-3">
+                <img className="w-10 h-10 rounded-full border border-primary object-cover" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" alt="Alex Rivera" />
+                <span className="font-medium text-on-surface">Alex Rivera</span>
+              </div>
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-sm">schedule</span>
+                <span className="text-label-sm">12 MIN READ</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {loading ? (
-        <CardGridSkeleton count={6} />
-      ) : blogs.length === 0 ? (
-        <p className="text-center py-20 text-[var(--color-on-surface-variant)] text-lg">No posts found.</p>
-      ) : (
-        <>
-          {/* Featured Blog Hero (only on page 1) */}
-          {page === 1 && featuredPost && (
-            <section className="mb-20">
-              <Link to={`/blog/${featuredPost.slug}`} className="block">
-                <div className="glass-card featured-card-border rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 group">
-                  <div className="relative overflow-hidden h-64 lg:h-auto">
-                    {featuredPost.coverImage ? (
-                      <img 
-                        src={optimizeImage(featuredPost.coverImage)} 
-                        alt={featuredPost.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[var(--color-surface-container-high)]"></div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-background)]/80 to-transparent lg:hidden"></div>
-                  </div>
-                  <div className="p-8 lg:p-12 flex flex-col justify-center bg-[var(--color-surface)]/40">
-                    <div className="flex gap-2 mb-6">
-                      <span className="bg-[var(--color-primary-container)]/20 text-[var(--color-primary-fixed)] px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-widest">
-                        Featured
-                      </span>
-                      <span className="text-[var(--color-on-surface-variant)] text-[14px] flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">schedule</span> {featuredPost.readTimeMinutes} min read
-                      </span>
-                    </div>
-                    <h2 className="font-headline-lg text-[var(--text-headline-lg)] font-bold mb-4 text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors leading-tight">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="text-[var(--color-on-surface-variant)] text-[var(--text-body-lg)] mb-8 leading-relaxed line-clamp-3">
-                      {featuredPost.excerpt || featuredPost.subtitle}
-                    </p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={featuredPost.author?.avatar || '/default-avatar.png'} 
-                          alt={featuredPost.author?.name} 
-                          referrerPolicy="no-referrer"
-                          className="w-10 h-10 rounded-full border border-[var(--color-outline-variant)] object-cover" 
-                        />
-                        <div>
-                          <p className="text-[var(--color-on-surface)] font-bold text-sm">{featuredPost.author?.name || 'Anonymous'}</p>
-                          <p className="text-[var(--color-on-surface-variant)] text-[12px]">{featuredPost.author?.role || 'Author'}</p>
-                        </div>
-                      </div>
-                      <button className="bg-[var(--color-primary)] text-[var(--color-on-primary)] px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 group-hover:scale-105 transition-transform text-sm">
-                        Read Article
-                        <span className="material-symbols-outlined transition-transform group-hover:translate-x-1 text-sm">arrow_forward</span>
-                      </button>
-                    </div>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Blog Grid (8 cols) */}
+        <div className="lg:col-span-8 space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Blog Card 1 */}
+            <article className="flex flex-col bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden card-glow transition-all duration-300">
+              <div className="h-48 w-full overflow-hidden bg-surface-container relative">
+                <img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?auto=format&fit=crop&q=80&w=800" alt="Cover" />
+              </div>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded text-label-sm font-bold">DEVOPS</span>
+                  <span className="text-on-surface-variant text-label-sm uppercase font-bold">5 Min Read</span>
                 </div>
-              </Link>
-            </section>
-          )}
+                <Link to="/blog/scaling-kubernetes">
+                  <h3 className="font-headline-md text-on-surface mb-3 hover:text-primary transition-colors cursor-pointer">The Invisible Infrastructure: Scaling Kubernetes in 2024</h3>
+                </Link>
+                <p className="text-on-surface-variant font-body-md line-clamp-3 mb-6">A deep dive into zero-trust networking and auto-scaling patterns for global enterprise clusters.</p>
+                <div className="mt-auto flex items-center gap-3 border-t border-outline-variant/20 pt-4">
+                  <img className="w-8 h-8 rounded-full object-cover" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100" alt="Marcus Chen" />
+                  <span className="text-label-sm font-medium">Marcus Chen</span>
+                </div>
+              </div>
+            </article>
 
-          {/* Blog Feed */}
-          <section>
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="font-headline-md text-[var(--text-headline-md)] font-bold text-[var(--color-on-surface)]">
-                Latest Intelligence
-              </h3>
+            {/* Blog Card 2 */}
+            <article className="flex flex-col bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden card-glow transition-all duration-300">
+              <div className="h-48 w-full overflow-hidden bg-surface-container relative">
+                <img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800" alt="Cover" />
+              </div>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-label-sm font-bold">AI/ML</span>
+                  <span className="text-on-surface-variant text-label-sm uppercase font-bold">8 Min Read</span>
+                </div>
+                <Link to="/blog/fine-tuning-llms">
+                  <h3 className="font-headline-md text-on-surface mb-3 hover:text-primary transition-colors cursor-pointer">Fine-tuning LLMs for Proprietary Codebases</h3>
+                </Link>
+                <p className="text-on-surface-variant font-body-md line-clamp-3 mb-6">Techniques for creating internal AI assistants that understand your specific architectural patterns.</p>
+                <div className="mt-auto flex items-center gap-3 border-t border-outline-variant/20 pt-4">
+                  <img className="w-8 h-8 rounded-full object-cover" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=100" alt="Sarah Jenkins" />
+                  <span className="text-label-sm font-medium">Sarah Jenkins</span>
+                </div>
+              </div>
+            </article>
+
+            {/* Blog Card 3 */}
+            <article className="flex flex-col bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden card-glow transition-all duration-300">
+              <div className="h-48 w-full overflow-hidden bg-surface-container relative">
+                <img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800" alt="Cover" />
+              </div>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="bg-secondary/10 text-secondary px-2 py-0.5 rounded text-label-sm font-bold">FRONTEND</span>
+                  <span className="text-on-surface-variant text-label-sm uppercase font-bold">4 Min Read</span>
+                </div>
+                <Link to="/blog/mastering-glassmorphism">
+                  <h3 className="font-headline-md text-on-surface mb-3 hover:text-primary transition-colors cursor-pointer">Mastering the Glassmorphism Aesthetic</h3>
+                </Link>
+                <p className="text-on-surface-variant font-body-md line-clamp-3 mb-6">Balancing accessibility and visual depth with modern CSS backdrop-filter techniques.</p>
+                <div className="mt-auto flex items-center gap-3 border-t border-outline-variant/20 pt-4">
+                  <img className="w-8 h-8 rounded-full object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" alt="David Vo" />
+                  <span className="text-label-sm font-medium">David Vo</span>
+                </div>
+              </div>
+            </article>
+
+            {/* Blog Card 4 */}
+            <article className="flex flex-col bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden card-glow transition-all duration-300">
+              <div className="h-48 w-full overflow-hidden bg-surface-container relative">
+                <img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800" alt="Cover" />
+              </div>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="bg-error/10 text-error px-2 py-0.5 rounded text-label-sm font-bold">SECURITY</span>
+                  <span className="text-on-surface-variant text-label-sm uppercase font-bold">10 Min Read</span>
+                </div>
+                <Link to="/blog/post-quantum-cryptography">
+                  <h3 className="font-headline-md text-on-surface mb-3 hover:text-primary transition-colors cursor-pointer">Post-Quantum Cryptography: Preparing Today</h3>
+                </Link>
+                <p className="text-on-surface-variant font-body-md line-clamp-3 mb-6">Why developers should start worrying about the impact of quantum computing on modern encryption.</p>
+                <div className="mt-auto flex items-center gap-3 border-t border-outline-variant/20 pt-4">
+                  <img className="w-8 h-8 rounded-full object-cover" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="Elena Thorne" />
+                  <span className="text-label-sm font-medium">Elena Thorne</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <button className="w-full py-4 glass text-primary font-bold rounded-xl hover:bg-primary/10 transition-colors uppercase tracking-widest text-label-sm">Load More Insights</button>
+        </div>
+
+        {/* Sidebar (4 cols) */}
+        <aside className="lg:col-span-4 space-y-12">
+          {/* Trending Topics */}
+          <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-8">
+            <h4 className="font-headline-md text-on-surface mb-6 border-l-4 border-primary pl-4">Trending Topics</h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between group cursor-pointer">
+                <span className="text-on-surface-variant group-hover:text-primary transition-colors">#GenerativeAI</span>
+                <span className="bg-surface-container-highest px-2 py-0.5 rounded text-label-sm text-outline">128</span>
+              </div>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <span className="text-on-surface-variant group-hover:text-primary transition-colors">#RustLang</span>
+                <span className="bg-surface-container-highest px-2 py-0.5 rounded text-label-sm text-outline">84</span>
+              </div>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <span className="text-on-surface-variant group-hover:text-primary transition-colors">#EdgeComputing</span>
+                <span className="bg-surface-container-highest px-2 py-0.5 rounded text-label-sm text-outline">56</span>
+              </div>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <span className="text-on-surface-variant group-hover:text-primary transition-colors">#PromptEng</span>
+                <span className="bg-surface-container-highest px-2 py-0.5 rounded text-label-sm text-outline">43</span>
+              </div>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <span className="text-on-surface-variant group-hover:text-primary transition-colors">#Wasm</span>
+                <span className="bg-surface-container-highest px-2 py-0.5 rounded text-label-sm text-outline">21</span>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {standardPosts.map((blog) => (
-                <BlogCard key={blog._id} blog={blog} />
-              ))}
+          </div>
+
+          {/* Newsletter */}
+          <div className="glass p-8 rounded-xl relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+            <h4 className="font-headline-md text-on-surface mb-3 relative z-10">The TechNex Dispatch</h4>
+            <p className="text-on-surface-variant mb-6 relative z-10">Weekly deep-dives into the future of computing. No fluff, just engineering excellence.</p>
+            <form className="space-y-4 relative z-10" onSubmit={(e) => { e.preventDefault(); alert('Subscribed!'); }}>
+              <input 
+                className="w-full bg-background border border-outline-variant/30 rounded-lg px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all outline-none text-on-surface placeholder:text-outline/50" 
+                placeholder="dev@work.com" 
+                type="email" 
+              />
+              <button 
+                className="w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all" 
+                type="submit"
+              >
+                SUBSCRIBE NOW
+              </button>
+            </form>
+            <p className="text-[10px] text-outline mt-4 opacity-50 uppercase tracking-tighter">Zero spam. unsubscribe anytime.</p>
+          </div>
+
+          {/* Ad/Promo Space */}
+          <div className="relative rounded-xl overflow-hidden aspect-[4/5] border border-outline-variant/20">
+            <img className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800" alt="Promo" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent flex flex-col justify-end p-8">
+              <h5 className="text-headline-md font-bold mb-2">Master Cloud Architecture</h5>
+              <p className="text-label-sm text-primary font-bold uppercase mb-4">Enroll in Pro Workspace</p>
+              <button className="bg-on-surface text-background font-bold py-2 rounded-lg text-label-sm hover:bg-white transition-colors">LEARN MORE</button>
             </div>
-            
-            <div className="mt-20 flex justify-center">
-              <Pagination page={page} pages={pages} onPageChange={handlePageChange} />
-            </div>
-          </section>
-        </>
-      )}
-    </main>
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 };
 
