@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Search, MessagesSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { forumApi } from '../api/forum';
-import CategoryCard from '../components/CategoryCard';
-import TopicRow from '../components/TopicRow';
 
 const ForumHome = () => {
   const navigate = useNavigate();
@@ -13,11 +11,9 @@ const ForumHome = () => {
   const [recentTopics, setRecentTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
-      // reload recent
       setIsLoading(true);
       const res = await forumApi.getRecentTopics();
       setRecentTopics(res.data);
@@ -56,108 +52,187 @@ const ForumHome = () => {
   }, []);
 
   return (
-    <div className="w-full">
-      {/* Hero Section (Superhuman Style) */}
-      <div 
-        className="relative overflow-hidden w-full px-4 py-24 flex flex-col items-center justify-center text-center"
-        style={{ backgroundColor: '#2C1B2E', color: 'white' }}
-      >
-        {/* Animated Background Blobs */}
-        <div 
-          className="absolute top-0 left-0 w-96 h-96 rounded-full mix-blend-screen filter blur-[80px] opacity-70 animate-blob"
-          style={{ backgroundColor: '#8B5CF6', transform: 'translate(-30%, -30%)' }}
-        />
-        <div 
-          className="absolute bottom-0 right-0 w-96 h-96 rounded-full mix-blend-screen filter blur-[80px] opacity-70 animate-blob animation-delay-2000"
-          style={{ backgroundColor: '#10B981', transform: 'translate(30%, 30%)' }}
-        />
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans pb-24">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
         
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-normal tracking-tight mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Welcome to the<br />
-            <span className="font-semibold">httpTechNex Community</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto font-light">
-            Discover, discuss, and dive deeper with our powerful network of developers.
-          </p>
-
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative mb-8 group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-              <Search size={20} />
-            </div>
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations..." 
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-lg shadow-2xl"
-            />
-          </form>
-
-          <div className="flex flex-wrap justify-center gap-4">
-            <button onClick={() => window.scrollTo({ top: 500, behavior: 'smooth' })} className="px-8 py-3 rounded-xl font-medium flex items-center gap-2 transition-all hover:scale-105" style={{ backgroundColor: '#6366F1', color: 'white' }}>
-              <span className="text-lg">⛳</span> Get Started
-            </button>
-            <button onClick={() => navigate('/forum/create')} className="px-8 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 font-medium flex items-center gap-2 transition-all hover:bg-white/20 hover:scale-105">
-              <span className="text-lg">?</span> Ask the Community
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 py-16 grid lg:grid-cols-12 gap-8">
-        
-        {/* Left Column: Categories */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'var(--border)' }}>
-            <h2 className="text-2xl font-light tracking-tight">Categories</h2>
-          </div>
+        <div className="grid lg:grid-cols-12 gap-8">
           
-          {isLoading ? (
-            <div className="flex flex-col gap-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-2xl bg-black/5 dark:bg-white/5 animate-pulse" />)}
+          {/* Left Column: Sidebar */}
+          <div className="lg:col-span-3 flex flex-col gap-8 hidden md:flex">
+            <div>
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 ml-3">Categories</h3>
+              <div className="flex flex-col gap-1">
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg bg-[#6366F1] text-white font-medium">
+                  <span className="material-symbols-outlined text-[20px]">grid_view</span> All Threads
+                </button>
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">chat_bubble</span> General
+                </button>
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">contact_support</span> Q&A
+                </button>
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">campaign</span> Show & Tell
+                </button>
+              </div>
             </div>
-          ) : (
+            
+            <div>
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 ml-3">My Activity</h3>
+              <div className="flex flex-col gap-1">
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">star</span> Following
+                </button>
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">history</span> Recent
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Column: Main Feed */}
+          <div className="lg:col-span-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-white tracking-tight">Community Forum</h1>
+              <button onClick={() => navigate('/forum/create')} className="flex items-center gap-2 bg-[#abc4ff] text-[#0a0a0a] px-4 py-2 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity">
+                <span className="material-symbols-outlined text-[18px]">add</span> New Discussion
+              </button>
+            </div>
+            
             <div className="flex flex-col gap-4">
-              {categories.map(category => (
-                <div key={category._id} className="bg-surface rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                  <CategoryCard category={category} />
+              {isLoading ? (
+                <div className="flex flex-col gap-4">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-xl bg-white/5 animate-pulse border border-white/5" />)}
                 </div>
-              ))}
+              ) : recentTopics.length === 0 ? (
+                <div className="p-12 text-center text-gray-500 flex flex-col items-center border border-white/5 rounded-xl bg-[#131315]">
+                  <MessagesSquare size={48} className="mb-4 opacity-20" />
+                  <p>No conversations yet.</p>
+                </div>
+              ) : (
+                <>
+                  {recentTopics.map(topic => (
+                    <div key={topic._id} className="p-5 rounded-xl border border-white/5 bg-[#131315] hover:bg-white/5 transition-colors flex gap-5 cursor-pointer" onClick={() => navigate(`/forum/${topic._id}`)}>
+                      {/* Voting */}
+                      <div className="flex flex-col items-center gap-1">
+                        <button className="text-gray-500 hover:text-white transition-colors">
+                          <span className="material-symbols-outlined text-[24px]">arrow_drop_up</span>
+                        </button>
+                        <span className="font-bold text-white text-sm">{topic.likes?.length || 0}</span>
+                        <button className="text-gray-500 hover:text-white transition-colors">
+                          <span className="material-symbols-outlined text-[24px]">arrow_drop_down</span>
+                        </button>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="bg-[#1f2937] text-[#9ca3af] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                            {topic.category?.name || 'General'}
+                          </span>
+                          <span className="text-[12px] text-gray-400">
+                            Posted by <span className="text-white font-medium">{topic.author?.name}</span> • 2h ago
+                          </span>
+                        </div>
+                        <h2 className="text-lg font-bold text-white mb-2 leading-tight">
+                          {topic.title}
+                        </h2>
+                        <p className="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">
+                          {topic.content?.substring(0, 150) || 'No description provided.'}
+                        </p>
+                        
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex items-center gap-2">
+                            {topic.tags?.slice(0, 3).map(tag => (
+                              <span key={tag} className="bg-white/5 text-gray-400 px-2 py-0.5 rounded text-[11px] font-medium border border-white/10">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-4 text-gray-400 text-[12px] font-medium">
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">chat_bubble</span> {topic.replies?.length || 0}</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">visibility</span> 1.2k</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-6 pb-2 flex justify-center">
+                    <button className="text-[#abc4ff] font-bold text-sm hover:underline">
+                      Load more discussions...
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Right Column: Top Conversations */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'var(--border)' }}>
-            <h2 className="text-2xl font-light tracking-tight">Top Conversations</h2>
+          {/* Right Column: Active Discussions & Stats */}
+          <div className="lg:col-span-3 hidden lg:flex flex-col gap-8">
+            <div className="rounded-xl border border-white/5 bg-[#131315] p-5">
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">Active Discussions</h3>
+              <div className="flex flex-col gap-5">
+                <div>
+                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">How to build a custom CLI with Node.js and TUI libraries?</h4>
+                  <p className="text-[11px] text-gray-500">24 new comments today</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">Migrating from Prisma to Drizzle: A post-mortem.</h4>
+                  <p className="text-[11px] text-gray-500">12 new comments today</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">Best practices for AuthN in Next.js App Router?</h4>
+                  <p className="text-[11px] text-gray-500">8 new comments today</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-[#131315] p-5">
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">Top Contributors</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-900 border border-blue-700 flex items-center justify-center text-xs font-bold text-white">AR</div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-white">Alex River</p>
+                      <p className="text-[11px] text-gray-400">2.4k Karma</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-[#abc4ff] text-[18px]">workspace_premium</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-900 border border-purple-700 flex items-center justify-center text-xs font-bold text-white">SC</div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-white">Sarah Connor</p>
+                      <p className="text-[11px] text-gray-400">1.9k Karma</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-orange-900 border border-orange-700 flex items-center justify-center text-xs font-bold text-white">MA</div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-white">Marcus Aurelius</p>
+                      <p className="text-[11px] text-gray-400">1.5k Karma</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-1 flex flex-col gap-3 text-sm text-gray-400">
+              <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                <span>Active users</span>
+                <span className="font-bold text-white">1,204</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                <span>Threads today</span>
+                <span className="font-bold text-white">142</span>
+              </div>
+            </div>
           </div>
           
-          <div className="bg-surface rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            {isLoading ? (
-              <div className="flex flex-col">
-                {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-24 border-b bg-black/5 dark:bg-white/5 animate-pulse" style={{ borderColor: 'var(--border)' }} />)}
-              </div>
-            ) : recentTopics.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                <MessagesSquare size={48} className="mb-4 opacity-20" />
-                <p>No conversations yet.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y" style={{ borderColor: 'var(--border)' }}>
-                {recentTopics.map(topic => (
-                  <div key={topic._id} className="relative group">
-                    <TopicRow topic={topic} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
-
       </div>
     </div>
   );

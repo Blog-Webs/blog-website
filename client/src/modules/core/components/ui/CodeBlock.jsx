@@ -5,17 +5,24 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
   const [copied, setCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
   const language = match ? match[1] : '';
+  
+  // Extract file name if provided via className like language-java:NexServiceController.java
+  let displayLanguage = language;
+  let filename = null;
+  if (className && className.includes(':')) {
+    const parts = className.split(':');
+    displayLanguage = parts[0].replace('language-', '');
+    filename = parts[1];
+  }
 
-  // If it's an inline code snippet (e.g. `const x = 1`), just return a simple span/code
   if (inline) {
     return (
-      <code className="bg-[var(--accent-soft)] text-[var(--accent)] px-1.5 py-0.5 rounded text-[0.875em]" {...props}>
+      <code className="bg-[#1f1f22] text-[#abc4ff] px-1.5 py-0.5 rounded text-[0.875em]" {...props}>
         {children}
       </code>
     );
   }
 
-  // Otherwise, it's a fenced code block
   const codeString = String(children).replace(/\n$/, '');
 
   const handleCopy = async () => {
@@ -29,27 +36,25 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
   };
 
   return (
-    <div className="relative my-6 rounded-xl overflow-hidden border shadow-lg group" style={{ borderColor: 'var(--border)', backgroundColor: '#0D1117' }}>
+    <div className="relative my-8 rounded-xl overflow-hidden border border-white/5 bg-[#131315] group">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-black/40 backdrop-blur-md" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#131315]">
+        <div className="flex items-center gap-3">
           {/* Mac OS window controls */}
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/20 shadow-inner" />
-            <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/20 shadow-inner" />
-            <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-black/20 shadow-inner" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
           </div>
-          {language && (
-            <span className="ml-3 text-[11px] font-mono-display tracking-wider uppercase opacity-60 text-white">
-              {language}
-            </span>
-          )}
+          <span className="text-[11px] font-mono tracking-wider text-gray-500">
+            {filename || (displayLanguage ? displayLanguage.toUpperCase() : 'CODE')}
+          </span>
         </div>
         
         {/* Copy button */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all hover:bg-white/10 text-white/70 hover:text-white btn-press"
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all hover:bg-white/5 text-gray-500 hover:text-white"
           aria-label="Copy code"
         >
           {copied ? (
@@ -67,7 +72,7 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
       </div>
 
       {/* Code Content */}
-      <div className="p-4 overflow-x-auto text-[14px] leading-relaxed font-mono-display text-[#E6EDF3]">
+      <div className="p-4 overflow-x-auto text-[13px] leading-[1.6] font-mono text-[#d1d5db]">
         <pre className="!bg-transparent !p-0 !m-0 !border-none">
           <code className={className} {...props}>
             {children}
