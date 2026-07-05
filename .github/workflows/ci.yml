@@ -1,0 +1,56 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "master", "tanish" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: './client/package-lock.json'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build frontend
+      run: npm run build
+
+  test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: './server/package-lock.json'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    # As there are no unit tests yet, we will just verify the syntax by doing a dry-run check of the app
+    # A simple way to check syntax without booting the server fully (which requires DB) is to run Node's built in syntax checker
+    - name: Syntax Check
+      run: |
+        # Use find to check syntax of all JS files
+        find . -name "*.js" -not -path "./node_modules/*" -exec node -c {} \;
