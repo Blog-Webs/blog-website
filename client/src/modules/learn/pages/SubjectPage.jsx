@@ -38,8 +38,11 @@ const SubjectPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#0A0A0A] relative text-white w-full">
-      {/* Subtle Background Grid Pattern matching the mockup */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D3342 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: 0.3 }} />
+      {/* Square Background Grid Pattern matching the mockup */}
+      <div className="absolute inset-0 pointer-events-none" style={{ 
+        backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)', 
+        backgroundSize: '48px 48px' 
+      }} />
       
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-16">
         <div className="mb-10">
@@ -48,12 +51,12 @@ const SubjectPage = () => {
 
           <div className="flex flex-wrap gap-3 mt-6">
             {subject.hasRoadmap && (
-              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-lg border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-[#0E1015]">
+              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-xl border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-transparent">
                 <Map size={14} /> Roadmap
               </button>
             )}
             {subject.hasCheatsheet && (
-              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-lg border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-[#0E1015]">
+              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-xl border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-transparent">
                 <FileSpreadsheet size={14} /> Cheatsheet
               </button>
             )}
@@ -66,7 +69,7 @@ const SubjectPage = () => {
               key={topic._id}
               to={`/learn/${subjectSlug}/${topic.slug}`}
               state={{ topicId: topic._id }}
-              className="group flex items-center justify-between gap-6 px-6 py-5 rounded-xl border border-[#2D3342] bg-[#0E1015] hover:border-[#4C5363] hover:bg-[#161B22] transition-all shadow-sm"
+              className="group flex items-center justify-between gap-6 px-6 py-5 rounded-xl border border-[#2D3342] bg-transparent hover:border-[#4C5363] hover:bg-[#111113] transition-all"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-3 mb-1.5">
