@@ -5,3 +5,4 @@
 * [StudentOS](student-os.md)
 * [The Community Forum](community-forum.md)
 * [Tech Blogs](tech-blogs.md)
+* [Personalization & Account](personalization.md)
