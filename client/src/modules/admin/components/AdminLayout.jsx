@@ -72,22 +72,6 @@ const AdminLayout = () => {
               <NavLink to="/admin-portal/blogs" className={navLinkClass}>
                 <FileText size={16} /> Blogs & Media
               </NavLink>
-              <NavLink to="/forum" className={navLinkClass}>
-                <MessageSquare size={16} /> Community Forum
-              </NavLink>
-            </nav>
-          </div>
-
-          {/* SYSTEMS GROUP */}
-          <div className="mb-6">
-            <h3 className="px-6 text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-3">Systems</h3>
-            <nav className="space-y-0.5 px-3">
-              <NavLink to="/admin-portal/cloud" className={navLinkClass}>
-                <Cloud size={16} /> Cloud Workspace
-              </NavLink>
-              <NavLink to="/admin-portal/ai" className={navLinkClass}>
-                <Bot size={16} /> AI Agent Ops
-              </NavLink>
             </nav>
           </div>
         </div>
