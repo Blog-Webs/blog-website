@@ -137,13 +137,18 @@ const BlogDetail = () => {
 
             {/* Cover Image */}
             {blog.coverImage && (
-              <div className="rounded-2xl overflow-hidden mb-12 border border-outline-variant/10 shadow-[0_0_50px_rgba(255,255,255,0.03)] group relative">
+              <div className="rounded-2xl overflow-hidden mb-12 border border-outline-variant/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] group relative h-[340px] md:h-[480px]">
                 <img 
                   src={optimizeImage(blog.coverImage)} 
                   alt={blog.title} 
-                  className="w-full object-cover h-[340px] md:h-[440px] group-hover:scale-[1.03] transition-transform duration-1000 ease-out" 
+                  className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-[2000ms] ease-out brightness-90 group-hover:brightness-100" 
+                  style={{ transform: `translateY(${progress * 0.2}px)` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1015]/40 to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-0"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1015] via-transparent to-transparent pointer-events-none transition-opacity duration-500 opacity-60"></div>
+                
+                {/* Floating Light Effect */}
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#818CF8] rounded-full blur-[100px] opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity duration-1000"></div>
+                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#abc4ff] rounded-full blur-[100px] opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity duration-1000"></div>
               </div>
             )}
 
@@ -169,24 +174,24 @@ const BlogDetail = () => {
               )}
             </div>
 
-            {/* Bottom Action Footer */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-6 border-y border-outline-variant/10 mt-16 mb-16">
+            {/* Floating Action Footer */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 py-3 px-6 rounded-full bg-[#15171D]/90 backdrop-blur-md border border-outline-variant/20 shadow-[0_10px_40px_rgba(0,0,0,0.5)] transition-all duration-300 transform">
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 bg-[#abc4ff] text-[#0E1015] px-5 py-2.5 rounded-full font-bold text-sm hover:bg-[#b9cdff] transition-colors shadow-[0_0_20px_rgba(171,196,255,0.2)]">
+                <button className="flex items-center gap-2 bg-[#abc4ff] text-[#0E1015] px-5 py-2 rounded-full font-bold text-sm hover:bg-[#b9cdff] transition-colors shadow-[0_0_20px_rgba(171,196,255,0.2)] hover:scale-105 transform">
                   <ThumbsUp size={16} fill="currentColor" />
                   1.2k
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant/20 text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
-                  <Bookmark size={18} />
+                <button className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors hover:scale-110 transform">
+                  <Bookmark size={16} />
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant/20 text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
-                  <Share2 size={18} />
+                <button className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors hover:scale-110 transform">
+                  <Share2 size={16} />
                 </button>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-mono bg-[#161B22] border border-outline-variant/10 text-on-surface-variant px-3 py-1.5 rounded-full hover:bg-surface-container transition-colors cursor-pointer">#Quantum</span>
-                <span className="text-xs font-mono bg-[#161B22] border border-outline-variant/10 text-on-surface-variant px-3 py-1.5 rounded-full hover:bg-surface-container transition-colors cursor-pointer">#FutureTech</span>
-                <span className="text-xs font-mono bg-[#161B22] border border-outline-variant/10 text-on-surface-variant px-3 py-1.5 rounded-full hover:bg-surface-container transition-colors cursor-pointer">#AI</span>
+              <div className="hidden sm:flex items-center gap-2 border-l border-outline-variant/20 pl-4">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-on-surface-variant uppercase mr-2">Tags</span>
+                <span className="text-[11px] font-mono bg-[#1C202B] border border-outline-variant/10 text-primary px-3 py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors">#Quantum</span>
+                <span className="text-[11px] font-mono bg-[#1C202B] border border-outline-variant/10 text-primary px-3 py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors">#AI</span>
               </div>
             </div>
 
