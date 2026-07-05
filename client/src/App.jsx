@@ -25,8 +25,7 @@ const TopicDetail = lazy(() => import('./modules/forum/pages/TopicDetail'));
 const AdminGuard = lazy(() => import('./modules/admin/components/AdminGuard'));
 const AdminLayout = lazy(() => import('./modules/admin/components/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
-const AdminBlogList = lazy(() => import('./modules/admin/pages/AdminBlogList'));
-const BlogEditor = lazy(() => import('./modules/admin/pages/BlogEditor'));
+const AdminBlogStudio = lazy(() => import('./modules/blog/pages/AdminBlogStudio'));
 const AdminSeriesList = lazy(() => import('./modules/admin/pages/AdminSeriesList'));
 const ContentTreeManager = lazy(() => import('./modules/admin/pages/ContentTreeManager'));
 const ChapterEditor = lazy(() => import('./modules/admin/pages/ChapterEditor'));
@@ -74,8 +73,8 @@ function App() {
         <Route path="/admin-portal" element={<AdminGuard />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="blogs" element={<AdminBlogList />} />
-            <Route path="blogs/:id" element={<BlogEditor />} />
+            <Route path="blogs" element={<AdminBlogStudio />} />
+            <Route path="blogs/:id" element={<AdminBlogStudio />} />
             <Route path="series" element={<AdminSeriesList />} />
             <Route path="content" element={<ContentTreeManager />} />
             <Route path="content/chapters/:id" element={<ChapterEditor />} />
