@@ -1,146 +1,201 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+const DOC_LINKS = [
+  { title: 'User Guide', slug: 'user-guide' },
+  { title: 'The Learn Platform', slug: 'learn-platform' },
+  { title: 'StudentOS', slug: 'student-os' },
+  { title: 'The Community Forum', slug: 'community-forum' },
+  { title: 'Tech Blogs', slug: 'tech-blogs' },
+  { title: 'Personalization & Account', slug: 'personalization' },
+];
+
+const mdModules = import.meta.glob('../../../../../docs/*.md', { query: '?raw', import: 'default' });
+
+const components = {
+  h1: ({node, ...props}) => <h1 className="font-display text-4xl md:text-5xl font-bold mb-6 leading-tight text-on-surface" {...props} />,
+  h2: ({node, ...props}) => <h2 className="font-display text-2xl font-bold text-on-surface mt-12 mb-4" {...props} />,
+  h3: ({node, ...props}) => <h3 className="font-display text-xl font-bold text-on-surface mt-8 mb-4" {...props} />,
+  p: ({node, ...props}) => <p className="mb-6 leading-relaxed" {...props} />,
+  ul: ({node, ...props}) => <ul className="list-disc list-outside ml-5 mb-6 space-y-2" {...props} />,
+  ol: ({node, ...props}) => <ol className="list-decimal list-outside ml-5 mb-6 space-y-2" {...props} />,
+  li: ({node, ...props}) => <li className="text-on-surface-variant pl-1" {...props} />,
+  strong: ({node, ...props}) => <strong className="text-on-surface font-bold" {...props} />,
+  a: ({node, ...props}) => <a className="text-primary hover:underline font-medium" {...props} />,
+  hr: ({node, ...props}) => <hr className="border-outline-variant/20 my-10" {...props} />,
+  blockquote: ({node, ...props}) => (
+    <div className="bg-[#161D2B] border border-[#20293E] border-l-4 border-l-[#64B5F6] rounded-lg p-5 flex gap-4 mt-8 mb-8">
+      <span className="material-symbols-outlined text-[#64B5F6] shrink-0 mt-0.5">info</span>
+      <div className="text-[#abc4ff]/90 text-sm [&>p]:mb-0 leading-relaxed" {...props} />
+    </div>
+  ),
+  code: ({node, inline, className, children, ...props}) => {
+    if (inline) {
+      return (
+        <code className="bg-surface-container-high text-primary px-1.5 py-0.5 rounded text-sm font-mono border border-outline-variant/10" {...props}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <div className="bg-[#111113] border border-outline-variant/20 rounded-xl overflow-hidden mt-8 mb-8 shadow-lg">
+        <div className="bg-[#1C1B1D] px-4 py-3 flex items-center border-b border-outline-variant/10">
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#FF5F56]"></div>
+            <div className="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+            <div className="w-3 h-3 rounded-full bg-[#27C93F]"></div>
+          </div>
+          <div className="text-xs font-mono text-on-surface-variant/70 mx-auto">code</div>
+        </div>
+        <div className="p-5 overflow-x-auto hide-scrollbar">
+          <pre className="font-mono text-sm leading-relaxed text-[#E0E0E0]">
+            <code {...props}>{children}</code>
+          </pre>
+        </div>
+      </div>
+    );
+  }
+};
 
 const DocsPage = () => {
+  const { slug } = useParams();
+  const [markdownContent, setMarkdownContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const currentDocIndex = slug ? DOC_LINKS.findIndex(d => d.slug === slug) : 0;
+  const currentDoc = currentDocIndex !== -1 ? DOC_LINKS[currentDocIndex] : DOC_LINKS[0];
+  
+  const prevDoc = currentDocIndex > 0 ? DOC_LINKS[currentDocIndex - 1] : null;
+  const nextDoc = currentDocIndex < DOC_LINKS.length - 1 ? DOC_LINKS[currentDocIndex + 1] : null;
+
+  useEffect(() => {
+    if (!slug) return;
+    let isMounted = true;
+    const loadContent = async () => {
+      setLoading(true);
+      try {
+        const path = `../../../../../docs/${slug}.md`;
+        if (mdModules[path]) {
+          const content = await mdModules[path]();
+          if (isMounted) {
+            setMarkdownContent(content);
+          }
+        } else {
+          if (isMounted) setMarkdownContent('# 404 - Document Not Found\n\nThe requested documentation page does not exist.');
+        }
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setMarkdownContent('# Error\n\nFailed to load documentation.');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    
+    loadContent();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
+
+  // If no slug, redirect to the first doc
+  if (!slug) {
+    return <Navigate to={`/docs/${DOC_LINKS[0].slug}`} replace />;
+  }
+
   return (
-    <div className="pt-24 pb-16 px-gutter max-w-3xl mx-auto text-on-surface">
+    <div className="pt-24 pb-24 px-gutter max-w-[1200px] mx-auto flex flex-col md:flex-row gap-12 lg:gap-20">
       
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-on-surface-variant uppercase mb-6">
-        <Link to="/docs" className="hover:text-on-surface transition-colors">DOCUMENTATION</Link>
-        <span>›</span>
-        <Link to="/docs/platform" className="hover:text-on-surface transition-colors">PLATFORM</Link>
-        <span>›</span>
-        <span className="text-on-surface">LEARN PLATFORM</span>
-      </div>
-
-      {/* Header Section */}
-      <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 leading-tight">
-        The Learn Platform
-      </h1>
-      <p className="text-lg md:text-xl text-on-surface-variant mb-6 leading-relaxed">
-        Welcome to The Learn Platform! This module is designed to act as your personal coding bootcamp and computer science university, taking you from a complete beginner to an advanced developer.
-      </p>
-
-      {/* Author Info */}
-      <div className="flex items-center gap-3 mb-10 pb-10 border-b border-outline-variant/20">
-        <img 
-          src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" 
-          alt="Author" 
-          className="w-10 h-10 rounded-full border border-outline-variant/30 object-cover"
-        />
-        <div>
-          <div className="text-sm font-bold">By Alex Rivera</div>
-          <div className="text-xs text-on-surface-variant mt-0.5">Updated Oct 24, 2024 • 12 min read</div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="space-y-8 font-body-lg text-on-surface-variant leading-relaxed">
-        <p>
-          Whether you are mastering the fundamentals of Web Development, diving into Data Structures, or exploring Machine Learning, the Learn Platform provides a structured, interactive, and personalized educational experience.
-        </p>
-
-        {/* Red Alert Box */}
-        <div className="bg-[#2A1616] border border-[#3E2020] border-l-4 border-l-[#E57373] rounded-lg p-5 flex gap-4">
-          <span className="material-symbols-outlined text-[#E57373] shrink-0">warning</span>
-          <div>
-            <h4 className="font-bold text-[#E57373] mb-1 text-sm">Important Concept</h4>
-            <p className="text-sm text-on-surface-variant">
-              Inside a Subject, you will find a breakdown of Topics. Think of Topics as specific courses or modules within a university degree. Clicking on a Topic will take you to its dedicated reading page.
-            </p>
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-64 shrink-0">
+        <div className="md:sticky md:top-24 space-y-1">
+          <div className="px-4 mb-4 flex items-center gap-2">
+             <span className="material-symbols-outlined text-primary text-[20px]">menu_book</span>
+             <h3 className="font-display font-bold text-on-surface uppercase tracking-wider text-sm">Documentation</h3>
           </div>
+          
+          {DOC_LINKS.map(link => (
+            <Link 
+              key={link.slug} 
+              to={`/docs/${link.slug}`}
+              className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                 slug === link.slug 
+                   ? 'bg-primary/10 text-primary border border-primary/20'
+                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container border border-transparent'
+              }`}
+            >
+              {link.title}
+            </Link>
+          ))}
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-3xl w-full">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-on-surface-variant uppercase mb-10">
+          <Link to="/docs" className="hover:text-on-surface transition-colors">DOCUMENTATION</Link>
+          <span>›</span>
+          <span className="text-on-surface">{currentDoc?.title || 'PAGE'}</span>
         </div>
 
-        <h2 className="font-display text-2xl font-bold text-on-surface mt-12 mb-4">
-          1. Navigating Subjects and Topics
-        </h2>
-        <p>
-          When you open the Learn Platform, you are greeted with a curated list of Subjects (e.g., Frontend Web Development, Backend Architecture, Algorithms). To begin, define your learning path by selecting the curriculum for better throughput.
-        </p>
+        {/* Content */}
+        {loading ? (
+          <div className="animate-pulse space-y-8">
+            <div className="h-12 bg-surface-container rounded-lg w-3/4"></div>
+            <div className="h-4 bg-surface-container rounded w-full"></div>
+            <div className="h-4 bg-surface-container rounded w-5/6"></div>
+            <div className="h-32 bg-surface-container rounded-xl w-full mt-8"></div>
+          </div>
+        ) : (
+          <div className="text-on-surface-variant font-body-lg">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={components}
+            >
+              {markdownContent}
+            </ReactMarkdown>
+          </div>
+        )}
 
-        {/* Code Block (Mac Window Style) */}
-        <div className="bg-[#111113] border border-outline-variant/20 rounded-xl overflow-hidden mt-6">
-          {/* Window Header */}
-          <div className="bg-[#1C1B1D] px-4 py-3 flex items-center border-b border-outline-variant/10">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF5F56]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#27C93F]"></div>
+        {/* Pagination & Share Bottom */}
+        {!loading && (
+          <div className="mt-20 pt-8 border-t border-outline-variant/20">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
+              {prevDoc ? (
+                <Link to={`/docs/${prevDoc.slug}`} className="w-full sm:w-auto group flex-1 flex flex-col items-start bg-surface-container-low border border-outline-variant/10 rounded-xl p-5 hover:border-outline-variant/30 hover:bg-surface-container transition-all">
+                  <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">PREVIOUS</span>
+                  <span className="font-bold text-sm md:text-base text-on-surface group-hover:text-primary transition-colors">{prevDoc.title}</span>
+                </Link>
+              ) : (
+                <div className="flex-1"></div>
+              )}
+              
+              {nextDoc ? (
+                <Link to={`/docs/${nextDoc.slug}`} className="w-full sm:w-auto group flex-1 flex flex-col items-end text-right bg-surface-container-low border border-outline-variant/10 rounded-xl p-5 hover:border-outline-variant/30 hover:bg-surface-container transition-all">
+                  <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">NEXT</span>
+                  <span className="font-bold text-sm md:text-base text-on-surface group-hover:text-primary transition-colors">{nextDoc.title}</span>
+                </Link>
+              ) : (
+                <div className="flex-1"></div>
+              )}
             </div>
-            <div className="text-xs font-mono text-on-surface-variant/70 mx-auto">navigation.js</div>
+            
+            <div className="flex justify-center">
+              <button 
+                onClick={() => navigator.clipboard.writeText(window.location.href)}
+                className="flex items-center gap-2 bg-[#abc4ff] hover:bg-[#b9cdff] text-[#0a0a0a] font-bold text-sm px-6 py-2.5 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">link</span>
+                Copy Link
+              </button>
+            </div>
           </div>
-          {/* Code Content */}
-          <div className="p-5 overflow-x-auto">
-            <pre className="font-mono text-sm leading-relaxed">
-<code className="text-[#E0E0E0]">
-<span className="text-[#C678DD]">const</span> <span className="text-[#E5C07B]">loadSubject</span> <span className="text-[#56B6C2]">=</span> (<span className="text-[#E06C75]">subjectId</span>) <span className="text-[#C678DD]">=&gt;</span> {'{'}
-{'\n  '}<span className="text-[#56B6C2]">return</span> api.<span className="text-[#61AFEF]">fetch</span>(<span className="text-[#98C379]">{"`/api/subjects/${subjectId}`"}</span>)
-{'\n    '}.<span className="text-[#61AFEF]">then</span>(<span className="text-[#E06C75]">data</span> <span className="text-[#C678DD]">=&gt;</span> {'{'}
-{'\n      '}<span className="text-[#E5C07B]">setTopics</span>(data.topics);
-{'\n      '}<span className="text-[#56B6C2]">if</span> (data.topics.length <span className="text-[#56B6C2]">&gt;</span> <span className="text-[#D19A66]">0</span>) {'{'}
-{'\n        '}<span className="text-[#E5C07B]">setActiveTopic</span>(data.topics[<span className="text-[#D19A66]">0</span>]);
-{'\n      '}  <span className="text-[#E5C07B]">initProgressTracker</span>();
-{'\n      '}{'}'}
-{'\n    '}{'}'});
-{'\n'}{'}'}
-</code>
-            </pre>
-          </div>
-        </div>
-
-        {/* Blue Alert Box */}
-        <div className="bg-[#161D2B] border border-[#20293E] border-l-4 border-l-[#64B5F6] rounded-lg p-5 flex gap-4 mt-6">
-          <span className="material-symbols-outlined text-[#64B5F6] shrink-0">info</span>
-          <div>
-            <h4 className="font-bold text-[#64B5F6] mb-1 text-sm">Pro Tip</h4>
-            <p className="text-[#abc4ff]/80 text-sm">
-              Always use the Sticky Table of Contents on the right side of your screen to jump between headings instantly and optimize your study sessions.
-            </p>
-          </div>
-        </div>
-
-        <h2 className="font-display text-2xl font-bold text-on-surface mt-12 mb-4">
-          2. Progress Tracking
-        </h2>
-        <p>
-          You never have to remember where you left off. The Learn Platform automatically tracks your progress as you read!
-        </p>
-
-        {/* Features Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <div className="bg-surface-container border border-outline-variant/20 rounded-xl p-5 hover:border-outline-variant/40 transition-colors">
-            <span className="material-symbols-outlined text-green-400 mb-3 text-[20px]">timeline</span>
-            <h4 className="font-bold text-on-surface text-sm mb-2">Reading Progress Bar</h4>
-            <p className="text-xs text-on-surface-variant">As you scroll through a chapter, a progress bar at the top visually indicates how far along you are.</p>
-          </div>
-          <div className="bg-surface-container border border-outline-variant/20 rounded-xl p-5 hover:border-outline-variant/40 transition-colors">
-            <span className="material-symbols-outlined text-purple-400 mb-3 text-[20px]">bookmark</span>
-            <h4 className="font-bold text-on-surface text-sm mb-2">Automatic Bookmarking</h4>
-            <p className="text-xs text-on-surface-variant">The system remembers exactly which chapter you were on, allowing you to resume instantly.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Pagination & Share Bottom */}
-      <div className="mt-16 pt-8 border-t border-outline-variant/20">
-        <div className="flex items-center justify-between gap-4 mb-8">
-          <Link to="/docs/getting-started" className="group flex-1 flex flex-col items-start bg-surface-container/50 border border-outline-variant/10 rounded-xl p-5 hover:border-outline-variant/30 transition-all">
-            <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">PREVIOUS</span>
-            <span className="font-bold text-sm md:text-base text-on-surface group-hover:text-primary transition-colors">Getting Started</span>
-          </Link>
-          <Link to="/docs/student-os" className="group flex-1 flex flex-col items-end text-right bg-surface-container/50 border border-outline-variant/10 rounded-xl p-5 hover:border-outline-variant/30 transition-all">
-            <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">NEXT</span>
-            <span className="font-bold text-sm md:text-base text-on-surface group-hover:text-primary transition-colors">StudentOS Features</span>
-          </Link>
-        </div>
-        
-        <div className="flex justify-center">
-          <button className="flex items-center gap-2 bg-[#abc4ff] hover:bg-[#b9cdff] text-[#0a0a0a] font-bold text-sm px-6 py-2.5 rounded-full transition-colors">
-            <span className="material-symbols-outlined text-[18px]">share</span>
-            Share Article
-          </button>
-        </div>
-      </div>
+        )}
+      </main>
 
     </div>
   );
