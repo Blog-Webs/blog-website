@@ -1,230 +1,237 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const ShaderCanvas = () => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    function syncSize() {
-      const w = canvas.clientWidth || 1280;
-      const h = canvas.clientHeight || 720;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-    
-    let resizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncSize);
-      resizeObserver.observe(canvas);
-    }
-    syncSize();
-
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
-    
-    const vs = `attribute vec2 a_position;
-varying vec2 v_texCoord;
-void main() {
-  v_texCoord = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-    
-    const fs = `precision highp float;
-varying vec2 v_texCoord;
-uniform float u_time;
-uniform vec2 u_resolution;
-
-void main() {
-    vec2 uv = v_texCoord;
-    
-    float noise1 = sin(uv.x * 3.0 + u_time * 0.5) * 0.5 + 0.5;
-    float noise2 = cos(uv.y * 2.0 - u_time * 0.4) * 0.5 + 0.5;
-    
-    vec3 color1 = vec3(0.23, 0.51, 0.96); 
-    vec3 color2 = vec3(0.55, 0.36, 0.96); 
-    vec3 color3 = vec3(0.02, 0.71, 0.83); 
-    vec3 bg = vec3(0.035, 0.035, 0.043); 
-    
-    float mask1 = smoothstep(0.2, 0.8, noise1 * noise2);
-    float mask2 = smoothstep(0.3, 0.9, sin(u_time * 0.3 + length(uv - 0.5) * 4.0) * 0.5 + 0.5);
-    
-    vec3 finalColor = mix(bg, color1, mask1 * 0.15);
-    finalColor = mix(finalColor, color2, mask2 * 0.1);
-    
-    vec2 grid = fract(uv * 20.0);
-    float line = step(0.98, grid.x) + step(0.98, grid.y);
-    finalColor += line * 0.02;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-}`;
-    
-    function cs(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-    const prog = gl.createProgram();
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-    const handleMouse = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-    window.addEventListener('mousemove', handleMouse);
-
-    let frameId;
-    function render(t) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001);
-      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      frameId = requestAnimationFrame(render);
-    }
-    render(0);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener('mousemove', handleMouse);
-      if (resizeObserver) resizeObserver.disconnect();
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-50 block" />;
-};
+import { ArrowRight, CheckCircle2, ChevronRight, TerminalSquare, ExternalLink } from 'lucide-react';
 
 const Home = () => {
   return (
-    <div className="overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans pb-32" style={{ 
+      backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)', 
+      backgroundSize: '24px 24px',
+      backgroundPosition: '0 0'
+    }}>
       {/* Hero Section */}
-      <section className="relative min-h-[751px] flex items-center justify-center overflow-hidden py-2xl">
-        <ShaderCanvas />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--color-background)]/40 to-[var(--color-background)] pointer-events-none"></div>
-        <div className="relative z-10 max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)] text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 mb-8">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
-            <span className="text-label-sm text-[var(--color-primary)] uppercase tracking-widest font-semibold">Join 50,000+ Engineers</span>
+      <section className="pt-24 pb-20 px-6 max-w-[1200px] mx-auto text-center md:text-left">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2C1B2E] border border-purple-900/50 mb-8 cursor-pointer hover:bg-[#3d2540] transition-colors">
+          <span className="text-[#8B5CF6]">⚡</span>
+          <span className="text-[11px] font-semibold text-[#c4b5fd] tracking-wide uppercase">New Track: Advanced Microservices with Go</span>
+        </div>
+        
+        <h1 className="text-[56px] md:text-[72px] font-bold text-white leading-[1.05] tracking-[-0.02em] mb-6">
+          Master Modern <br />
+          <span className="text-[#abc4ff] italic">Engineering</span> at Depth
+        </h1>
+        
+        <p className="text-[17px] text-gray-400 max-w-2xl leading-[1.6] mb-10">
+          Structured learning paths, in-depth documentation, and expert articles for 
+          software engineers who demand precision. Build your expertise from 
+          fundamentals to production-grade architectures.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link to="/learn/dsa" className="w-full sm:w-auto px-6 py-3.5 bg-[#abc4ff] text-[#0a0a0a] font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-[#b9cdff] transition-colors">
+            Start Learning <ArrowRight size={18} />
+          </Link>
+          <Link to="/blog" className="w-full sm:w-auto px-6 py-3.5 bg-transparent border border-white/10 text-white font-semibold rounded-lg hover:bg-white/5 transition-colors flex items-center justify-center">
+            Explore Blogs
+          </Link>
+        </div>
+      </section>
+
+      {/* Stats Row */}
+      <section className="max-w-[1200px] mx-auto px-6 mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#131315] border border-white/5 rounded-2xl p-8 flex flex-col justify-center">
+            <h3 className="text-[40px] font-bold text-[#abc4ff] leading-none mb-2">12K+</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Expert Articles</p>
           </div>
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl max-w-4xl mx-auto mb-6 text-[var(--color-on-surface)] font-bold tracking-tight leading-tight">
-            Learn Software Engineering Like Top Tech Companies
+          <div className="bg-[#131315] border border-white/5 rounded-2xl p-8 flex flex-col justify-center">
+            <h3 className="text-[40px] font-bold text-[#abc4ff] leading-none mb-2">340+</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Learning Paths</p>
+          </div>
+          <div className="bg-[#131315] border border-white/5 rounded-2xl p-8 flex flex-col justify-center">
+            <h3 className="text-[40px] font-bold text-[#abc4ff] leading-none mb-2">98K+</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Active Learners</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Technologies Bar */}
+      <section className="border-y border-white/5 bg-[#0e0e10] py-12 mb-24">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-10">Architectures Powered By Industry Standards</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 text-[13px] font-semibold text-gray-300">
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">terminal</span> Java</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">code</span> React</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">javascript</span> Node.js</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">inventory_2</span> Docker</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">cloud</span> AWS</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">data_object</span> Python</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">account_tree</span> Git</div>
+            <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">psychology</span> AI/ML</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Personal Productivity Split */}
+      <section className="max-w-[1200px] mx-auto px-6 mb-32 grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight tracking-tight">
+            Personal Productivity <br />
+            <span className="text-[#abc4ff]">Engineered for Devs</span>
           </h2>
-          <p className="text-lg md:text-xl text-[var(--color-on-surface-variant)] max-w-2xl mx-auto mb-10 leading-relaxed">
-            Master large-scale systems, high-performance algorithms, and modern infrastructure through industry-vetted curriculums and real-world project simulations.
+          <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-md">
+            A unified workspace built for the technical mind. Manage complex documentation tracks, maintain task lists for your side projects, and store code snippets—all in one encrypted vault.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/learn/dsa" className="w-full sm:w-auto px-8 py-4 bg-[var(--color-primary)] text-[var(--color-on-primary)] font-bold rounded-lg hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[var(--color-primary)]/20 text-center">
-              Start Learning
-            </Link>
-            <Link to="/blog" className="w-full sm:w-auto px-8 py-4 bg-transparent border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] font-bold rounded-lg hover:bg-[var(--color-surface-container-high)] transition-all text-center">
-              Explore Blogs
-            </Link>
+          
+          <div className="flex flex-col gap-8">
+            <div className="flex gap-4">
+              <div className="mt-1 w-8 h-8 rounded-full bg-[#1e2336] flex items-center justify-center text-[#abc4ff] shrink-0">
+                <CheckCircle2 size={16} />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-1">Contextual Task Manager</h4>
+                <p className="text-sm text-gray-500 leading-relaxed">Link tasks directly to learning modules or GitHub issues.</p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="mt-1 w-8 h-8 rounded-full bg-[#1e2336] flex items-center justify-center text-[#abc4ff] shrink-0">
+                <TerminalSquare size={16} />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-1">Markdown Native Notes</h4>
+                <p className="text-sm text-gray-500 leading-relaxed">Full support for LaTeX math and Mermaid diagrams.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mac Window Mockup */}
+        <div className="bg-[#131315] border border-white/5 rounded-xl shadow-2xl overflow-hidden text-sm">
+          {/* Top Bar */}
+          <div className="bg-[#0e0e10] border-b border-white/5 px-4 py-3 flex items-center justify-between">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]"></div>
+            </div>
+            <div className="text-[10px] font-mono text-gray-500 tracking-wider">Workspace / Project_A / main</div>
+          </div>
+          {/* Content */}
+          <div className="p-6 font-mono text-[12px]">
+            <p className="text-[#8B5CF6] font-bold mb-4 text-[10px] uppercase tracking-widest">Pending Tasks</p>
+            <div className="bg-[#0e0e10] border border-white/5 rounded-lg p-3 mb-4 flex items-center gap-3">
+              <div className="w-4 h-4 rounded border border-gray-600"></div>
+              <span className="text-gray-300">Refactor Distributed Locks in Go</span>
+            </div>
+            <div className="bg-[#0e0e10] border border-white/5 rounded-lg p-3 mb-8 flex items-center gap-3">
+              <div className="w-4 h-4 rounded bg-[#abc4ff] flex items-center justify-center"><CheckCircle2 size={12} className="text-black" /></div>
+              <span className="text-gray-500 line-through">Review 'Quantum Superiority' draft</span>
+            </div>
+
+            <p className="text-[#8B5CF6] font-bold mb-4 text-[10px] uppercase tracking-widest">Draft Notes</p>
+            <div className="bg-[#0e0e10] border border-white/5 rounded-lg p-4">
+              <span className="text-pink-400">#</span> <span className="text-white font-bold">Arch Notes</span><br/>
+              <span className="text-gray-500">- Implement 2PC for cross-shard ops</span><br/>
+              <span className="text-gray-500">- TTL for ephemeral cache: 300s</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Stats Bento */}
-      <section className="py-[var(--spacing-xl)] max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[var(--color-primary)] text-3xl">article</span>
-            </div>
-            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">500+</span>
-            <span className="text-[var(--color-on-surface-variant)] font-medium">Articles</span>
+      {/* Latest from the Forge */}
+      <section className="max-w-[1200px] mx-auto px-6">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Latest from the Forge</h2>
+            <p className="text-gray-500 text-sm">Stay ahead with deep-dives and structured paths.</p>
           </div>
-          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-tertiary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[var(--color-tertiary)] text-3xl">school</span>
-            </div>
-            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">45</span>
-            <span className="text-[var(--color-on-surface-variant)] font-medium">Pro Courses</span>
-          </div>
-          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-secondary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[var(--color-secondary)] text-3xl">hub</span>
-            </div>
-            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">120+</span>
-            <span className="text-[var(--color-on-surface-variant)] font-medium">Tech Topics</span>
-          </div>
-          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-error)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[var(--color-error)] text-3xl">groups</span>
-            </div>
-            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">50k+</span>
-            <span className="text-[var(--color-on-surface-variant)] font-medium">Engineers</span>
-          </div>
+          <Link to="/blog" className="hidden sm:flex items-center gap-2 text-[12px] font-bold text-[#abc4ff] hover:underline uppercase tracking-wide">
+            View All Content <ExternalLink size={14} />
+          </Link>
         </div>
-      </section>
 
-      {/* Trusted Technologies */}
-      <section className="py-[var(--spacing-xl)] border-y border-[var(--color-outline-variant)]/10 bg-[var(--color-surface-container-lowest)]/50 mb-20">
-        <div className="max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)] overflow-hidden">
-          <p className="text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-[0.2em] mb-10 font-bold">Master Industry Standard Tech</p>
-          <div className="flex justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all">
-            <span className="font-display text-xl font-bold">React</span>
-            <span className="font-display text-xl font-bold">Node.js</span>
-            <span className="font-display text-xl font-bold">Python</span>
-            <span className="font-display text-xl font-bold">AWS</span>
-            <span className="font-display text-xl font-bold">Docker</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Big Blog Card */}
+          <div className="lg:col-span-2 bg-[#131315] border border-white/5 rounded-2xl overflow-hidden flex flex-col md:flex-row cursor-pointer hover:border-white/10 transition-colors group">
+            <div className="w-full md:w-[45%] h-[240px] md:h-auto relative overflow-hidden bg-[#0e0e10]">
+              <img 
+                src="https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&q=80&w=800" 
+                alt="Quantum" 
+                className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+              />
+            </div>
+            <div className="w-full md:w-[55%] p-8 flex flex-col justify-center">
+              <div className="flex items-center gap-3 mb-4 text-[10px] font-bold uppercase tracking-widest">
+                <span className="text-[#abc4ff] bg-[#1a233a] px-2 py-0.5 rounded">Blog Post</span>
+                <span className="text-gray-500">12 min read</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3 leading-tight group-hover:text-[#abc4ff] transition-colors">
+                Quantum Superiority: The Reality of Noisy Intermediate-Scale Quantum Computers
+              </h3>
+              <p className="text-sm text-gray-400 mb-6 line-clamp-2">
+                A technical analysis of current NISQ limitations and the road to fault-tolerance.
+              </p>
+              <div className="flex items-center gap-3 mt-auto">
+                <div className="w-8 h-8 rounded-full bg-[#1e2336] border border-white/10 flex items-center justify-center text-gray-500 text-xs">HV</div>
+                <span className="text-sm font-medium text-gray-300">Dr. Helena Vance</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-      
-      {/* Newsletter Subscription */}
-      <section className="mb-32 max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)]">
-        <div className="glass-card rounded-[32px] p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--color-primary)]/10 blur-[100px] rounded-full pointer-events-none"></div>
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[var(--color-secondary)]/10 blur-[100px] rounded-full pointer-events-none"></div>
-            
-            <span className="material-symbols-outlined text-[var(--color-primary)] text-5xl mb-6 animate-float">mail</span>
-            
-            <h2 className="font-display text-4xl md:text-5xl mb-4 max-w-2xl leading-tight font-bold text-[var(--color-on-surface)]">
-              Join 50,000+ developers receiving our weekly intel.
-            </h2>
-            <p className="text-[var(--color-on-surface-variant)] text-lg mb-10 max-w-xl">
-                Get the latest engineering insights, AI research, and architecture patterns delivered straight to your inbox. No spam, ever.
-            </p>
-            
-            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+
+          {/* Side Track Card */}
+          <div className="lg:col-span-1 bg-[#131315] border border-white/5 rounded-2xl p-8 flex flex-col cursor-pointer hover:border-white/10 transition-colors group">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="material-symbols-outlined text-[16px] text-gray-500">route</span>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Track</span>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-3 group-hover:text-[#abc4ff] transition-colors">Java Master Path</h3>
+            <p className="text-sm text-gray-400 mb-auto">From JVM internals to high-throughput Spring Cloud deployments.</p>
+            <div className="flex items-center justify-between mt-8">
+              <div className="flex -space-x-2">
+                <div className="w-6 h-6 rounded-full bg-gray-700 border border-[#131315]"></div>
+                <div className="w-6 h-6 rounded-full bg-gray-600 border border-[#131315]"></div>
+                <div className="w-6 h-6 rounded-full bg-gray-500 border border-[#131315]"></div>
+              </div>
+              <span className="text-[11px] font-medium text-gray-500">2.4k Students</span>
+            </div>
+          </div>
+
+          {/* Small Track Card */}
+          <div className="lg:col-span-1 bg-[#131315] border border-white/5 rounded-2xl p-8 flex flex-col cursor-pointer hover:border-white/10 transition-colors group">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-gray-500 font-mono font-bold text-[14px]">&lt;&gt;</span>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Track</span>
+            </div>
+            <h3 className="text-md font-bold text-white mb-2 group-hover:text-[#abc4ff] transition-colors">Data Structures & Algorithms</h3>
+            <p className="text-sm text-gray-400 mb-auto">A rigorous mathematical approach to optimization.</p>
+            <div className="flex items-center gap-2 mt-8 text-[11px] font-medium text-gray-500">
+              <span className="material-symbols-outlined text-[14px]">bar_chart</span> Level: Advanced
+            </div>
+          </div>
+
+          {/* Newsletter Box */}
+          <div className="lg:col-span-2 bg-[#abc4ff] rounded-2xl p-8 relative overflow-hidden flex flex-col justify-center">
+            <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-20 pointer-events-none">
+              <span className="material-symbols-outlined text-[200px] text-[#0a0a0a]">mail</span>
+            </div>
+            <div className="relative z-10 max-w-sm">
+              <h3 className="text-2xl font-bold text-[#0a0a0a] mb-2 tracking-tight">Join the Dispatch</h3>
+              <p className="text-sm text-[#0a0a0a]/70 mb-6">Weekly technical reports on the state of engineering delivered to your inbox.</p>
+              <form className="flex bg-[#0a0a0a]/5 rounded-lg p-1 border border-[#0a0a0a]/10">
                 <input 
-                  className="flex-grow bg-[var(--color-background)] border border-[var(--color-outline-variant)] rounded-lg px-6 py-3 text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] outline-none transition-all" 
-                  placeholder="dev@example.com" 
-                  type="email"
+                  type="email" 
+                  placeholder="engineer@domain.com" 
+                  className="bg-transparent border-none outline-none px-3 text-sm flex-1 text-[#0a0a0a] placeholder-[#0a0a0a]/40"
                 />
-                <button className="bg-[var(--color-primary)] text-[var(--color-on-primary)] px-8 py-3 rounded-lg font-bold hover:scale-105 active:scale-95 transition-all">
-                  Subscribe
+                <button className="bg-[#0a0a0a] text-white px-4 py-1.5 rounded-md text-sm font-bold hover:bg-[#1f2937] transition-colors">
+                  Join
                 </button>
-            </form>
-            <p className="text-xs text-[var(--color-on-surface-variant)]/60 mt-6 italic">
-              By subscribing, you agree to our Terms of Service and Privacy Policy.
-            </p>
+              </form>
+            </div>
+          </div>
         </div>
       </section>
+
     </div>
   );
 };

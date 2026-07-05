@@ -3,13 +3,11 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
-import GoogleSignInButton from '../components/ui/GoogleSignInButton';
-import BookmarksDropdown from './BookmarksDropdown';
 import GlobalSearchModal from '../components/ui/GlobalSearchModal';
 
 const navLinkClass = ({ isActive }) =>
-  `text-sm transition-colors duration-200 ${
-    isActive ? 'text-white font-semibold' : 'text-gray-300 hover:text-white'
+  `text-[11px] uppercase tracking-widest transition-colors duration-200 ${
+    isActive ? 'text-white font-bold' : 'text-gray-400 font-semibold hover:text-white'
   }`;
 
 const Header = () => {
@@ -58,12 +56,12 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 w-full z-50 bg-[#0e0e10] border-b border-white/5">
-      <div className="flex justify-between items-center h-14 px-4 sm:px-6 max-w-[1400px] mx-auto">
+    <header className="sticky top-0 w-full z-50 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
+      <div className="flex justify-between items-center h-16 px-6 max-w-[1400px] mx-auto">
         {/* Left: Logo & Menu */}
         <div className="flex items-center gap-4">
           <button 
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-white transition-colors md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle Menu"
           >
@@ -72,33 +70,31 @@ const Header = () => {
             </span>
           </button>
           <Link to="/" className="flex items-center">
-            <h1 className="font-display text-lg font-bold tracking-tight text-white">HTTPTechNex</h1>
+            <h1 className="font-display text-xl font-bold tracking-tight text-white">HTTPTechNex</h1>
           </Link>
         </div>
         
         {/* Center: Navigation */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-          <NavLink to="/learn/dsa" className={navLinkClass}>Learn</NavLink>
-          <NavLink to="/blog" className={navLinkClass}>Blogs</NavLink>
-          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
+        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <NavLink to="/learn/dsa" className={navLinkClass}>Tracks</NavLink>
+          <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
-          <NavLink to="/ai" className={navLinkClass}>AI</NavLink>
+          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
         </nav>
 
-        {/* Right: Search & Profile */}
-        <div className="flex items-center gap-5">
-          <button 
-            className="text-gray-400 hover:text-white transition-colors"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search"
-          >
-            <span className="material-symbols-outlined text-[20px]">search</span>
+        {/* Right: Actions */}
+        <div className="flex items-center gap-6">
+          <button className="text-gray-400 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[18px]">notifications</span>
+          </button>
+          <button className="text-gray-400 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[18px]">settings</span>
           </button>
 
           {user ? (
             <div className="relative" ref={profileRef}>
               <button 
-                className="h-7 w-7 rounded-full bg-[#6366F1] flex items-center justify-center text-white text-[11px] font-semibold tracking-wider hover:opacity-90 transition-opacity"
+                className="h-8 w-8 rounded-full bg-[#6366F1] flex items-center justify-center text-white text-[12px] font-bold tracking-wider hover:opacity-90 transition-opacity"
                 onClick={() => setProfileOpen(!profileOpen)}
               >
                 {getInitials(user.name)}
@@ -132,9 +128,9 @@ const Header = () => {
               )}
             </div>
           ) : (
-            <div className="hidden sm:block">
-              <GoogleSignInButton />
-            </div>
+            <button className="bg-[#abc4ff] text-[#0a0a0a] px-5 py-1.5 rounded-full font-bold text-[12px] uppercase tracking-wider hover:bg-[#b9cdff] transition-colors">
+              Sign In
+            </button>
           )}
         </div>
       </div>
@@ -142,12 +138,17 @@ const Header = () => {
       {/* Mobile nav */}
       {mobileOpen && (
         <div className="md:hidden border-t border-white/5 px-4 py-3 flex flex-col gap-2 bg-[#0e0e10]">
-          <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>Learn</NavLink>
-          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blogs</NavLink>
-          <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
+          <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>Tracks</NavLink>
+          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
-          <NavLink to="/ai" className={navLinkClass} onClick={() => setMobileOpen(false)}>AI</NavLink>
-          {!user && <div className="pt-2"><GoogleSignInButton /></div>}
+          <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
+          {!user && (
+            <div className="pt-2">
+              <button className="w-full bg-[#abc4ff] text-[#0a0a0a] px-5 py-2.5 rounded-lg font-bold text-[12px] uppercase tracking-wider">
+                Sign In
+              </button>
+            </div>
+          )}
         </div>
       )}
       
