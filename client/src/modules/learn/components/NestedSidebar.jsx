@@ -1,33 +1,15 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const NestedSidebar = ({
   subjectName = 'Documentation',
-  topics = [],
-  activeTopicId,
-  chaptersByTopic = {}, 
+  chapters = [], 
   activeChapterId,
-  onSelectTopic,
   onSelectChapter,
   studiedCount = 0,
   totalCount = 0,
 }) => {
-  // Keep track of which topics are expanded. Default to the active topic being open.
-  const [expandedTopics, setExpandedTopics] = useState(new Set([activeTopicId]));
-
-  const toggleTopic = (topicId) => {
-    setExpandedTopics(prev => {
-      const next = new Set(prev);
-      if (next.has(topicId)) {
-        next.delete(topicId);
-      } else {
-        next.add(topicId);
-      }
-      return next;
-    });
-  };
-
   const pct = totalCount > 0 ? Math.round((studiedCount / totalCount) * 100) : 0;
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
@@ -63,85 +45,33 @@ const NestedSidebar = ({
 
       {/* Navigation Tree */}
       <nav className="flex-1 overflow-y-auto px-4 space-y-1" aria-label="Course Navigation">
-        {topics.map(topic => {
-          const isExpanded = expandedTopics.has(topic._id);
-          const isActiveTopic = topic._id === activeTopicId;
-          const topicChapters = chaptersByTopic[topic._id] || [];
-
-          return (
-            <div key={topic._id} className="flex flex-col mb-1">
-              {/* Topic / Folder Level */}
-              <button
-                onClick={() => {
-                  onSelectTopic(topic);
-                  if (!isExpanded) toggleTopic(topic._id);
-                }}
-                aria-expanded={isExpanded}
-                aria-controls={`topic-content-${topic._id}`}
-                className={`flex items-center justify-between w-full px-3 py-3 rounded-lg transition-colors group ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant hover:text-white'}`}
-              >
-                <div className="flex items-center gap-3 overflow-hidden pr-2">
-                  <svg className={`w-4 h-4 shrink-0 ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                    <polyline points="2 17 12 22 22 17"></polyline>
-                    <polyline points="2 12 12 17 22 12"></polyline>
-                  </svg>
-                  <span className={`text-[14px] font-medium truncate ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`}>
-                    {topic.name}
-                  </span>
-                </div>
-                <div 
-                  className="flex items-center justify-center w-5 h-5 rounded hover:bg-white/5 transition-colors shrink-0"
-                  aria-label={isExpanded ? "Collapse topic" : "Expand topic"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTopic(topic._id);
-                  }}
+        {chapters.length === 0 ? (
+          <div className="px-4 py-4 text-xs italic text-[#8B949E]">
+            No chapters available yet.
+          </div>
+        ) : (
+          chapters.map(chapter => {
+            const isActive = chapter._id === activeChapterId;
+            return (
+              <div key={chapter._id} className="relative group">
+                {isActive && (
+                  <div className="absolute -left-[14px] top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#abc4ff] rounded-r-full"></div>
+                )}
+                <button
+                  onClick={() => onSelectChapter(chapter)}
+                  className={`flex items-center w-full px-3 py-2.5 text-sm rounded-lg transition-all ${
+                    isActive 
+                      ? 'bg-[#1C1628] text-white font-medium border border-[#3A225E]' 
+                      : 'text-on-surface-variant hover:text-white hover:bg-[#161B22] border border-transparent'
+                  }`}
                 >
-                  {isExpanded ? <ChevronDown size={14} className="opacity-70" /> : <ChevronRight size={14} className="opacity-70" />}
-                </div>
-              </button>
-
-              {/* Chapters / Document Level (Accordion) */}
-              <div 
-                id={`topic-content-${topic._id}`}
-                className="overflow-hidden transition-all duration-300 ease-in-out"
-                style={{
-                  maxHeight: isExpanded ? `${topicChapters.length * 50 + 20}px` : '0px',
-                  opacity: isExpanded ? 1 : 0
-                }}
-              >
-                <div className="pl-4 pr-1 py-2 space-y-0.5 border-l border-[#2D3342] ml-[21px] mt-1 relative">
-                  {topicChapters.map(chapter => {
-                    const isActive = chapter._id === activeChapterId;
-                    return (
-                      <div key={chapter._id} className="relative">
-                        {isActive && (
-                          <div className="absolute -left-[18px] top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#abc4ff] rounded-r-full"></div>
-                        )}
-                        <button
-                          onClick={() => onSelectChapter(chapter, topic)}
-                          className={`flex items-center w-full px-4 py-2.5 text-sm rounded-lg transition-all ${
-                            isActive 
-                              ? 'bg-[#1C1628] text-white font-medium border border-[#3A225E]' 
-                              : 'text-on-surface-variant hover:text-white hover:bg-white/5 border border-transparent'
-                          }`}
-                        >
-                          <span className="truncate text-left">{chapter.title}</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {isExpanded && topicChapters.length === 0 && isActiveTopic && (
-                     <div className="px-4 py-2 text-xs italic text-on-surface-variant">
-                       No documents
-                     </div>
-                  )}
-                </div>
+                  <FileText size={14} className={`mr-3 shrink-0 ${isActive ? 'text-[#abc4ff]' : 'text-[#8B949E] group-hover:text-white'}`} />
+                  <span className="truncate text-left">{chapter.title}</span>
+                </button>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </nav>
 
       {/* Need Help Card */}

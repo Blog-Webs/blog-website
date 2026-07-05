@@ -1,8 +1,6 @@
 module.exports = {
   User: require('../modules/auth/User'),
   Subject: require('../modules/content/Subject'),
-  Topic: require('../modules/content/Topic'),
-  Track: require('../modules/content/Track'),
   Chapter: require('../modules/content/Chapter'),
   Progress: require('../modules/workspace/Progress'),
   Bookmark: require('../modules/workspace/Bookmark'),

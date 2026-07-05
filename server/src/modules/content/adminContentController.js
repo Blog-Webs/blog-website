@@ -1,5 +1,5 @@
 const slugify = require('slugify');
-const { Subject, Topic, Track, Chapter, Progress, Bookmark, IconOption } = require('../../models');
+const { Subject, Chapter, Progress, Bookmark, IconOption } = require('../../models');
 const cache = require('../../utils/cache');
 
 // Deletes Progress and Bookmark rows that reference any of the given
@@ -59,147 +59,41 @@ const updateSubject = async (req, res) => {
   res.json({ subject });
 };
 
-const deleteTracksAndChaptersByTopicIds = async (topicIds) => {
-  const trackIds = (await Track.find({ topic: { $in: topicIds } }).select('_id')).map((t) => t._id);
-  const chapterIds = (await Chapter.find({ track: { $in: trackIds } }).select('_id')).map((c) => c._id);
-  await cleanupChapterReferences(chapterIds);
-  await Chapter.deleteMany({ track: { $in: trackIds } });
-  await Track.deleteMany({ topic: { $in: topicIds } });
-};
-
 const deleteSubject = async (req, res) => {
   const subject = await Subject.findByIdAndDelete(req.params.id);
   if (!subject) return res.status(404).json({ message: 'Subject not found.' });
 
-  const topicIds = (await Topic.find({ subject: subject._id }).select('_id')).map((t) => t._id);
-  await deleteTracksAndChaptersByTopicIds(topicIds);
-  await Topic.deleteMany({ subject: subject._id });
+  const chapterIds = (await Chapter.find({ subject: subject._id }).select('_id')).map((c) => c._id);
+  await cleanupChapterReferences(chapterIds);
+  await Chapter.deleteMany({ subject: subject._id });
 
   await cache.del('subjects:all');
   await cache.del(`subject:${subject.slug}`);
-  await cache.del('tracks:*'); // To be safe, clear tracks as well
 
   res.json({ message: 'Subject and all related content deleted.' });
 };
 
-// ---------- Topics ----------
-const createTopic = async (req, res) => {
-  const { subject, name, description, order, difficulty, estimatedMinutes, hasVisualizer, visualizerType } = req.body;
-  if (!subject || !name) return res.status(400).json({ message: 'subject and name are required.' });
-
-  const slug = slugify(name, { lower: true, strict: true });
-  const topic = await Topic.create({
-    subject, name, slug, description, order, difficulty, estimatedMinutes, hasVisualizer, visualizerType,
-  });
-  
-  await cache.del('subject:*'); // Clear subject caches so topic list updates
-  
-  res.status(201).json({ topic });
-};
-
-const updateTopic = async (req, res) => {
-  const topic = await Topic.findById(req.params.id);
-  if (!topic) return res.status(404).json({ message: 'Topic not found.' });
-
-  const { name, description, order, difficulty, estimatedMinutes, hasVisualizer, visualizerType } = req.body;
-
-  if (name && name !== topic.name) {
-    topic.name = name;
-    let slug = slugify(name, { lower: true, strict: true });
-    const existingCount = await Topic.countDocuments({
-      subject: topic.subject, slug: new RegExp(`^${slug}`), _id: { $ne: topic._id },
-    });
-    topic.slug = existingCount > 0 ? `${slug}-${existingCount + 1}` : slug;
-  }
-  if (description !== undefined) topic.description = description;
-  if (order !== undefined) topic.order = order;
-  if (difficulty !== undefined) topic.difficulty = difficulty;
-  if (estimatedMinutes !== undefined) topic.estimatedMinutes = estimatedMinutes;
-  if (hasVisualizer !== undefined) topic.hasVisualizer = hasVisualizer;
-  if (visualizerType !== undefined) topic.visualizerType = visualizerType;
-
-  await topic.save();
-  await cache.del('subject:*');
-  res.json({ topic });
-};
-
-const deleteTopic = async (req, res) => {
-  const topic = await Topic.findByIdAndDelete(req.params.id);
-  if (!topic) return res.status(404).json({ message: 'Topic not found.' });
-
-  await deleteTracksAndChaptersByTopicIds([topic._id]);
-
-  await cache.del('subject:*');
-  await cache.del('tracks:*');
-
-  res.json({ message: 'Topic and all of its tracks and chapters were deleted.' });
-};
-
-// ---------- Tracks ----------
-const createTrack = async (req, res) => {
-  const { topic, name, order, icon } = req.body;
-  if (!topic || !name) return res.status(400).json({ message: 'topic and name are required.' });
-
-  const slug = slugify(name, { lower: true, strict: true });
-  const track = await Track.create({ topic, name, slug, order, icon });
-  await cache.del('tracks:*');
-  res.status(201).json({ track });
-};
-
-const updateTrack = async (req, res) => {
-  const track = await Track.findById(req.params.id);
-  if (!track) return res.status(404).json({ message: 'Track not found.' });
-
-  const { name, order, icon } = req.body;
-
-  if (name && name !== track.name) {
-    track.name = name;
-    let slug = slugify(name, { lower: true, strict: true });
-    const existingCount = await Track.countDocuments({
-      topic: track.topic, slug: new RegExp(`^${slug}`), _id: { $ne: track._id },
-    });
-    track.slug = existingCount > 0 ? `${slug}-${existingCount + 1}` : slug;
-  }
-  if (order !== undefined) track.order = order;
-  if (icon !== undefined) track.icon = icon;
-
-  await track.save();
-  await cache.del('tracks:*');
-  res.json({ track });
-};
-
-const deleteTrack = async (req, res) => {
-  const track = await Track.findByIdAndDelete(req.params.id);
-  if (!track) return res.status(404).json({ message: 'Track not found.' });
-
-  const chapterIds = (await Chapter.find({ track: track._id }).select('_id')).map((c) => c._id);
-  await cleanupChapterReferences(chapterIds);
-  await Chapter.deleteMany({ track: track._id });
-
-  await cache.del('tracks:*');
-
-  res.json({ message: 'Track and all of its chapters were deleted.' });
-};
 
 // ---------- Chapters ----------
 const createChapter = async (req, res) => {
   const {
-    track, chapterNumber, title, content, contentBlocks, headings,
+    subject, chapterNumber, title, content, contentBlocks, headings,
     codeSnippets, isFreePreview, estimatedMinutes, order, externalLinks,
   } = req.body;
-  if (!track || !chapterNumber || !title || !content) {
-    return res.status(400).json({ message: 'track, chapterNumber, title and content are required.' });
+  
+  if (!subject || !chapterNumber || !title || !content) {
+    return res.status(400).json({ message: 'subject, chapterNumber, title and content are required.' });
   }
 
   const slug = slugify(title, { lower: true, strict: true });
   const chapter = await Chapter.create({
-    track, chapterNumber, title, slug, content,
+    subject, chapterNumber, title, slug, content,
     contentBlocks: contentBlocks || null,
     headings: Array.isArray(headings) ? headings : [],
     codeSnippets, isFreePreview, estimatedMinutes, order, externalLinks,
   });
   
-  await cache.del('tracks:*'); // Updates chapter count
+  await cache.del(`subject:${subject}:chapters`); // Updates chapter count
   
   res.status(201).json({ chapter });
 };
@@ -229,7 +123,7 @@ const updateChapter = async (req, res) => {
 
   await chapter.save();
   await cache.del(`chapter:${chapter._id}`);
-  await cache.del('tracks:*'); // Updates chapter titles/order
+  await cache.del(`subject:${chapter.subject}:chapters`); // Updates chapter titles/order
   res.json({ chapter });
 };
 
@@ -240,7 +134,7 @@ const deleteChapter = async (req, res) => {
   await cleanupChapterReferences([chapter._id]);
 
   await cache.del(`chapter:${chapter._id}`);
-  await cache.del('tracks:*');
+  await cache.del(`subject:${chapter.subject}:chapters`);
 
   res.json({ message: 'Chapter deleted.' });
 };
@@ -278,8 +172,6 @@ const deleteIconOption = async (req, res) => {
 
 module.exports = {
   createSubject, updateSubject, deleteSubject,
-  createTopic, updateTopic, deleteTopic,
-  createTrack, updateTrack, deleteTrack,
   createChapter, updateChapter, deleteChapter,
   getIconOptions, createIconOption, updateIconOption, deleteIconOption,
 };

@@ -55,8 +55,6 @@ const ChapterReader = ({ chapterData, subjectName, topicName, locked, onToggleSt
         <Link to="/learn" className="hover:text-white transition-colors">Learning Hub</Link>
         <ChevronRight size={12} className="opacity-50" />
         <Link to={`/learn/${subjectName?.toLowerCase()}`} className="hover:text-white transition-colors">{subjectName || 'Subject'}</Link>
-        <ChevronRight size={12} className="opacity-50" />
-        <span className="text-white">{topicName || 'Topic'}</span>
       </div>
 
       {/* Track Label and Mark Complete Checkbox */}
@@ -65,7 +63,7 @@ const ChapterReader = ({ chapterData, subjectName, topicName, locked, onToggleSt
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
           </svg>
-          <span className="text-[11px] font-bold tracking-[0.15em] uppercase">JAVA CORE TRACK</span>
+          <span className="text-[11px] font-bold tracking-[0.15em] uppercase">{subjectName}</span>
         </div>
         
         <label className="flex items-center gap-2 cursor-pointer group">

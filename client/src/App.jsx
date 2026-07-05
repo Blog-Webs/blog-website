@@ -59,7 +59,6 @@ function App() {
         {/* Topic reading — no header/footer (immersive reading layout) */}
         <Route element={<ReadingLayout />}>
           <Route path="/learn/:subjectSlug" element={<TopicPage />} />
-          <Route path="/learn/:subjectSlug/:topicSlug" element={<TopicPage />} />
         </Route>
 
         {/* Blog reading — no header/footer, only center pane scrolls */}

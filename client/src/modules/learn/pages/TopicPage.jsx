@@ -15,16 +15,14 @@ import { useScrollSpy } from '../../core/hooks/useScrollSpy';
 import { useReadingProgress } from '../../core/hooks/useReadingProgress';
 
 const TopicPage = () => {
-  const { subjectSlug, topicSlug } = useParams();
+  const { subjectSlug } = useParams();
   const { user, refreshUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef(null);
 
   const [subject, setSubject] = useState(null);
-  const [allTopics, setAllTopics] = useState([]);
-  const [activeTopic, setActiveTopic] = useState(null);
+  const [chapters, setChapters] = useState([]);
   
-  const [chaptersByTopic, setChaptersByTopic] = useState({});
   const [activeChapterId, setActiveChapterId] = useState(null);
   const [chapterData, setChapterData] = useState(null);
   
@@ -33,66 +31,21 @@ const TopicPage = () => {
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [noteContent, setNoteContent] = useState('');
 
-  // Initial Load: Fetch Subject, Topics, and all Chapters
+  // Initial Load: Fetch Subject and Chapters
   useEffect(() => {
     setLoading(true);
-    contentApi.getSubjectBySlug(subjectSlug).then(async ({ data }) => {
+    contentApi.getSubjectBySlug(subjectSlug).then(({ data }) => {
       setSubject(data.subject);
-      const subjectTopics = data.topics || [];
-      setAllTopics(subjectTopics);
+      setChapters(data.chapters || []);
       
-      let initialTopic = subjectTopics.find((t) => t.slug === topicSlug);
-      if (!initialTopic && subjectTopics.length > 0) {
-        initialTopic = subjectTopics[0];
+      if (data.chapters && data.chapters.length > 0) {
+        setActiveChapterId(data.chapters[0]._id);
       }
-      setActiveTopic(initialTopic || null);
-      
-      // Fetch chapters for all topics to populate the sidebar tree
-      const map = {};
-      let firstChapterId = null;
-      
-      await Promise.all(
-        subjectTopics.map(async (t) => {
-          try {
-            const tracksRes = await contentApi.getTracksForTopic(t._id);
-            const tracks = tracksRes.data.tracks;
-            if (tracks && tracks.length > 0) {
-              const chaptersRes = await contentApi.getChaptersForTrack(tracks[0]._id);
-              const chaps = chaptersRes.data.chapters;
-              map[t._id] = chaps;
-              
-              if (t._id === initialTopic?._id && chaps.length > 0 && !firstChapterId) {
-                firstChapterId = chaps[0]._id;
-              }
-            } else {
-              map[t._id] = [];
-            }
-          } catch (e) {
-            map[t._id] = [];
-          }
-        })
-      );
-      
-      setChaptersByTopic(map);
-      
-      if (firstChapterId) {
-        setActiveChapterId(firstChapterId);
-      } else {
-        // If initial topic has no chapters, fallback to very first available chapter
-        for (const t of subjectTopics) {
-           if (map[t._id] && map[t._id].length > 0) {
-             setActiveChapterId(map[t._id][0]._id);
-             setActiveTopic(t);
-             break;
-           }
-        }
-      }
-      
       setLoading(false);
     }).catch(() => {
       setLoading(false);
     });
-  }, [subjectSlug, topicSlug]);
+  }, [subjectSlug]);
 
   // Load Chapter Content when active chapter changes
   useEffect(() => {
@@ -136,13 +89,7 @@ const TopicPage = () => {
   const handleToggleStudied = useCallback(async (chapterId) => {
     const { data } = await progressApi.toggleStudied(chapterId);
     
-    setChaptersByTopic((prev) => {
-       const next = { ...prev };
-       for (const topicId in next) {
-          next[topicId] = next[topicId].map(c => c._id === chapterId ? { ...c, studied: data.studied } : c);
-       }
-       return next;
-    });
+    setChapters((prev) => prev.map(c => c._id === chapterId ? { ...c, studied: data.studied } : c));
     setChapterData((prev) => (prev?.chapter?._id === chapterId ? { ...prev, studied: data.studied } : prev));
   }, []);
 
@@ -174,30 +121,19 @@ const TopicPage = () => {
   const activeHeadingId = useScrollSpy(headings, scrollRef);
   const progress = useReadingProgress(scrollRef);
 
-  // Flatten chapters for prev/next logic
-  const flattenedChapters = useMemo(() => {
-    return allTopics.flatMap(t => chaptersByTopic[t._id] || []);
-  }, [allTopics, chaptersByTopic]);
-
-  const currentChapterIndex = flattenedChapters.findIndex(c => c._id === activeChapterId);
+  const currentChapterIndex = chapters.findIndex(c => c._id === activeChapterId);
   const hasPrev = currentChapterIndex > 0;
-  const hasNext = currentChapterIndex >= 0 && currentChapterIndex < flattenedChapters.length - 1;
+  const hasNext = currentChapterIndex >= 0 && currentChapterIndex < chapters.length - 1;
   
   const handlePrev = () => {
     if (hasPrev) {
-      const prevCh = flattenedChapters[currentChapterIndex - 1];
-      setActiveChapterId(prevCh._id);
-      const tId = allTopics.find(t => chaptersByTopic[t._id]?.some(c => c._id === prevCh._id))?._id;
-      if (tId) setActiveTopic(allTopics.find(t => t._id === tId));
+      setActiveChapterId(chapters[currentChapterIndex - 1]._id);
     }
   };
   
   const handleNext = () => {
     if (hasNext) {
-      const nextCh = flattenedChapters[currentChapterIndex + 1];
-      setActiveChapterId(nextCh._id);
-      const tId = allTopics.find(t => chaptersByTopic[t._id]?.some(c => c._id === nextCh._id))?._id;
-      if (tId) setActiveTopic(allTopics.find(t => t._id === tId));
+      setActiveChapterId(chapters[currentChapterIndex + 1]._id);
     }
   };
 
@@ -206,8 +142,8 @@ const TopicPage = () => {
   };
 
   // Progress calculation across entire subject
-  const totalCount = flattenedChapters.length;
-  const studiedCount = flattenedChapters.filter(c => c.studied).length;
+  const totalCount = chapters.length;
+  const studiedCount = chapters.filter(c => c.studied).length;
 
   if (loading) {
     return (
@@ -239,15 +175,9 @@ const TopicPage = () => {
           <div className="h-full lg:overflow-y-auto">
             <NestedSidebar
               subjectName={subject.name}
-              topics={allTopics}
-              activeTopicId={activeTopic?._id}
-              chaptersByTopic={chaptersByTopic}
+              chapters={chapters}
               activeChapterId={activeChapterId}
-              onSelectTopic={setActiveTopic}
-              onSelectChapter={(ch, t) => {
-                setActiveChapterId(ch._id);
-                setActiveTopic(t);
-              }}
+              onSelectChapter={(ch) => setActiveChapterId(ch._id)}
               studiedCount={studiedCount}
               totalCount={totalCount}
             />
@@ -264,7 +194,6 @@ const TopicPage = () => {
               <ChapterReader
                 chapterData={chapterData}
                 subjectName={subject?.name}
-                topicName={activeTopic?.name}
                 locked={chapterData.locked}
                 onToggleStudied={handleToggleStudied}
                 onToggleBookmark={handleToggleBookmark}

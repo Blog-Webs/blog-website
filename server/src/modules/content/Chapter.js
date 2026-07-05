@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const chapterSchema = new mongoose.Schema(
   {
-    track: { type: mongoose.Schema.Types.ObjectId, ref: 'Track', required: true, index: true },
+    subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true, index: true },
     chapterNumber: { type: Number, required: true }, // 1, 2, 3...
     title: { type: String, required: true, trim: true }, // "Introduction", "Features & Use Cases"
     slug: { type: String, required: true, lowercase: true },
@@ -36,7 +36,7 @@ const chapterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-chapterSchema.index({ track: 1, chapterNumber: 1 }, { unique: true });
+chapterSchema.index({ subject: 1, chapterNumber: 1 }, { unique: true });
 chapterSchema.index({ title: 'text', content: 'text' });
 
 module.exports = mongoose.model('Chapter', chapterSchema);

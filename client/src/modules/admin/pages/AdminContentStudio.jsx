@@ -7,7 +7,6 @@ import {
 import { contentApi } from '../../learn/api/content';
 import { adminApi } from '../api/admin';
 import { blogApi } from '../../blog/api/blog';
-import IconManagerModal from '../components/IconManagerModal';
 import { ContentTreeSkeleton } from '../components/AdminSkeleton';
 import BlockEditor from '../../core/components/ui/BlockEditor';
 
@@ -16,8 +15,6 @@ const inputStyle = { borderColor: '#1C202B', backgroundColor: '#111113', color: 
 const textareaClass = 'px-4 py-3 rounded-xl border text-[15px] outline-none w-full input-focus resize-none shadow-sm';
 
 const emptySubjectForm = { name: '', description: '', icon: 'layers', color: '#5EEAD4', coverImage: '' };
-const emptyTopicForm = { name: '', description: '', difficulty: 'beginner', estimatedMinutes: 30 };
-const emptyTrackForm = { name: '' };
 const emptyChapter = {
   title: '',
   content: '',
@@ -61,23 +58,11 @@ const AdminContentStudio = () => {
   const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState([]);
   const [expandedSubject, setExpandedSubject] = useState(null);
-  const [topics, setTopics] = useState({});
-  const [expandedTopic, setExpandedTopic] = useState(null);
-  const [tracks, setTracks] = useState({});
-  const [expandedTrack, setExpandedTrack] = useState(null);
   const [chapters, setChapters] = useState({});
   
   const [addingSubject, setAddingSubject] = useState(false);
   const [subjectForm, setSubjectForm] = useState(emptySubjectForm);
   const [editingSubjectId, setEditingSubjectId] = useState(null);
-
-  const [addingTopicTo, setAddingTopicTo] = useState(null);
-  const [topicForm, setTopicForm] = useState(emptyTopicForm);
-  const [editingTopicId, setEditingTopicId] = useState(null);
-
-  const [addingTrackTo, setAddingTrackTo] = useState(null);
-  const [trackForm, setTrackForm] = useState(emptyTrackForm);
-  const [editingTrackId, setEditingTrackId] = useState(null);
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -85,7 +70,7 @@ const AdminContentStudio = () => {
   // Editor State
   const isEditingChapter = id && id !== 'new';
   const isCreatingChapter = id === 'new';
-  const trackIdFromQuery = searchParams.get('track');
+  const subjectIdFromQuery = searchParams.get('subject');
   const [chapter, setChapter] = useState(emptyChapter);
   const [breadcrumb, setBreadcrumb] = useState(null);
   const [existingChapterCount, setExistingChapterCount] = useState(0);
@@ -123,12 +108,10 @@ const AdminContentStudio = () => {
     
     if (isCreatingChapter) {
       setChapter(emptyChapter);
-      if (trackIdFromQuery) {
-        contentApi.getChaptersForTrack(trackIdFromQuery).then(({ data }) => {
+      if (subjectIdFromQuery) {
+        contentApi.getChaptersForSubject(subjectIdFromQuery).then(({ data }) => {
           setBreadcrumb({
-            subjectName: data.track?.topic?.subject?.name,
-            topicName: data.track?.topic?.name,
-            trackName: data.track?.name,
+            subjectName: data.subject?.name,
           });
           setExistingChapterCount(data.chapters.length);
           setChapterLoaded(true);
@@ -150,22 +133,20 @@ const AdminContentStudio = () => {
           coverImage: found.coverImage || ''
         });
         setBreadcrumb({
-          subjectName: found.track?.topic?.subject?.name,
-          topicName: found.track?.topic?.name,
-          trackName: found.track?.name,
+          subjectName: found.subject?.name,
         });
         
-        // Ensure track is loaded and expanded in tree to show "Recently Modified"
-        if (found.track) {
-          contentApi.getChaptersForTrack(found.track._id).then(res => {
-            setChapters(prev => ({ ...prev, [found.track._id]: res.data.chapters }));
+        // Ensure subject is loaded and expanded in tree to show "Recently Modified"
+        if (found.subject) {
+          contentApi.getChaptersForSubject(found.subject._id).then(res => {
+            setChapters(prev => ({ ...prev, [found.subject._id]: res.data.chapters }));
           });
         }
 
         setChapterLoaded(true);
       });
     }
-  }, [id, isCreatingChapter, trackIdFromQuery]);
+  }, [id, isCreatingChapter, subjectIdFromQuery]);
 
   // Tree Handlers
   const toggleSubject = async (subject) => {
@@ -174,39 +155,15 @@ const AdminContentStudio = () => {
       return;
     }
     setExpandedSubject(subject._id);
-    if (!topics[subject._id]) {
-      const { data } = await contentApi.getSubjectBySlug(subject.slug);
-      setTopics((prev) => ({ ...prev, [subject._id]: data.topics }));
+    if (!chapters[subject._id]) {
+      const { data } = await contentApi.getChaptersForSubject(subject._id);
+      setChapters((prev) => ({ ...prev, [subject._id]: data.chapters }));
     }
   };
 
-  const toggleTopic = async (topic) => {
-    if (expandedTopic === topic._id) {
-      setExpandedTopic(null);
-      return;
-    }
-    setExpandedTopic(topic._id);
-    if (!tracks[topic._id]) {
-      const { data } = await contentApi.getTracksForTopic(topic._id);
-      setTracks((prev) => ({ ...prev, [topic._id]: data.tracks }));
-    }
-  };
-
-  const toggleTrack = async (track) => {
-    if (expandedTrack === track._id) {
-      setExpandedTrack(null);
-      return;
-    }
-    setExpandedTrack(track._id);
-    if (!chapters[track._id]) {
-      const { data } = await contentApi.getChaptersForTrack(track._id);
-      setChapters((prev) => ({ ...prev, [track._id]: data.chapters }));
-    }
-  };
-
-  const refreshChapters = async (trackId) => {
-    const { data } = await contentApi.getChaptersForTrack(trackId);
-    setChapters((prev) => ({ ...prev, [trackId]: data.chapters }));
+  const refreshChapters = async (subjectId) => {
+    const { data } = await contentApi.getChaptersForSubject(subjectId);
+    setChapters((prev) => ({ ...prev, [subjectId]: data.chapters }));
   };
 
   const handleAddSubject = async () => {
@@ -232,59 +189,11 @@ const AdminContentStudio = () => {
     setTimeout(async () => { if (!undone) try { await adminApi.deleteSubject(subjectId); } catch {} }, 5100);
   };
 
-  const handleAddTopic = async (subjectId) => {
-    if (!topicForm.name.trim()) return;
-    const existing = topics[subjectId] || [];
-    const { data } = await adminApi.createTopic({ subject: subjectId, ...topicForm, order: existing.length });
-    setTopics((prev) => ({ ...prev, [subjectId]: [...existing, data.topic] }));
-    setTopicForm(emptyTopicForm);
-    setAddingTopicTo(null);
-  };
-  
-  const handleSaveTopicEdit = async (subjectId) => {
-    if (!topicForm.name.trim()) return;
-    const { data } = await adminApi.updateTopic(editingTopicId, topicForm);
-    setTopics((prev) => ({ ...prev, [subjectId]: prev[subjectId].map((t) => (t._id === editingTopicId ? data.topic : t)) }));
-    setEditingTopicId(null);
-  };
-  
-  const handleDeleteTopic = async (subjectId, topicId, topicName) => {
-    const snapshot = topics[subjectId] ? [...topics[subjectId]] : [];
-    setTopics((prev) => ({ ...prev, [subjectId]: (prev[subjectId] || []).filter((t) => t._id !== topicId) }));
+  const handleDeleteChapter = async (subjectId, chapterId, chapterTitle) => {
+    const snapshot = chapters[subjectId] ? [...chapters[subjectId]] : [];
+    setChapters((prev) => ({ ...prev, [subjectId]: (prev[subjectId] || []).filter((c) => c._id !== chapterId) }));
     let undone = false;
-    showToast(`Deleted topic "${topicName}"`, () => { undone = true; setTopics((prev) => ({ ...prev, [subjectId]: snapshot })); dismissToast(); });
-    setTimeout(async () => { if (!undone) try { await adminApi.deleteTopic(topicId); } catch {} }, 5100);
-  };
-
-  const handleAddTrack = async (topicId) => {
-    if (!trackForm.name.trim()) return;
-    const existing = tracks[topicId] || [];
-    const { data } = await adminApi.createTrack({ topic: topicId, name: trackForm.name, order: existing.length });
-    setTracks((prev) => ({ ...prev, [topicId]: [...existing, { ...data.track, chapterCount: 0 }] }));
-    setTrackForm(emptyTrackForm);
-    setAddingTrackTo(null);
-  };
-  
-  const handleSaveTrackEdit = async (topicId) => {
-    if (!trackForm.name.trim()) return;
-    const { data } = await adminApi.updateTrack(editingTrackId, trackForm);
-    setTracks((prev) => ({ ...prev, [topicId]: prev[topicId].map((t) => (t._id === editingTrackId ? { ...t, ...data.track } : t)) }));
-    setEditingTrackId(null);
-  };
-  
-  const handleDeleteTrack = async (topicId, trackId, trackName) => {
-    const snapshot = tracks[topicId] ? [...tracks[topicId]] : [];
-    setTracks((prev) => ({ ...prev, [topicId]: (prev[topicId] || []).filter((t) => t._id !== trackId) }));
-    let undone = false;
-    showToast(`Deleted track "${trackName}"`, () => { undone = true; setTracks((prev) => ({ ...prev, [topicId]: snapshot })); dismissToast(); });
-    setTimeout(async () => { if (!undone) try { await adminApi.deleteTrack(trackId); } catch {} }, 5100);
-  };
-
-  const handleDeleteChapter = async (trackId, chapterId, chapterTitle) => {
-    const snapshot = chapters[trackId] ? [...chapters[trackId]] : [];
-    setChapters((prev) => ({ ...prev, [trackId]: (prev[trackId] || []).filter((c) => c._id !== chapterId) }));
-    let undone = false;
-    showToast(`Deleted chapter "${chapterTitle}"`, () => { undone = true; setChapters((prev) => ({ ...prev, [trackId]: snapshot })); dismissToast(); });
+    showToast(`Deleted chapter "${chapterTitle}"`, () => { undone = true; setChapters((prev) => ({ ...prev, [subjectId]: snapshot })); dismissToast(); });
     setTimeout(async () => { if (!undone) try { await adminApi.deleteChapter(chapterId); } catch {} }, 5100);
     if (id === chapterId) {
       navigate('/admin-portal/content');
@@ -307,18 +216,18 @@ const AdminContentStudio = () => {
         await adminApi.updateChapter(id, chapter);
         showToast('Chapter updated successfully.');
       } else {
-        if (!trackIdFromQuery) {
-          alert('No track specified for this new chapter.');
+        if (!subjectIdFromQuery) {
+          alert('No subject specified for this new chapter.');
           setSavingChapter(false);
           return;
         }
         await adminApi.createChapter({
           ...chapter,
-          track: trackIdFromQuery,
+          subject: subjectIdFromQuery,
           chapterNumber: existingChapterCount + 1,
         });
         showToast('Chapter created successfully.');
-        refreshChapters(trackIdFromQuery);
+        refreshChapters(subjectIdFromQuery);
         navigate('/admin-portal/content');
       }
     } catch (err) {
@@ -354,9 +263,7 @@ const AdminContentStudio = () => {
     }
   };
 
-  // Determine which track ID to use for displaying "Recently Modified Chapters"
-  // It could be from the URL query on new chapter, or from the existing chapter's loaded data.
-  const activeTrackId = trackIdFromQuery || (breadcrumb?.trackName && Object.keys(chapters).find(tId => chapters[tId]?.some(c => c._id === id)));
+  const activeSubjectId = subjectIdFromQuery || (breadcrumb?.subjectName && Object.keys(chapters).find(sId => chapters[sId]?.some(c => c._id === id)));
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#0A0A0A] text-on-surface">
@@ -364,7 +271,7 @@ const AdminContentStudio = () => {
       <aside className="w-[280px] flex-shrink-0 border-r border-[#1C202B] bg-[#0E1015] flex flex-col h-full z-10">
         <div className="p-4 border-b border-[#1C202B] flex flex-col gap-3">
           <h2 className="text-xs font-bold tracking-widest text-[#8B949E] uppercase mb-1">Curriculum</h2>
-          <button onClick={() => alert("Navigate to a track to add a chapter first")} className="flex items-center justify-center gap-2 py-2 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg text-sm font-medium transition-colors">
+          <button onClick={() => alert("Navigate to a subject to add a chapter first")} className="flex items-center justify-center gap-2 py-2 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg text-sm font-medium transition-colors">
             <Plus size={14} /> New Chapter
           </button>
           {addingSubject ? (
@@ -405,100 +312,22 @@ const AdminContentStudio = () => {
 
                 {expandedSubject === subject._id && (
                   <div className="ml-4 pl-2 border-l border-[#2D3342] my-1 flex flex-col gap-0.5">
-                    {(topics[subject._id] || []).map(topic => (
-                      <div key={topic._id} className="flex flex-col">
-                        <div className={`flex items-center gap-2 p-1.5 rounded-lg group ${expandedTopic === topic._id ? 'bg-[#1C202B]' : 'hover:bg-[#161B22]'}`}>
-                          <button onClick={() => toggleTopic(topic)} className="flex items-center gap-1.5 flex-1 text-left text-sm text-[#C9D1D9]">
-                            {expandedTopic === topic._id ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                            {topic.name}
-                          </button>
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center transition-opacity">
-                            <button onClick={() => { setEditingTopicId(topic._id); setTopicForm({ name: topic.name, difficulty: topic.difficulty, estimatedMinutes: topic.estimatedMinutes }); }} className="text-[#8B949E] hover:text-white p-1"><Pencil size={10} /></button>
-                            <button onClick={() => handleDeleteTopic(subject._id, topic._id, topic.name)} className="text-red-400 hover:text-red-300 p-1"><Trash2 size={10} /></button>
-                          </div>
-                        </div>
-
-                        {editingTopicId === topic._id && (
-                          <div className="ml-4 mr-2 mb-1">
-                            <InlineForm onSave={() => handleSaveTopicEdit(subject._id)} onCancel={() => setEditingTopicId(null)}>
-                              <input value={topicForm.name} onChange={e => setTopicForm(f => ({ ...f, name: e.target.value }))} className="bg-[#111113] border border-[#2D3342] text-xs text-white rounded-md px-2 py-1 outline-none" />
-                            </InlineForm>
-                          </div>
-                        )}
-
-                        {expandedTopic === topic._id && (
-                          <div className="ml-4 pl-2 border-l border-[#2D3342] my-1 flex flex-col gap-0.5">
-                            {(tracks[topic._id] || []).map(track => (
-                              <div key={track._id} className="flex flex-col">
-                                <div className="flex items-center gap-2 p-1.5 rounded-lg group hover:bg-[#161B22]">
-                                  <button onClick={() => toggleTrack(track)} className="flex items-center gap-1.5 flex-1 text-left text-xs text-[#8B949E]">
-                                    {expandedTrack === track._id ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                                    {track.name}
-                                  </button>
-                                  <div className="opacity-0 group-hover:opacity-100 flex items-center transition-opacity">
-                                    <button onClick={() => { setEditingTrackId(track._id); setTrackForm({ name: track.name }); }} className="text-[#8B949E] hover:text-white p-1"><Pencil size={10} /></button>
-                                    <button onClick={() => handleDeleteTrack(topic._id, track._id, track.name)} className="text-red-400 hover:text-red-300 p-1"><Trash2 size={10} /></button>
-                                  </div>
-                                </div>
-                                
-                                {editingTrackId === track._id && (
-                                  <div className="ml-4 mr-2 mb-1">
-                                    <InlineForm onSave={() => handleSaveTrackEdit(topic._id)} onCancel={() => setEditingTrackId(null)}>
-                                      <input value={trackForm.name} onChange={e => setTrackForm(f => ({ ...f, name: e.target.value }))} className="bg-[#111113] border border-[#2D3342] text-xs text-white rounded-md px-2 py-1 outline-none" />
-                                    </InlineForm>
-                                  </div>
-                                )}
-
-                                {expandedTrack === track._id && (
-                                  <div className="ml-4 my-1 flex flex-col gap-0.5">
-                                    {(chapters[track._id] || []).map(chap => (
-                                      <div key={chap._id} className="flex items-center justify-between group">
-                                        <Link 
-                                          to={`/admin-portal/content/chapters/${chap._id}`} 
-                                          className={`block px-2 py-1 text-[11px] rounded transition-colors ${id === chap._id ? 'text-[#4375FF] font-medium bg-[#4375FF]/10' : 'text-[#8B949E] hover:text-white hover:bg-[#1C202B]'}`}
-                                        >
-                                          {chap.title}
-                                        </Link>
-                                        <button onClick={() => handleDeleteChapter(track._id, chap._id, chap.title)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-1">
-                                          <Trash2 size={10} />
-                                        </button>
-                                      </div>
-                                    ))}
-                                    <Link to={`/admin-portal/content/chapters/new?track=${track._id}`} onClick={() => refreshChapters(track._id)} className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#4375FF] hover:underline mt-1">
-                                      <Plus size={10} /> Add Chapter
-                                    </Link>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                            
-                            {addingTrackTo === topic._id ? (
-                              <div className="ml-2 mt-1 mr-2">
-                                <InlineForm onSave={() => handleAddTrack(topic._id)} onCancel={() => setAddingTrackTo(null)} saveLabel="Add">
-                                  <input value={trackForm.name} onChange={e => setTrackForm(f => ({ ...f, name: e.target.value }))} placeholder="Track name" className="bg-[#111113] border border-[#2D3342] text-xs text-white rounded-md px-2 py-1 outline-none" />
-                                </InlineForm>
-                              </div>
-                            ) : (
-                              <button onClick={() => setAddingTrackTo(topic._id)} className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#4375FF] hover:underline mt-1">
-                                <Plus size={10} /> Add Track
-                              </button>
-                            )}
-                          </div>
-                        )}
+                    {(chapters[subject._id] || []).map(chap => (
+                      <div key={chap._id} className="flex items-center justify-between group">
+                        <Link 
+                          to={`/admin-portal/content/chapters/${chap._id}?subject=${subject._id}`} 
+                          className={`block px-2 py-1 text-[11px] rounded transition-colors w-full ${id === chap._id ? 'text-[#4375FF] font-medium bg-[#4375FF]/10' : 'text-[#8B949E] hover:text-white hover:bg-[#1C202B]'}`}
+                        >
+                          <span className="truncate block max-w-[180px]">{chap.title}</span>
+                        </Link>
+                        <button onClick={() => handleDeleteChapter(subject._id, chap._id, chap.title)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-1">
+                          <Trash2 size={10} />
+                        </button>
                       </div>
                     ))}
-                    
-                    {addingTopicTo === subject._id ? (
-                      <div className="ml-2 mt-1 mr-2">
-                        <InlineForm onSave={() => handleAddTopic(subject._id)} onCancel={() => setAddingTopicTo(null)} saveLabel="Add">
-                          <input value={topicForm.name} onChange={e => setTopicForm(f => ({ ...f, name: e.target.value }))} placeholder="Topic name" className="bg-[#111113] border border-[#2D3342] text-xs text-white rounded-md px-2 py-1 outline-none" />
-                        </InlineForm>
-                      </div>
-                    ) : (
-                      <button onClick={() => setAddingTopicTo(subject._id)} className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#4375FF] hover:underline mt-1">
-                        <Plus size={10} /> Add Topic
-                      </button>
-                    )}
+                    <Link to={`/admin-portal/content/chapters/new?subject=${subject._id}`} onClick={() => refreshChapters(subject._id)} className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#4375FF] hover:underline mt-1">
+                      <Plus size={10} /> Add Chapter
+                    </Link>
                   </div>
                 )}
               </div>
@@ -525,11 +354,7 @@ const AdminContentStudio = () => {
                 <div className="flex items-center gap-2 text-[13px] font-mono tracking-wide text-[#8B949E]">
                   <span className="text-white">Subjects</span>
                   <ChevronRight size={12} />
-                  <span>{breadcrumb.subjectName}</span>
-                  <ChevronRight size={12} />
-                  <span>{breadcrumb.topicName}</span>
-                  <ChevronRight size={12} />
-                  <span className="text-white font-medium">{breadcrumb.trackName}</span>
+                  <span className="text-white font-medium">{breadcrumb.subjectName}</span>
                 </div>
                )}
             </div>
@@ -556,15 +381,15 @@ const AdminContentStudio = () => {
               </div>
 
               {/* Recently Modified Chapters (Matches mockup) */}
-              {activeTrackId && chapters[activeTrackId] && chapters[activeTrackId].length > 0 && (
+              {activeSubjectId && chapters[activeSubjectId] && chapters[activeSubjectId].length > 0 && (
                 <div className="mt-12">
                   <h3 className="text-sm font-bold text-white mb-4">Recently Modified Chapters</h3>
                   <div className="border border-[#1C202B] rounded-xl overflow-hidden bg-[#0E1015]">
-                    {chapters[activeTrackId].map((c, i) => (
+                    {chapters[activeSubjectId].map((c, i) => (
                       <Link 
                         key={c._id} 
-                        to={`/admin-portal/content/chapters/${c._id}?track=${activeTrackId}`}
-                        className={`flex items-center justify-between p-4 hover:bg-[#161B22] transition-colors ${i !== chapters[activeTrackId].length - 1 ? 'border-b border-[#1C202B]' : ''}`}
+                        to={`/admin-portal/content/chapters/${c._id}?subject=${activeSubjectId}`}
+                        className={`flex items-center justify-between p-4 hover:bg-[#161B22] transition-colors ${i !== chapters[activeSubjectId].length - 1 ? 'border-b border-[#1C202B]' : ''}`}
                       >
                         <span className="text-sm text-white font-medium">{c.title}</span>
                         <span className="text-xs text-[#8B949E]">{c.estimatedMinutes} mins read</span>
