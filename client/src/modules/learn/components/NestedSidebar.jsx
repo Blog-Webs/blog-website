@@ -3,26 +3,26 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const NestedSidebar = ({
-  topicName = 'Documentation',
-  tracks = [],
-  activeTrackId,
-  chapters = [], 
+  subjectName = 'Documentation',
+  topics = [],
+  activeTopicId,
+  chaptersByTopic = {}, 
   activeChapterId,
-  onSelectTrack,
+  onSelectTopic,
   onSelectChapter,
   studiedCount = 0,
   totalCount = 0,
 }) => {
-  // Keep track of which tracks are expanded. Default to the active track being open.
-  const [expandedTracks, setExpandedTracks] = useState(new Set([activeTrackId]));
+  // Keep track of which topics are expanded. Default to the active topic being open.
+  const [expandedTopics, setExpandedTopics] = useState(new Set([activeTopicId]));
 
-  const toggleTrack = (trackId) => {
-    setExpandedTracks(prev => {
+  const toggleTopic = (topicId) => {
+    setExpandedTopics(prev => {
       const next = new Set(prev);
-      if (next.has(trackId)) {
-        next.delete(trackId);
+      if (next.has(topicId)) {
+        next.delete(topicId);
       } else {
-        next.add(trackId);
+        next.add(topicId);
       }
       return next;
     });
@@ -53,7 +53,7 @@ const NestedSidebar = ({
         </div>
         <div>
           <h2 className="text-[11px] font-bold tracking-[0.15em] text-white uppercase mb-1">
-            {topicName} PATH
+            {subjectName} PATH
           </h2>
           <div className="text-xs font-mono text-on-surface-variant">
             {studiedCount}/{totalCount} Chapters Done
@@ -63,39 +63,39 @@ const NestedSidebar = ({
 
       {/* Navigation Tree */}
       <nav className="flex-1 overflow-y-auto px-4 space-y-1" aria-label="Course Navigation">
-        {tracks.map(track => {
-          const isExpanded = expandedTracks.has(track._id);
-          const isActiveTrack = track._id === activeTrackId;
-          const trackChapters = isActiveTrack ? chapters : [];
+        {topics.map(topic => {
+          const isExpanded = expandedTopics.has(topic._id);
+          const isActiveTopic = topic._id === activeTopicId;
+          const topicChapters = chaptersByTopic[topic._id] || [];
 
           return (
-            <div key={track._id} className="flex flex-col mb-1">
-              {/* Track / Folder Level */}
+            <div key={topic._id} className="flex flex-col mb-1">
+              {/* Topic / Folder Level */}
               <button
                 onClick={() => {
-                  onSelectTrack(track);
-                  if (!isExpanded) toggleTrack(track._id);
+                  onSelectTopic(topic);
+                  if (!isExpanded) toggleTopic(topic._id);
                 }}
                 aria-expanded={isExpanded}
-                aria-controls={`track-content-${track._id}`}
-                className={`flex items-center justify-between w-full px-3 py-3 rounded-lg transition-colors group ${isActiveTrack ? 'text-[#abc4ff]' : 'text-on-surface-variant hover:text-white'}`}
+                aria-controls={`topic-content-${topic._id}`}
+                className={`flex items-center justify-between w-full px-3 py-3 rounded-lg transition-colors group ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant hover:text-white'}`}
               >
-                <div className="flex items-center gap-3">
-                  <svg className={`w-4 h-4 ${isActiveTrack ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="flex items-center gap-3 overflow-hidden pr-2">
+                  <svg className={`w-4 h-4 shrink-0 ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                     <polyline points="2 17 12 22 22 17"></polyline>
                     <polyline points="2 12 12 17 22 12"></polyline>
                   </svg>
-                  <span className={`text-[14px] font-medium ${isActiveTrack ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`}>
-                    {track.name}
+                  <span className={`text-[14px] font-medium truncate ${isActiveTopic ? 'text-[#abc4ff]' : 'text-on-surface-variant'}`}>
+                    {topic.name}
                   </span>
                 </div>
                 <div 
-                  className="flex items-center justify-center w-5 h-5 rounded hover:bg-white/5 transition-colors"
-                  aria-label={isExpanded ? "Collapse track" : "Expand track"}
+                  className="flex items-center justify-center w-5 h-5 rounded hover:bg-white/5 transition-colors shrink-0"
+                  aria-label={isExpanded ? "Collapse topic" : "Expand topic"}
                   onClick={(e) => {
                     e.stopPropagation();
-                    toggleTrack(track._id);
+                    toggleTopic(topic._id);
                   }}
                 >
                   {isExpanded ? <ChevronDown size={14} className="opacity-70" /> : <ChevronRight size={14} className="opacity-70" />}
@@ -104,15 +104,15 @@ const NestedSidebar = ({
 
               {/* Chapters / Document Level (Accordion) */}
               <div 
-                id={`track-content-${track._id}`}
+                id={`topic-content-${topic._id}`}
                 className="overflow-hidden transition-all duration-300 ease-in-out"
                 style={{
-                  maxHeight: isExpanded ? `${trackChapters.length * 50 + 20}px` : '0px',
+                  maxHeight: isExpanded ? `${topicChapters.length * 50 + 20}px` : '0px',
                   opacity: isExpanded ? 1 : 0
                 }}
               >
                 <div className="pl-4 pr-1 py-2 space-y-0.5 border-l border-[#2D3342] ml-[21px] mt-1 relative">
-                  {trackChapters.map(chapter => {
+                  {topicChapters.map(chapter => {
                     const isActive = chapter._id === activeChapterId;
                     return (
                       <div key={chapter._id} className="relative">
@@ -120,7 +120,7 @@ const NestedSidebar = ({
                           <div className="absolute -left-[18px] top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#abc4ff] rounded-r-full"></div>
                         )}
                         <button
-                          onClick={() => onSelectChapter(chapter)}
+                          onClick={() => onSelectChapter(chapter, topic)}
                           className={`flex items-center w-full px-4 py-2.5 text-sm rounded-lg transition-all ${
                             isActive 
                               ? 'bg-[#1C1628] text-white font-medium border border-[#3A225E]' 
@@ -132,7 +132,7 @@ const NestedSidebar = ({
                       </div>
                     );
                   })}
-                  {isExpanded && trackChapters.length === 0 && isActiveTrack && (
+                  {isExpanded && topicChapters.length === 0 && isActiveTopic && (
                      <div className="px-4 py-2 text-xs italic text-on-surface-variant">
                        No documents
                      </div>
@@ -149,7 +149,7 @@ const NestedSidebar = ({
         <div className="bg-[#1C202B] border border-[#2D3342] rounded-xl p-5 shadow-lg">
           <h4 className="text-sm font-bold text-white mb-2">Need Help?</h4>
           <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
-            Join our community forum for {topicName} developers.
+            Join our community forum for {subjectName} developers.
           </p>
           <Link to="/forum" className="block w-full py-2 bg-[#abc4ff] hover:bg-[#b9cdff] text-[#0E1015] font-bold text-xs text-center rounded-lg transition-colors">
             Visit Forum

@@ -10,7 +10,6 @@ const ReadingLayout = lazy(() => import('./modules/core/layout/ReadingLayout'));
 const Home = lazy(() => import('./modules/core/pages/Home'));
 const LearnHome = lazy(() => import('./modules/learn/pages/LearnHome'));
 const DocsPage = lazy(() => import('./modules/docs/pages/DocsPage'));
-const SubjectPage = lazy(() => import('./modules/learn/pages/SubjectPage'));
 const TopicPage = lazy(() => import('./modules/learn/pages/TopicPage'));
 const BlogList = lazy(() => import('./modules/blog/pages/BlogList'));
 const BlogDetail = lazy(() => import('./modules/blog/pages/BlogDetail'));
@@ -49,7 +48,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/learn" element={<LearnHome />} />
           <Route path="/docs/:slug?" element={<DocsPage />} />
-          <Route path="/learn/:subjectSlug" element={<SubjectPage />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
@@ -60,6 +58,7 @@ function App() {
 
         {/* Topic reading — no header/footer (immersive reading layout) */}
         <Route element={<ReadingLayout />}>
+          <Route path="/learn/:subjectSlug" element={<TopicPage />} />
           <Route path="/learn/:subjectSlug/:topicSlug" element={<TopicPage />} />
         </Route>
 

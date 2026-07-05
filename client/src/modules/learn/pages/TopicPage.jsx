@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Circle, Sun, Moon } from 'lucide-react';
 import { contentApi } from '../api/content';
@@ -21,68 +21,80 @@ const TopicPage = () => {
   const scrollRef = useRef(null);
 
   const [subject, setSubject] = useState(null);
-  const [topic, setTopic] = useState(null);
-  const [tracks, setTracks] = useState([]);
-  const [activeTrack, setActiveTrack] = useState(null);
-  const [chapters, setChapters] = useState([]);
+  const [allTopics, setAllTopics] = useState([]);
+  const [activeTopic, setActiveTopic] = useState(null);
+  
+  const [chaptersByTopic, setChaptersByTopic] = useState({});
   const [activeChapterId, setActiveChapterId] = useState(null);
   const [chapterData, setChapterData] = useState(null);
+  
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [noteContent, setNoteContent] = useState('');
 
+  // Initial Load: Fetch Subject, Topics, and all Chapters
   useEffect(() => {
     setLoading(true);
-    contentApi.getSubjectBySlug(subjectSlug).then(({ data }) => {
+    contentApi.getSubjectBySlug(subjectSlug).then(async ({ data }) => {
       setSubject(data.subject);
-      const foundTopic = data.topics.find((t) => t.slug === topicSlug);
-      setTopic(foundTopic || null);
+      const subjectTopics = data.topics || [];
+      setAllTopics(subjectTopics);
+      
+      let initialTopic = subjectTopics.find((t) => t.slug === topicSlug);
+      if (!initialTopic && subjectTopics.length > 0) {
+        initialTopic = subjectTopics[0];
+      }
+      setActiveTopic(initialTopic || null);
+      
+      // Fetch chapters for all topics to populate the sidebar tree
+      const map = {};
+      let firstChapterId = null;
+      
+      await Promise.all(
+        subjectTopics.map(async (t) => {
+          try {
+            const tracksRes = await contentApi.getTracksForTopic(t._id);
+            const tracks = tracksRes.data.tracks;
+            if (tracks && tracks.length > 0) {
+              const chaptersRes = await contentApi.getChaptersForTrack(tracks[0]._id);
+              const chaps = chaptersRes.data.chapters;
+              map[t._id] = chaps;
+              
+              if (t._id === initialTopic?._id && chaps.length > 0 && !firstChapterId) {
+                firstChapterId = chaps[0]._id;
+              }
+            } else {
+              map[t._id] = [];
+            }
+          } catch (e) {
+            map[t._id] = [];
+          }
+        })
+      );
+      
+      setChaptersByTopic(map);
+      
+      if (firstChapterId) {
+        setActiveChapterId(firstChapterId);
+      } else {
+        // If initial topic has no chapters, fallback to very first available chapter
+        for (const t of subjectTopics) {
+           if (map[t._id] && map[t._id].length > 0) {
+             setActiveChapterId(map[t._id][0]._id);
+             setActiveTopic(t);
+             break;
+           }
+        }
+      }
+      
+      setLoading(false);
     }).catch(() => {
-      // Fallback for UI demonstration if DB is empty
-      setSubject({ name: 'Java', color: '#FFBD2E' });
-      setTopic({ _id: 'mock-topic', name: 'JVM Architecture', slug: 'jvm-architecture' });
+      setLoading(false);
     });
   }, [subjectSlug, topicSlug]);
 
-  useEffect(() => {
-    if (!topic) return;
-    contentApi.getTracksForTopic(topic._id).then(({ data }) => {
-      setTracks(data.tracks);
-      if (data.tracks.length > 0) setActiveTrack(data.tracks[0]);
-    }).catch(() => {
-      // Mock tracks
-      const mockTrack = { _id: 'mock-track', name: 'Java Core' };
-      setTracks([mockTrack, { _id: 'mock-track2', name: 'Advanced Java' }, { _id: 'mock-track3', name: 'Spring Boot' }]);
-      setActiveTrack(mockTrack);
-    });
-  }, [topic]);
-
-  useEffect(() => {
-    if (!activeTrack) return;
-    contentApi.getChaptersForTrack(activeTrack._id).then(({ data }) => {
-      setChapters(data.chapters);
-      if (data.chapters.length > 0) {
-        setActiveChapterId(data.chapters[0]._id);
-      } else {
-        setActiveChapterId(null);
-        setChapterData(null);
-      }
-      setLoading(false);
-    }).catch(() => {
-      // Mock chapters
-      const mockChapters = [
-        { _id: 'mock-chap-1', title: 'JVM Architecture' },
-        { _id: 'mock-chap-2', title: 'Data Types & Ops' },
-        { _id: 'mock-chap-3', title: 'Control Flow' },
-        { _id: 'mock-chap-4', title: 'OOP Principles' },
-      ];
-      setChapters(mockChapters);
-      setActiveChapterId(mockChapters[0]._id);
-      setLoading(false);
-    });
-  }, [activeTrack]);
-
+  // Load Chapter Content when active chapter changes
   useEffect(() => {
     if (!activeChapterId) return;
     
@@ -98,29 +110,6 @@ const TopicPage = () => {
       .catch((err) => {
         if (err.response?.status === 401) {
           setChapterData({ ...err.response.data, locked: true });
-        } else {
-          // Mock Chapter content
-          setChapterData({
-            locked: false,
-            studied: false,
-            chapter: {
-              _id: 'mock-chap-1',
-              title: 'Chapter 1: Introduction to JVM Architecture',
-              content: `The Java Virtual Machine (JVM) is the engine that drives the Java platform. It is responsible for loading, verifying, and executing Java bytecode, ensuring cross-platform compatibility through the famous "Write Once, Run Anywhere" (WORA) philosophy.
-
-![JVM Layout Diagram](https://media.geeksforgeeks.org/wp-content/uploads/20231206121406/JVM-Architecture.png)
-
-## 1. The Class Loader Subsystem
-The Class Loader is primarily responsible for three activities: Loading, Linking, and Initialization.`,
-              headings: [
-                { id: '1-the-class-loader-subsystem', level: 2, text: 'The Class Loader Subsystem' },
-                { id: '2-runtime-data-areas', level: 2, text: 'Runtime Data Areas' },
-                { id: '3-execution-engine', level: 2, text: 'Execution Engine' },
-                { id: '4-native-method-interface', level: 2, text: 'Native Method Interface' },
-              ]
-            }
-          });
-          scrollRef.current?.scrollTo({ top: 0 });
         }
       });
 
@@ -146,7 +135,14 @@ The Class Loader is primarily responsible for three activities: Loading, Linking
 
   const handleToggleStudied = useCallback(async (chapterId) => {
     const { data } = await progressApi.toggleStudied(chapterId);
-    setChapters((prev) => prev.map((c) => (c._id === chapterId ? { ...c, studied: data.studied } : c)));
+    
+    setChaptersByTopic((prev) => {
+       const next = { ...prev };
+       for (const topicId in next) {
+          next[topicId] = next[topicId].map(c => c._id === chapterId ? { ...c, studied: data.studied } : c);
+       }
+       return next;
+    });
     setChapterData((prev) => (prev?.chapter?._id === chapterId ? { ...prev, studied: data.studied } : prev));
   }, []);
 
@@ -178,29 +174,42 @@ The Class Loader is primarily responsible for three activities: Loading, Linking
   const activeHeadingId = useScrollSpy(headings, scrollRef);
   const progress = useReadingProgress(scrollRef);
 
-  // Prev / Next logic
-  const currentChapterIndex = chapters.findIndex(c => c._id === activeChapterId);
+  // Flatten chapters for prev/next logic
+  const flattenedChapters = useMemo(() => {
+    return allTopics.flatMap(t => chaptersByTopic[t._id] || []);
+  }, [allTopics, chaptersByTopic]);
+
+  const currentChapterIndex = flattenedChapters.findIndex(c => c._id === activeChapterId);
   const hasPrev = currentChapterIndex > 0;
-  const hasNext = currentChapterIndex >= 0 && currentChapterIndex < chapters.length - 1;
+  const hasNext = currentChapterIndex >= 0 && currentChapterIndex < flattenedChapters.length - 1;
   
   const handlePrev = () => {
-    if (hasPrev) setActiveChapterId(chapters[currentChapterIndex - 1]._id);
+    if (hasPrev) {
+      const prevCh = flattenedChapters[currentChapterIndex - 1];
+      setActiveChapterId(prevCh._id);
+      const tId = allTopics.find(t => chaptersByTopic[t._id]?.some(c => c._id === prevCh._id))?._id;
+      if (tId) setActiveTopic(allTopics.find(t => t._id === tId));
+    }
   };
   
   const handleNext = () => {
-    if (hasNext) setActiveChapterId(chapters[currentChapterIndex + 1]._id);
+    if (hasNext) {
+      const nextCh = flattenedChapters[currentChapterIndex + 1];
+      setActiveChapterId(nextCh._id);
+      const tId = allTopics.find(t => chaptersByTopic[t._id]?.some(c => c._id === nextCh._id))?._id;
+      if (tId) setActiveTopic(allTopics.find(t => t._id === tId));
+    }
   };
 
   const scrollToHeading = (id) => {
     scrollRef.current?.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Progress calculation
-  const studiedCount = chapters.filter((c) => c.studied).length;
-  const totalCount = chapters.length;
-  const pct = totalCount > 0 ? Math.round((studiedCount / totalCount) * 100) : 0;
+  // Progress calculation across entire subject
+  const totalCount = flattenedChapters.length;
+  const studiedCount = flattenedChapters.filter(c => c.studied).length;
 
-  if (loading && !topic) {
+  if (loading) {
     return (
       <div className="min-h-screen pt-20 bg-[#0E1015]">
         <ArticleSkeleton />
@@ -208,10 +217,10 @@ The Class Loader is primarily responsible for three activities: Loading, Linking
     );
   }
 
-  if (!topic) {
+  if (!subject) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0E1015] text-on-surface-variant">
-        Topic not found.
+        Subject not found.
       </div>
     );
   }
@@ -229,13 +238,16 @@ The Class Loader is primarily responsible for three activities: Loading, Linking
         <aside className={`order-1 overflow-hidden transition-all duration-300 ease-in-out ${isReadingMode ? 'opacity-0 w-0' : 'opacity-100'}`}>
           <div className="h-full lg:overflow-y-auto">
             <NestedSidebar
-              topicName={topic.name}
-              tracks={tracks}
-              activeTrackId={activeTrack?._id}
-              chapters={chapters}
+              subjectName={subject.name}
+              topics={allTopics}
+              activeTopicId={activeTopic?._id}
+              chaptersByTopic={chaptersByTopic}
               activeChapterId={activeChapterId}
-              onSelectTrack={setActiveTrack}
-              onSelectChapter={(ch) => setActiveChapterId(ch._id)}
+              onSelectTopic={setActiveTopic}
+              onSelectChapter={(ch, t) => {
+                setActiveChapterId(ch._id);
+                setActiveTopic(t);
+              }}
               studiedCount={studiedCount}
               totalCount={totalCount}
             />
@@ -252,7 +264,7 @@ The Class Loader is primarily responsible for three activities: Loading, Linking
               <ChapterReader
                 chapterData={chapterData}
                 subjectName={subject?.name}
-                topicName={topic?.name}
+                topicName={activeTopic?.name}
                 locked={chapterData.locked}
                 onToggleStudied={handleToggleStudied}
                 onToggleBookmark={handleToggleBookmark}
