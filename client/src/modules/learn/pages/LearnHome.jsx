@@ -94,9 +94,10 @@ const LearnHome = () => {
   ];
 
   return (
-    <div className="pt-20 pb-32 px-6 max-w-[1280px] mx-auto bg-[#0E1015]">
-      {/* Header */}
-      <div className="mb-16 text-center max-w-3xl mx-auto">
+    <div className="w-full bg-[#0E1015] min-h-screen">
+      <div className="pt-20 pb-32 px-6 max-w-[1280px] mx-auto w-full">
+        {/* Header */}
+        <div className="mb-16 text-center w-full max-w-3xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
           Master the Modern Tech Stack
         </h1>
@@ -114,7 +115,7 @@ const LearnHome = () => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-24">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-24 w-full">
         {tracks.map((track) => (
           <Link 
             key={track.id} 
@@ -142,7 +143,7 @@ const LearnHome = () => {
       </div>
 
       {/* Bottom CTA */}
-      <div className="bg-[#1C202B] border border-[#2D3342] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+      <div className="bg-[#1C202B] border border-[#2D3342] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10 w-full">
         <div className="flex-1 w-full max-w-xl">
           <h2 className="text-3xl font-bold text-white mb-4">
             Can't decide where to start?
@@ -162,6 +163,7 @@ const LearnHome = () => {
              <circle cx="18" cy="5" r="3" />
            </svg>
         </div>
+      </div>
       </div>
     </div>
   );
