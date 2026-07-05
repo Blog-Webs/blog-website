@@ -77,7 +77,7 @@ const Header = () => {
         
         {/* Center: Navigation */}
         <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <NavLink to="/learn/dsa" className={navLinkClass}>Tracks</NavLink>
+          <NavLink to="/learn" className={navLinkClass}>Learn</NavLink>
           <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
@@ -143,7 +143,7 @@ const Header = () => {
       {/* Mobile nav */}
       {mobileOpen && (
         <div className="md:hidden border-t border-white/5 px-4 py-3 flex flex-col gap-2 bg-[#0e0e10]">
-          <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>Tracks</NavLink>
+          <NavLink to="/learn" className={navLinkClass} onClick={() => setMobileOpen(false)}>Learn</NavLink>
           <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>

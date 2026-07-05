@@ -304,7 +304,7 @@ const Home = () => {
         <div className="max-w-max-width mx-auto px-gutter">
           <div className="text-center mb-16">
             <h3 className="font-display text-headline-lg text-on-surface mb-4">Popular Learning Paths</h3>
-            <p className="text-on-surface-variant max-w-xl mx-auto">Structured curriculum designed to take you from foundation to senior expertise.</p>
+            <p className="text-on-surface-variant max-w-[36rem] mx-auto">Structured curriculum designed to take you from foundation to senior expertise.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="glowing-border glass-card rounded-20px p-8 flex flex-col h-full group transition-all">
