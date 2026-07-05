@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Share2, Bookmark, ThumbsUp, MessageSquare, Mail, Link as LinkIcon } from 'lucide-react';
+import { Share2, Bookmark, ThumbsUp, MessageSquare, Mail, Link as LinkIcon, ChevronLeft, ChevronRight, PenTool } from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { useAuth } from '../../core/context/AuthContext';
 import BlockNoteRenderer from '../../core/components/ui/BlockNoteRenderer';
@@ -175,24 +175,41 @@ const BlogDetail = () => {
             </div>
 
             {/* Floating Action Footer */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 py-3 px-6 rounded-full bg-[#15171D]/90 backdrop-blur-md border border-outline-variant/20 shadow-[0_10px_40px_rgba(0,0,0,0.5)] transition-all duration-300 transform">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 sm:gap-6 py-2 px-3 sm:py-3 sm:px-6 rounded-full bg-[#15171D]/80 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] transition-all duration-300 transform">
+              
+              {/* Previous Navigation */}
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110" title="Previous Post">
+                <ChevronLeft size={20} />
+              </button>
+
+              <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
+
+              {/* Core Actions */}
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 bg-[#abc4ff] text-[#0E1015] px-5 py-2 rounded-full font-bold text-sm hover:bg-[#b9cdff] transition-colors shadow-[0_0_20px_rgba(171,196,255,0.2)] hover:scale-105 transform">
+                <button className="flex items-center gap-2 bg-gradient-to-r from-[#abc4ff] to-[#818CF8] text-[#0E1015] px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(171,196,255,0.3)] hover:scale-105 transform">
                   <ThumbsUp size={16} fill="currentColor" />
                   1.2k
                 </button>
-                <button className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors hover:scale-110 transform">
+                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform">
                   <Bookmark size={16} />
                 </button>
-                <button className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors hover:scale-110 transform">
+                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform">
                   <Share2 size={16} />
                 </button>
               </div>
-              <div className="hidden sm:flex items-center gap-2 border-l border-outline-variant/20 pl-4">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-on-surface-variant uppercase mr-2">Tags</span>
-                <span className="text-[11px] font-mono bg-[#1C202B] border border-outline-variant/10 text-primary px-3 py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors">#Quantum</span>
-                <span className="text-[11px] font-mono bg-[#1C202B] border border-outline-variant/10 text-primary px-3 py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors">#AI</span>
+
+              <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-on-surface-variant uppercase mr-1">Tags</span>
+                <span className="text-[11px] font-mono bg-white/5 border border-white/10 text-[#abc4ff] px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors">#Quantum</span>
+                <span className="text-[11px] font-mono bg-white/5 border border-white/10 text-[#abc4ff] px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors">#AI</span>
               </div>
+
+              <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
+
+              {/* Next Navigation */}
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110" title="Next Post">
+                <ChevronRight size={20} />
+              </button>
             </div>
 
             {/* Discussions Section */}
@@ -338,6 +355,25 @@ const BlogDetail = () => {
 
         </div>
       </div>
+
+      {/* Floating Glass Note Taker */}
+      <div className="fixed bottom-32 right-8 z-40 w-72 rounded-2xl bg-[#0E1015]/40 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 hover:border-white/20 group hidden xl:block">
+        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between bg-white/5">
+          <div className="flex items-center gap-2">
+            <PenTool size={14} className="text-[#818CF8]" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-white/90">Quick Notes</span>
+          </div>
+          <div className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+        </div>
+        <textarea 
+          placeholder="Jot down insights while reading..."
+          className="w-full h-32 bg-transparent text-sm text-white/90 placeholder:text-white/40 p-4 resize-none focus:outline-none focus:ring-0 leading-relaxed"
+        ></textarea>
+        <div className="px-4 py-2 bg-white/5 border-t border-white/5 flex justify-end">
+          <span className="text-[10px] text-white/40 font-mono">Auto-saved</span>
+        </div>
+      </div>
+
     </div>
   );
 };
