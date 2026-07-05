@@ -11,7 +11,8 @@ import {
   Search, 
   Bell, 
   Plus,
-  TerminalSquare
+  TerminalSquare,
+  Users
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -74,14 +75,11 @@ const AdminLayout = () => {
             <NavLink to="/admin-portal/blogs" className={navLinkClass}>
               <FileText size={16} /> Blogs & Media
             </NavLink>
-            <NavLink to="/admin-portal/tree" className={navLinkClass}>
-              <MessageSquare size={16} /> Content Tree
-            </NavLink>
             <NavLink to="/admin-portal/contact" className={navLinkClass}>
               <Cloud size={16} /> Contact Inbox
             </NavLink>
-            <NavLink to="/admin-portal/ai" className={navLinkClass}>
-              <Bot size={16} /> AI Agent Ops
+            <NavLink to="/admin-portal/subscribers" className={navLinkClass}>
+              <Users size={16} /> Subscribers
             </NavLink>
           </nav>
         </div>
