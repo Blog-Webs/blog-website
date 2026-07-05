@@ -130,10 +130,10 @@ const Home = () => {
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
             <span className="text-label-sm text-primary uppercase tracking-widest font-semibold">Join 10,000+ Engineers</span>
           </div>
-          <h2 className="font-display text-headline-lg md:text-display max-w-4xl mx-auto mb-6 text-on-surface">
+          <h2 className="font-display text-headline-lg md:text-display max-w-[56rem] mx-auto mb-6 text-on-surface">
             Learn Software Engineering Like Top Tech Companies
           </h2>
-          <p className="font-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">
+          <p className="font-body-lg text-on-surface-variant max-w-[42rem] mx-auto mb-10">
             Master large-scale systems, high-performance algorithms, and modern infrastructure through industry-vetted curriculums and real-world project simulations.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -357,7 +357,7 @@ const Home = () => {
           <div className="glass-card rounded-20px p-12 relative overflow-hidden flex flex-col items-center text-center">
             <div className="absolute inset-0 bg-primary/5 pointer-events-none"></div>
             <h3 className="font-display text-headline-lg text-on-surface mb-4">Level Up Your Engineering Career</h3>
-            <p className="text-on-surface-variant mb-8 max-w-2xl mx-auto">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
+            <p className="text-on-surface-variant mb-8 max-w-[42rem] mx-auto">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
             <form className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
               <input 
                 className="flex-grow bg-background border border-outline-variant rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-on-surface" 

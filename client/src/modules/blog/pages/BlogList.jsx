@@ -11,7 +11,7 @@ const BlogList = () => {
         ></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-full p-8 md:p-12">
-          <div className="glass max-w-2xl p-8 rounded-xl space-y-4">
+          <div className="glass max-w-[42rem] p-8 rounded-xl space-y-4">
             <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-label-sm rounded-full tracking-wider font-bold">FEATURED STORY</span>
             <Link to="/blog/the-quantum-shift">
               <h1 className="font-display text-headline-lg-mobile md:text-display text-on-surface leading-tight hover:text-primary transition-colors">
