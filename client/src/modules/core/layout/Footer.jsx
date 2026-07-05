@@ -1,79 +1,56 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Globe, MessageCircle } from 'lucide-react';
-import { newsletterApi } from '../../blog/api/blog';
 
 const Footer = () => {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState(null);
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    if (!email) return;
-    try {
-      await newsletterApi.subscribe(email);
-      setStatus('success');
-      setEmail('');
-    } catch {
-      setStatus('error');
-    }
-  };
-
   return (
-    <footer className="border-t mt-16" style={{ borderColor: 'var(--border)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <p className="font-mono-display font-bold text-lg mb-2">httpTechNex</p>
-          <p className="font-mono-display font-bold text-lg mb-2">By Tanish Dewase</p>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            DSA, Java, and Aptitude  explained, visualized, and tracked.
+    <footer className="w-full py-16 px-[var(--spacing-gutter)] bg-[var(--color-surface-container-lowest)] border-t border-[var(--color-outline-variant)]/20">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-[var(--spacing-max-width)] mx-auto">
+        <div className="md:col-span-1">
+          <h2 className="font-display text-[var(--text-headline-md)] font-bold text-[var(--color-on-surface)] mb-6">HTTPTechNex</h2>
+          <p className="text-[var(--color-on-surface-variant)] mb-8 leading-relaxed">
+            The premier destination for modern developers architecting the future of the web.
           </p>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold mb-3">Learn</p>
-          <div className="flex flex-col gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-            <Link to="/learn/dsa" className="hover:text-[var(--accent)] transition-colors">DSA</Link>
-            <Link to="/learn/java-advanced-java" className="hover:text-[var(--accent)] transition-colors">Java & Advanced Java</Link>
-            <Link to="/learn/aptitude" className="hover:text-[var(--accent)] transition-colors">Aptitude</Link>
-            <Link to="/blog" className="hover:text-[var(--accent)] transition-colors">Blog</Link>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold mb-3">Newsletter</p>
-          <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>One weekly email. No spam.</p>
-          <form onSubmit={handleSubscribe} className="flex gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              className="flex-1 min-w-0 text-sm px-3 py-2 rounded-lg border outline-none input-focus"
-              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
-            />
-            <button
-              type="submit"
-              className="px-3 py-2 rounded-lg text-sm font-medium shrink-0 btn-press"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-            >
-              <Mail size={15} />
+          <div className="flex gap-4">
+            <button className="w-10 h-10 rounded-full border border-[var(--color-outline-variant)]/30 flex items-center justify-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all">
+              <span className="material-symbols-outlined text-[20px]">terminal</span>
             </button>
-          </form>
-          {status === 'success' && <p className="text-xs mt-2" style={{ color: 'var(--accent)' }}>Subscribed! Check your inbox.</p>}
-          {status === 'error' && <p className="text-xs mt-2" style={{ color: 'var(--danger)' }}>Something went wrong. Try again.</p>}
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold mb-3">Connect</p>
-          <div className="flex gap-3">
-            <a href="#" aria-label="Website" style={{ color: 'var(--text-muted)' }} className="hover:text-[var(--accent)] transition-colors"><Globe size={18} /></a>
-            <a href="#" aria-label="Contact" style={{ color: 'var(--text-muted)' }} className="hover:text-[var(--accent)] transition-colors"><MessageCircle size={18} /></a>
+            <button className="w-10 h-10 rounded-full border border-[var(--color-outline-variant)]/30 flex items-center justify-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all">
+              <span className="material-symbols-outlined text-[20px]">public</span>
+            </button>
+            <button className="w-10 h-10 rounded-full border border-[var(--color-outline-variant)]/30 flex items-center justify-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all">
+              <span className="material-symbols-outlined text-[20px]">code</span>
+            </button>
           </div>
+        </div>
+        <div>
+          <h4 className="font-bold text-[var(--color-on-surface)] mb-6">Ecosystem</h4>
+          <ul className="space-y-4">
+            <li><Link to="/learn/dsa" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Learn</Link></li>
+            <li><Link to="/blog" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Blogs</Link></li>
+            <li><Link to="/forum" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Forum</Link></li>
+            <li><Link to="/student-os" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Workspace</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-bold text-[var(--color-on-surface)] mb-6">Company</h4>
+          <ul className="space-y-4">
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">About Us</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Careers</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Partners</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Contact</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-bold text-[var(--color-on-surface)] mb-6">Legal</h4>
+          <ul className="space-y-4">
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Privacy</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Terms</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">Cookie Policy</Link></li>
+            <li><Link to="/" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">DPA</Link></li>
+          </ul>
         </div>
       </div>
-      <div className="text-center text-xs py-4 border-t" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-        © {new Date().getFullYear()} HttpTechNex. By Tanish Dewase.
+      <div className="max-w-[var(--spacing-max-width)] mx-auto mt-16 pt-8 border-t border-[var(--color-outline-variant)]/10 text-center text-[var(--color-on-surface-variant)]">
+        <p>© 2026 HTTPTechNex. Built for the modern developer.</p>
       </div>
     </footer>
   );

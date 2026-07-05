@@ -1,334 +1,228 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Users, BookOpen, FileText, TrendingUp, HelpCircle, Layers,
-  ArrowRight, Clock, Check, StickyNote, ListTodo, Tag, Star, Sparkles
-} from 'lucide-react';
-import SortVisualizer from '../components/home/SortVisualizer';
-import SubjectCard from '../components/home/SubjectCard';
-import SearchBar from '../components/home/SearchBar';
-import ContactModal from '../components/home/ContactModal';
-import { contentApi } from '../../learn/api/content';
-import { seriesApi } from '../../blog/api/series';
-import { todoApi, noteApi } from '../../workspace/api/userFeatures';
-import { useLiveUserCount } from '../hooks/useLiveUserCount';
-import { useAuth } from '../context/AuthContext';
 
-/* ── Fade-up on scroll: add .visible when element enters the viewport ── */
-const useFadeUp = () => {
-  const ref = useRef(null);
+const ShaderCanvas = () => {
+  const canvasRef = useRef(null);
+
   useEffect(() => {
-    if (!ref.current) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { entry.target.classList.add('visible'); obs.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(ref.current);
-    return () => obs.disconnect();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    function syncSize() {
+      const w = canvas.clientWidth || 1280;
+      const h = canvas.clientHeight || 720;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+    
+    let resizeObserver;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(syncSize);
+      resizeObserver.observe(canvas);
+    }
+    syncSize();
+
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
+    
+    const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+    
+    const fs = `precision highp float;
+varying vec2 v_texCoord;
+uniform float u_time;
+uniform vec2 u_resolution;
+
+void main() {
+    vec2 uv = v_texCoord;
+    
+    float noise1 = sin(uv.x * 3.0 + u_time * 0.5) * 0.5 + 0.5;
+    float noise2 = cos(uv.y * 2.0 - u_time * 0.4) * 0.5 + 0.5;
+    
+    vec3 color1 = vec3(0.23, 0.51, 0.96); 
+    vec3 color2 = vec3(0.55, 0.36, 0.96); 
+    vec3 color3 = vec3(0.02, 0.71, 0.83); 
+    vec3 bg = vec3(0.035, 0.035, 0.043); 
+    
+    float mask1 = smoothstep(0.2, 0.8, noise1 * noise2);
+    float mask2 = smoothstep(0.3, 0.9, sin(u_time * 0.3 + length(uv - 0.5) * 4.0) * 0.5 + 0.5);
+    
+    vec3 finalColor = mix(bg, color1, mask1 * 0.15);
+    finalColor = mix(finalColor, color2, mask2 * 0.1);
+    
+    vec2 grid = fract(uv * 20.0);
+    float line = step(0.98, grid.x) + step(0.98, grid.y);
+    finalColor += line * 0.02;
+    
+    gl_FragColor = vec4(finalColor, 1.0);
+}`;
+    
+    function cs(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+    const prog = gl.createProgram();
+    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const pos = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    const handleMouse = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width && rect.height) {
+        const nx = (event.clientX - rect.left) / rect.width;
+        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+        mouse.x = nx * canvas.width;
+        mouse.y = ny * canvas.height;
+      }
+    };
+    window.addEventListener('mousemove', handleMouse);
+
+    let frameId;
+    function render(t) {
+      if (typeof ResizeObserver === 'undefined') syncSize();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      if (uTime) gl.uniform1f(uTime, t * 0.001);
+      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      frameId = requestAnimationFrame(render);
+    }
+    render(0);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('mousemove', handleMouse);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
   }, []);
-  return ref;
-};
 
-/* ── Water-droplet click ripple for series cards ── */
-const useWaterRipple = () =>
-  useCallback((e) => {
-    const card = e.currentTarget;
-    const container = card.querySelector('.ripple-container');
-    if (!container) return;
-    const rect = card.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 1.4;
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top - size / 2;
-    const ripple = document.createElement('span');
-    ripple.className = 'water-ripple';
-    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
-    container.appendChild(ripple);
-    ripple.addEventListener('animationend', () => ripple.remove());
-  }, []);
-
-/* ── Series card using FeatureCard ── */
-import FeatureCard from '../components/ui/FeatureCard';
-
-const SeriesCard = ({ series }) => {
-  const hasMultiplePosts = (series.postCount || 0) >= 2;
-  const ref = useFadeUp();
-
-  return (
-    <div ref={ref} className="fade-up">
-      <FeatureCard 
-        title={series.title}
-        description={series.description}
-        icon={Layers}
-        image={series.coverImage}
-        color="#5EEAD4"
-        badge={hasMultiplePosts ? `${series.postCount} parts` : 'Series'}
-        to={`/series/${series.slug}`}
-      />
-    </div>
-  );
-};
-
-/* ── Workspace preview (todos + notes for logged-in users) ── */
-const WorkspacePreview = ({ todos, notes }) => {
-  const ref = useFadeUp();
-  const PRIORITY_COLOR = { low: '#5EEAD4', medium: '#FFB454', high: '#F87171' };
-
-  return (
-    <section ref={ref} className="max-w-7xl mx-auto px-4 sm:px-6 py-12 fade-up">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-xs font-mono-display uppercase tracking-widest mb-1" style={{ color: 'var(--accent)' }}>
-            // your workspace
-          </p>
-          <h2 className="text-2xl font-bold glow-title">Recent Activity</h2>
-        </div>
-        <Link
-          to="/todos"
-          className="flex items-center gap-1.5 text-sm font-medium border px-3.5 py-2 rounded-xl btn-press"
-          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-        >
-          View all <ArrowRight size={14} />
-        </Link>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-5">
-        {/* Todos preview */}
-        <div className="rounded-2xl border p-5" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <p className="flex items-center gap-2 text-sm font-semibold mb-4">
-            <ListTodo size={15} style={{ color: 'var(--accent)' }} /> To-Do
-          </p>
-          {todos.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No tasks yet.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {todos.slice(0, 3).map((t) => (
-                <div key={t._id} className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded border flex items-center justify-center shrink-0"
-                    style={{ borderColor: t.isDone ? 'var(--accent)' : 'var(--border)', backgroundColor: t.isDone ? 'var(--accent)' : 'transparent' }}
-                  >
-                    {t.isDone && <Check size={10} color="var(--bg)" />}
-                  </div>
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_COLOR[t.priority] }} />
-                  <p className="text-sm truncate" style={{ color: t.isDone ? 'var(--text-muted)' : 'var(--text)', textDecoration: t.isDone ? 'line-through' : 'none' }}>
-                    {t.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Notes preview */}
-        <div className="rounded-2xl border p-5" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <p className="flex items-center gap-2 text-sm font-semibold mb-4">
-            <StickyNote size={15} style={{ color: 'var(--accent)' }} /> Notes
-          </p>
-          {notes.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No notes yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {notes.slice(0, 2).map((n) => (
-                <div
-                  key={n._id}
-                  className="rounded-lg p-3 border-l-2"
-                  style={{ borderColor: n.color, backgroundColor: `${n.color}11` }}
-                >
-                  <p className="text-sm font-medium">{n.title}</p>
-                  {n.subject && (
-                    <span className="text-[10px] font-mono-display flex items-center gap-1 mt-0.5" style={{ color: n.color }}>
-                      <Tag size={9} /> {n.subject}
-                    </span>
-                  )}
-                  <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-muted)' }}>{n.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-50 block" />;
 };
 
 const Home = () => {
-  const { user } = useAuth();
-  const [subjects, setSubjects] = useState([]);
-  const [seriesList, setSeriesList] = useState([]);
-  const [userTodos, setUserTodos] = useState([]);
-  const [userNotes, setUserNotes] = useState([]);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const liveCount = useLiveUserCount();
-
-  const heroRef = useFadeUp();
-  const subjectsRef = useFadeUp();
-
-  useEffect(() => {
-    contentApi.getSubjects().then(({ data }) => setSubjects(data.subjects)).catch(() => {});
-    seriesApi.getAll().then(({ data }) => setSeriesList(data.series || [])).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    todoApi.getAll().then(({ data }) => setUserTodos(data.todos)).catch(() => {});
-    noteApi.getAll().then(({ data }) => setUserNotes(data.notes)).catch(() => {});
-  }, [user]);
-
   return (
-    <div>
-      {/* Hero */}
-      <section
-        ref={heroRef}
-        className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12 grid lg:grid-cols-2 gap-10 items-center fade-up"
-      >
-        <div>
-          <div
-            className="inline-flex items-center gap-1.5 text-xs font-mono-display px-3 py-1.5 rounded-full border mb-5"
-            style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
-          >
-            <Users size={13} /> {liveCount} learning right now
+    <div className="overflow-x-hidden">
+      {/* Hero Section */}
+      <section className="relative min-h-[751px] flex items-center justify-center overflow-hidden py-2xl">
+        <ShaderCanvas />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--color-background)]/40 to-[var(--color-background)] pointer-events-none"></div>
+        <div className="relative z-10 max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)] text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 mb-8">
+            <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
+            <span className="text-label-sm text-[var(--color-primary)] uppercase tracking-widest font-semibold">Join 50,000+ Engineers</span>
           </div>
-
-          {/* Sparkle hero title */}
-          <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-5">
-            <span className="sparkle-text glow-title">
-              {/* Floating star particles */}
-              <span className="sparkle-star"><Star size={8} fill="var(--accent)" color="var(--accent)" /></span>
-              <span className="sparkle-star"><Star size={6} fill="#5EEAD4" color="#5EEAD4" /></span>
-              <span className="sparkle-star"><Star size={7} fill="var(--accent)" color="var(--accent)" /></span>
-              <span className="sparkle-star"><Star size={5} fill="#A78BFA" color="#A78BFA" /></span>
-              Learn DSA, Java &amp; Aptitude
-            </span>
-            <br />
-            <span className="gradient-heading-accent">the way it should be taught</span>
-          </h1>
-
-          <p className="text-lg mb-8" style={{ color: 'var(--text-muted)' }}>
-            Visual algorithm walkthroughs, structured roadmaps, and chapter-by-chapter tracking —
-            built for engineers preparing for interviews, not just browsing tutorials.
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl max-w-4xl mx-auto mb-6 text-[var(--color-on-surface)] font-bold tracking-tight leading-tight">
+            Learn Software Engineering Like Top Tech Companies
+          </h2>
+          <p className="text-lg md:text-xl text-[var(--color-on-surface-variant)] max-w-2xl mx-auto mb-10 leading-relaxed">
+            Master large-scale systems, high-performance algorithms, and modern infrastructure through industry-vetted curriculums and real-world project simulations.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/learn/dsa"
-              className="px-5 py-3 rounded-xl font-semibold text-sm btn-press"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-            >
-              Start with DSA
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/learn/dsa" className="w-full sm:w-auto px-8 py-4 bg-[var(--color-primary)] text-[var(--color-on-primary)] font-bold rounded-lg hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[var(--color-primary)]/20 text-center">
+              Start Learning
             </Link>
-            <Link
-              to="/blog"
-              className="px-5 py-3 rounded-xl font-semibold text-sm border btn-press"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              Read the blog
+            <Link to="/blog" className="w-full sm:w-auto px-8 py-4 bg-transparent border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] font-bold rounded-lg hover:bg-[var(--color-surface-container-high)] transition-all text-center">
+              Explore Blogs
             </Link>
           </div>
         </div>
-
-        <div className="rounded-2xl border p-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <p className="text-xs font-mono-display mb-3" style={{ color: 'var(--text-muted)' }}>
-            // live bubble sort visualization
-          </p>
-          <SortVisualizer />
-        </div>
       </section>
 
-      {/* Search + Help */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-        <div className="flex items-center gap-3">
-          <SearchBar />
-          <button
-            onClick={() => setHelpOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium shrink-0 btn-press"
-            style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
-          >
-            <HelpCircle size={16} style={{ color: 'var(--accent)' }} />
-            <span className="hidden sm:inline">Help</span>
-          </button>
-        </div>
-      </section>
-
-      {helpOpen && <ContactModal onClose={() => setHelpOpen(false)} />}
-
-      {/* Stats bar */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div
-          className="rounded-2xl border grid grid-cols-2 sm:grid-cols-4 divide-x"
-          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
-        >
-          {[
-            { icon: Users, label: 'Online now', value: liveCount },
-            { icon: BookOpen, label: 'Subjects', value: subjects.length || '3' },
-            { icon: FileText, label: 'Free chapters', value: '12+' },
-            { icon: TrendingUp, label: 'Growing weekly', value: 'Always' },
-          ].map(({ icon: Icon, label, value }, i) => (
-            <div
-              key={i}
-              className="px-4 py-6 text-center transition-colors duration-200 hover:bg-[var(--accent-soft)]"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <Icon size={18} className="mx-auto mb-2" style={{ color: 'var(--accent)' }} />
-              <p className="text-xl font-bold font-mono-display">{value}</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      {/* Quick Stats Bento */}
+      <section className="py-[var(--spacing-xl)] max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[var(--color-primary)] text-3xl">article</span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Workspace preview (logged-in users only) */}
-      {user && (userTodos.length > 0 || userNotes.length > 0) && (
-        <WorkspacePreview todos={userTodos} notes={userNotes} />
-      )}
-
-      {/* Subjects */}
-      <section ref={subjectsRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-12 fade-up">
-        <h2 className="text-2xl font-bold mb-2 glow-title">Pick a track</h2>
-        <p className="mb-8" style={{ color: 'var(--text-muted)' }}>
-          Every topic separates theory (Deep Analysis) from practice patterns (Data Research).
-        </p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {subjects.map((s) => (
-            <SubjectCard key={s._id} subject={s} />
-          ))}
-        </div>
-      </section>
-
-      {/* Blog Series */}
-      {seriesList.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-xs font-mono-display uppercase tracking-widest mb-1" style={{ color: 'var(--accent)' }}>
-                // curated reading paths
-              </p>
-              <h2 className="text-2xl font-bold glow-title">Blog Series</h2>
+            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">500+</span>
+            <span className="text-[var(--color-on-surface-variant)] font-medium">Articles</span>
+          </div>
+          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-tertiary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[var(--color-tertiary)] text-3xl">school</span>
             </div>
-            <Link
-              to="/blog"
-              className="flex items-center gap-1.5 text-sm font-medium border px-3.5 py-2 rounded-xl btn-press"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-            >
-              All posts <ArrowRight size={14} />
-            </Link>
+            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">45</span>
+            <span className="text-[var(--color-on-surface-variant)] font-medium">Pro Courses</span>
           </div>
-          <p className="mb-8" style={{ color: 'var(--text-muted)' }}>
-            Multi-part deep dives — each series takes you from zero to expert on one concept.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {seriesList.map((s) => (
-              <SeriesCard key={s._id} series={s} />
-            ))}
+          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-secondary)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[var(--color-secondary)] text-3xl">hub</span>
+            </div>
+            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">120+</span>
+            <span className="text-[var(--color-on-surface-variant)] font-medium">Tech Topics</span>
           </div>
-        </section>
-      )}
+          <div className="glass-card rounded-[20px] p-6 flex flex-col items-center text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-error)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[var(--color-error)] text-3xl">groups</span>
+            </div>
+            <span className="font-display text-2xl font-bold text-[var(--color-on-surface)] mb-1">50k+</span>
+            <span className="text-[var(--color-on-surface-variant)] font-medium">Engineers</span>
+          </div>
+        </div>
+      </section>
 
-      {/* Footer note */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="rounded-2xl border p-8 text-center" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}>
-          <p className="text-sm font-mono-display mb-2" style={{ color: 'var(--accent)' }}>references &amp; further reading</p>
-          <p className="max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
-            Every chapter created by Tanish — from scratch to mastery. No doubt left. Best platform for revision.
-          </p>
+      {/* Trusted Technologies */}
+      <section className="py-[var(--spacing-xl)] border-y border-[var(--color-outline-variant)]/10 bg-[var(--color-surface-container-lowest)]/50 mb-20">
+        <div className="max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)] overflow-hidden">
+          <p className="text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-[0.2em] mb-10 font-bold">Master Industry Standard Tech</p>
+          <div className="flex justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all">
+            <span className="font-display text-xl font-bold">React</span>
+            <span className="font-display text-xl font-bold">Node.js</span>
+            <span className="font-display text-xl font-bold">Python</span>
+            <span className="font-display text-xl font-bold">AWS</span>
+            <span className="font-display text-xl font-bold">Docker</span>
+          </div>
+        </div>
+      </section>
+      
+      {/* Newsletter Subscription */}
+      <section className="mb-32 max-w-[var(--spacing-max-width)] mx-auto px-[var(--spacing-gutter)]">
+        <div className="glass-card rounded-[32px] p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--color-primary)]/10 blur-[100px] rounded-full pointer-events-none"></div>
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[var(--color-secondary)]/10 blur-[100px] rounded-full pointer-events-none"></div>
+            
+            <span className="material-symbols-outlined text-[var(--color-primary)] text-5xl mb-6 animate-float">mail</span>
+            
+            <h2 className="font-display text-4xl md:text-5xl mb-4 max-w-2xl leading-tight font-bold text-[var(--color-on-surface)]">
+              Join 50,000+ developers receiving our weekly intel.
+            </h2>
+            <p className="text-[var(--color-on-surface-variant)] text-lg mb-10 max-w-xl">
+                Get the latest engineering insights, AI research, and architecture patterns delivered straight to your inbox. No spam, ever.
+            </p>
+            
+            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                <input 
+                  className="flex-grow bg-[var(--color-background)] border border-[var(--color-outline-variant)] rounded-lg px-6 py-3 text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] outline-none transition-all" 
+                  placeholder="dev@example.com" 
+                  type="email"
+                />
+                <button className="bg-[var(--color-primary)] text-[var(--color-on-primary)] px-8 py-3 rounded-lg font-bold hover:scale-105 active:scale-95 transition-all">
+                  Subscribe
+                </button>
+            </form>
+            <p className="text-xs text-[var(--color-on-surface-variant)]/60 mt-6 italic">
+              By subscribing, you agree to our Terms of Service and Privacy Policy.
+            </p>
         </div>
       </section>
     </div>

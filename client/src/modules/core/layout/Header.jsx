@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bookmark, Users, Menu, X, LogOut, LayoutDashboard, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
@@ -9,8 +8,8 @@ import BookmarksDropdown from './BookmarksDropdown';
 import GlobalSearchModal from '../components/ui/GlobalSearchModal';
 
 const navLinkClass = ({ isActive }) =>
-  `text-sm font-medium px-3 py-2 rounded-lg transition-colors ${
-    isActive ? 'text-[var(--accent)] bg-[var(--accent-soft)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+  `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 ${
+    isActive ? 'text-[var(--color-primary)] font-bold' : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)]'
   }`;
 
 const Header = () => {
@@ -54,145 +53,98 @@ const Header = () => {
   };
 
   return (
-    <header
-      className="sticky top-0 z-50 border-b glass-panel"
-      style={{
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        backgroundColor: 'color-mix(in srgb, var(--bg) 60%, transparent)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)'
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link to="/" className="flex flex-col shrink-0 leading-none">
-          <span className="flex items-center gap-2">
-            <span className="font-mono-display text-lg font-bold" style={{ color: 'var(--accent)' }}>{'<'}</span>
-            <span className="font-mono-display text-lg font-bold">httpTechNex</span>
-            <span className="font-mono-display text-lg font-bold" style={{ color: 'var(--accent)' }}>{'/>'}</span>
-          </span>
-          <span className="text-[10px] font-mono-display mt-0.5 pl-0.5" style={{ color: 'var(--text-muted)' }}>
-            Built by Engineer, for Engineer
-          </span>
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          <NavLink to="/learn/dsa" className={navLinkClass}>DSA</NavLink>
-          <NavLink to="/learn/java-advanced-java" className={navLinkClass}>Java</NavLink>
-          <NavLink to="/learn/aptitude" className={navLinkClass}>Aptitude</NavLink>
-          <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
-          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
-          <NavLink to="/todos" className={navLinkClass}>To-Do</NavLink>
-          <NavLink
-            to="/student-os"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all ${
-                isActive
-                  ? 'text-[var(--accent)] bg-[var(--accent-soft)]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-              }`
-            }
+    <header className="fixed top-0 w-full z-50 bg-[var(--color-background)]/70 backdrop-blur-xl border-b border-[var(--color-outline-variant)]/30">
+      <div className="flex justify-between items-center h-16 px-[var(--spacing-gutter)] max-w-[var(--spacing-max-width)] mx-auto">
+        <div className="flex items-center gap-4">
+          <span 
+            className="material-symbols-outlined text-[var(--color-primary)] cursor-pointer active:scale-95 transition-transform md:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
           >
-            StudentOS
-            <span
-              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-              style={{ background: 'linear-gradient(90deg, var(--accent), #5EEAD4)', color: 'white' }}
-            >
-              AI
-            </span>
-          </NavLink>
+            {mobileOpen ? 'close' : 'menu'}
+          </span>
+          <Link to="/" className="flex items-center">
+            <h1 className="font-display text-[var(--text-headline-md)] font-bold tracking-tighter text-[var(--color-on-surface)]">HTTPTechNex</h1>
+          </Link>
+        </div>
+        
+        <nav className="hidden md:flex items-center gap-8">
+          <NavLink to="/learn/dsa" className={navLinkClass}>Learn</NavLink>
+          <NavLink to="/blog" className={navLinkClass}>Blogs</NavLink>
+          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
+          <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
+          {/* We keep To-Do under workspace usually, but let's add it for parity if needed, or hide */}
         </nav>
 
-        {/* Right cluster */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Live users */}
+        <div className="flex items-center gap-4">
+          {/* Live users count - styled minimal */}
           <div
-            className="hidden sm:flex items-center gap-1.5 text-xs font-mono-display px-2.5 py-1.5 rounded-full border"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-            title="Live users on HttpTechNex right now"
+            className="hidden sm:flex items-center gap-1.5 text-xs font-mono-display px-2 py-1 rounded-full border border-[var(--color-outline-variant)]/30"
+            title="Live users"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--accent)' }} />
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: 'var(--accent)' }} />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[var(--color-primary)]" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]" />
             </span>
-            <Users size={13} />
-            {liveCount}
+            <span className="text-[var(--color-on-surface-variant)]">{liveCount}</span>
           </div>
 
-          {/* Search Button */}
-          <button
+          <span 
+            className="material-symbols-outlined text-[var(--color-primary)] cursor-pointer active:scale-95 transition-transform"
             onClick={() => setSearchOpen(true)}
-            aria-label="Search (Cmd+K)"
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-lg border transition-colors hover:bg-[var(--surface)] btn-press"
-            style={{ borderColor: 'var(--border)' }}
           >
-            <Search size={16} />
-            <span className="hidden sm:inline text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-              Search... <kbd className="ml-1 px-1.5 py-0.5 rounded border border-current opacity-70 font-mono-display text-[9px]">⌘K</kbd>
-            </span>
-          </button>
+            search
+          </span>
 
-          {/* Theme toggle */}
-          <button
+          <span 
+            className="material-symbols-outlined text-[var(--color-on-surface-variant)] cursor-pointer active:scale-95 transition-transform"
             onClick={toggleTheme}
-            aria-label="Toggle dark/light mode"
-            className="p-2 rounded-lg border transition-colors hover:bg-[var(--surface)] btn-press"
-            style={{ borderColor: 'var(--border)' }}
           >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
+            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+          </span>
 
           {user && (
             <div className="relative">
-              <button
-                onClick={() => setBookmarksOpen((o) => !o)}
-                aria-label="Bookmarks"
-                className="p-2 rounded-lg border transition-colors hover:bg-[var(--surface)] btn-press"
-                style={{ borderColor: 'var(--border)' }}
+              <span 
+                className="material-symbols-outlined text-[var(--color-on-surface-variant)] cursor-pointer active:scale-95 transition-transform"
+                onClick={() => setBookmarksOpen(!bookmarksOpen)}
               >
-                <Bookmark size={17} />
-              </button>
+                bookmark
+              </span>
               {bookmarksOpen && <BookmarksDropdown onClose={() => setBookmarksOpen(false)} />}
             </div>
           )}
 
-          {/* Auth */}
           {user ? (
             <div className="relative" ref={profileRef}>
-              <button onClick={() => setProfileOpen((o) => !o)} className="flex items-center btn-press">
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                  className="w-9 h-9 rounded-full border-2 object-cover"
-                  style={{ borderColor: 'var(--accent)' }}
-                />
-              </button>
+              <div 
+                className="hidden sm:flex h-8 w-8 rounded-full bg-[var(--color-secondary-container)] items-center justify-center cursor-pointer border border-[var(--color-outline-variant)]/30 overflow-hidden"
+                onClick={() => setProfileOpen(!profileOpen)}
+              >
+                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              </div>
               {profileOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-56 rounded-xl border shadow-lg overflow-hidden"
-                  style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 8px 24px var(--shadow)' }}
+                  className="absolute right-0 mt-2 w-56 rounded-xl border border-[var(--color-outline-variant)]/30 shadow-lg overflow-hidden glass-panel"
+                  style={{ backgroundColor: 'var(--color-surface)', boxShadow: '0 8px 24px var(--shadow)' }}
                 >
-                  <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-                    <p className="text-sm font-semibold truncate">{user.name}</p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
+                  <div className="px-4 py-3 border-b border-[var(--color-outline-variant)]/30">
+                    <p className="text-sm font-semibold truncate text-[var(--color-on-surface)]">{user.name}</p>
+                    <p className="text-xs truncate text-[var(--color-on-surface-variant)]">{user.email}</p>
                   </div>
                   {user.role === 'admin' && (
                     <Link
                       to="/admin-portal"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] transition-colors btn-press"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-colors"
                     >
-                      <LayoutDashboard size={15} /> Admin Dashboard
+                      <span className="material-symbols-outlined text-sm">dashboard</span> Admin
                     </Link>
                   )}
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-[var(--accent-soft)] transition-colors btn-press"
-                    style={{ color: 'var(--danger)' }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-[var(--color-surface-container-high)] transition-colors text-[var(--color-error)]"
                   >
-                    <LogOut size={15} /> Sign out
+                    <span className="material-symbols-outlined text-sm">logout</span> Sign out
                   </button>
                 </div>
               )}
@@ -202,38 +154,20 @@ const Header = () => {
               <GoogleSignInButton />
             </div>
           )}
-
-          {/* Mobile menu toggle */}
-          <button
-            className="md:hidden p-2 rounded-lg border btn-press"
-            style={{ borderColor: 'var(--border)' }}
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
 
       {/* Mobile nav */}
       {mobileOpen && (
-        <div className="md:hidden border-t px-4 py-3 flex flex-col gap-1" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}>
-          <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>DSA</NavLink>
-          <NavLink to="/learn/java-advanced-java" className={navLinkClass} onClick={() => setMobileOpen(false)}>Java &amp; Advanced Java</NavLink>
-          <NavLink to="/learn/aptitude" className={navLinkClass} onClick={() => setMobileOpen(false)}>Aptitude</NavLink>
-          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
+        <div className="md:hidden border-t px-4 py-3 flex flex-col gap-1 border-[var(--color-outline-variant)]/30 bg-[var(--color-background)]">
+          <NavLink to="/learn/dsa" className={navLinkClass} onClick={() => setMobileOpen(false)}>Learn</NavLink>
+          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blogs</NavLink>
           <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
-          <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>To-Do</NavLink>
-          <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-            StudentOS{' '}
-            <span className="text-[9px] font-bold px-1 py-0.5 rounded-full ml-1"
-              style={{ background: 'linear-gradient(90deg, var(--accent), #5EEAD4)', color: 'white' }}>AI</span>
-          </NavLink>
+          <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           {!user && <div className="pt-2"><GoogleSignInButton /></div>}
         </div>
       )}
       
-      {/* Global Search Modal */}
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
