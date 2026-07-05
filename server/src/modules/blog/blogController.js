@@ -333,6 +333,31 @@ const deleteBlog = async (req, res) => {
   res.json({ message: 'Post deleted.' });
 };
 
+// DELETE /api/blogs/comments/:commentId
+const deleteComment = async (req, res) => {
+  const comment = await Comment.findById(req.params.commentId);
+  if (!comment) return res.status(404).json({ message: 'Comment not found' });
+  
+  // Must be admin or author
+  if (req.user.role !== 'admin' && req.user._id.toString() !== comment.user.toString()) {
+    return res.status(403).json({ message: 'Not authorized to delete this comment' });
+  }
+
+  // Find blog so we can clear its cache
+  const blogId = comment.blog;
+  await Comment.findByIdAndDelete(req.params.commentId);
+  
+  // Also delete child comments
+  await Comment.deleteMany({ parentComment: req.params.commentId });
+  
+  const blog = await Blog.findById(blogId);
+  if (blog) {
+    await cache.del(`blog:${blog.slug}`);
+  }
+
+  res.json({ message: 'Comment deleted successfully' });
+};
+
 module.exports = {
   getBlogs,
   getBlogBySlug,
@@ -345,4 +370,5 @@ module.exports = {
   createBlog,
   updateBlog,
   deleteBlog,
+  deleteComment,
 };

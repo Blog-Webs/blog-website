@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, Clock, Heart, Send } from 'lucide-react';
+import { ArrowLeft, Clock, Heart, Send, Trash2 } from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { bookmarkApi } from '../../workspace/api/userFeatures';
 import api from '../../core/api/client';
@@ -184,6 +184,16 @@ const BlogDetail = () => {
             <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               {new Date(c.createdAt).toLocaleDateString()}
             </span>
+
+            {(user?.role === 'admin' || user?._id === c.user?._id || user?.id === c.user?._id) && (
+              <button
+                onClick={() => handleDeleteComment(c._id)}
+                className="text-[13px] font-semibold text-red-400 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                <Trash2 size={13} /> Delete
+              </button>
+            )}
+
           </div>
           
           {replyingTo === c._id && user && (

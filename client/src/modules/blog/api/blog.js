@@ -5,6 +5,7 @@ export const blogApi = {
   getBlogBySlug: (slug) => api.get(`/blogs/${slug}`),
   toggleLike: (slug) => api.post(`/blogs/${slug}/like`),
   addComment: (slug, text, parentComment) => api.post(`/blogs/${slug}/comments`, { text, parentComment }),
+  deleteComment: (commentId) => api.delete(`/blogs/comments/${commentId}`),
   getTagsAndCategories: () => api.get('/blogs/meta/tags-categories'),
 
   // Admin

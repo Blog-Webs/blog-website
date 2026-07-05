@@ -12,6 +12,7 @@ const {
   createBlog,
   updateBlog,
   deleteBlog,
+  deleteComment,
 } = require('./blogController');
 const { requireAuth, requireAdmin } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
@@ -33,5 +34,6 @@ router.get('/', cache('blogs', 300), getBlogs);
 router.get('/:slug', cache('blog', 300), getBlogBySlug);
 router.post('/:slug/like', requireAuth, toggleLike);
 router.post('/:slug/comments', requireAuth, addComment);
+router.delete('/comments/:commentId', requireAuth, deleteComment);
 
 module.exports = router;

@@ -35,6 +35,21 @@ const TopicDetail = () => {
     fetchTopic();
   }, [topicSlug, navigate]);
 
+  
+  const handleDeleteReply = async (replyId) => {
+    if (!window.confirm('Are you sure you want to delete this reply?')) return;
+    try {
+      await forumApi.deleteReply(replyId);
+      setReplies(replies.filter(r => r._id !== replyId));
+      if (topic) {
+        setTopic({ ...topic, replyCount: Math.max(0, topic.replyCount - 1) });
+      }
+    } catch (err) {
+      console.error('Failed to delete reply:', err);
+      alert('Failed to delete reply');
+    }
+  };
+
   const handlePostReply = async () => {
     if (!replyContent.trim()) return;
     setIsReplying(true);

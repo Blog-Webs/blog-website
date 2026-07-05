@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Heart, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
+import { Heart, Link as LinkIcon, CheckCircle2, Trash2 } from 'lucide-react';
 import { useAuth } from '../../core/context/AuthContext';
 import { forumApi } from '../api/forum';
 
-const ReplyCard = ({ reply, isOp }) => {
+const ReplyCard = ({ reply, isOp, onDelete }) => {
   const { user } = useAuth();
   const [likes, setLikes] = useState(reply.likes || []);
   const [isLiking, setIsLiking] = useState(false);
@@ -92,6 +92,16 @@ const ReplyCard = ({ reply, isOp }) => {
         <button className="flex items-center gap-1.5 font-medium transition-colors hover:text-foreground opacity-50 hover:opacity-100">
           <LinkIcon size={16} />
         </button>
+      
+        {(user?.role === 'admin' || user?._id === reply.author?._id || user?.id === reply.author?._id) && !isOp && (
+          <button 
+            onClick={() => onDelete && onDelete(reply._id)}
+            className="flex items-center gap-1.5 font-medium transition-colors hover:text-red-500 opacity-50 hover:opacity-100 ml-auto"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+
       </div>
     </div>
   );

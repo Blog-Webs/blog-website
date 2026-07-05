@@ -15,4 +15,5 @@ export const forumApi = {
   // Replies
   createReply: (topicId, content) => api.post(`/forum/topics/${topicId}/replies`, { content }),
   toggleLikeReply: (replyId) => api.post(`/forum/replies/${replyId}/like`),
+  deleteReply: (replyId) => api.delete(`/forum/replies/${replyId}`),
 };
