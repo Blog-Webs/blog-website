@@ -2,3 +2,4 @@
 
 * [User Guide](user-guide.md)
 * [The Learn Platform](learn-platform.md)
+* [StudentOS](student-os.md)
