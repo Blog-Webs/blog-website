@@ -30,67 +30,70 @@ const SubjectPage = () => {
       .finally(() => setLoading(false));
   }, [subjectSlug]);
 
-  if (loading) return <div className="max-w-5xl mx-auto px-4 py-20"><CardGridSkeleton count={4} /></div>;
+  if (loading) return <div className="min-h-screen bg-[#0A0A0A] max-w-5xl mx-auto px-4 py-20"><CardGridSkeleton count={4} /></div>;
 
   if (error || !subject) {
-    return <div className="max-w-5xl mx-auto px-4 py-20 text-center" style={{ color: 'var(--text-muted)' }}>{error || 'Not found.'}</div>;
+    return <div className="min-h-screen bg-[#0A0A0A] max-w-5xl mx-auto px-4 py-20 text-center text-[#8B949E]">{error || 'Not found.'}</div>;
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold mb-2 glow-title" style={{ color: subject.color }}>{subject.name}</h1>
-        <p style={{ color: 'var(--text-muted)' }}>{subject.description}</p>
+    <div className="min-h-[calc(100vh-64px)] bg-[#0A0A0A] relative text-white w-full">
+      {/* Subtle Background Grid Pattern matching the mockup */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D3342 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: 0.3 }} />
+      
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-16">
+        <div className="mb-10">
+          <h1 className="text-[32px] font-bold mb-3 tracking-tight" style={{ color: subject.color }}>{subject.name}</h1>
+          <p className="text-[15px] text-[#C9D1D9] font-medium tracking-wide">{subject.description}</p>
 
-        <div className="flex flex-wrap gap-3 mt-5">
-          {subject.hasRoadmap && (
-            <button
-              className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-lg border btn-press"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <Map size={14} /> Roadmap
-            </button>
-          )}
-          {subject.hasCheatsheet && (
-            <button
-              className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-lg border btn-press"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <FileSpreadsheet size={14} /> Cheatsheet
-            </button>
-          )}
+          <div className="flex flex-wrap gap-3 mt-6">
+            {subject.hasRoadmap && (
+              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-lg border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-[#0E1015]">
+                <Map size={14} /> Roadmap
+              </button>
+            )}
+            {subject.hasCheatsheet && (
+              <button className="flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-lg border border-[#2D3342] text-[#C9D1D9] hover:text-white hover:bg-[#161B22] transition-colors bg-[#0E1015]">
+                <FileSpreadsheet size={14} /> Cheatsheet
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-3">
-        {topics.map((topic) => (
-          <Link
-            key={topic._id}
-            to={`/learn/${subjectSlug}/${topic.slug}`}
-            state={{ topicId: topic._id }}
-            className="flex items-center justify-between gap-4 p-5 rounded-xl border card-hover"
-            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2.5 mb-1.5">
-                <h3 className="font-semibold truncate">{topic.name}</h3>
-                <span
-                  className="text-[10px] font-mono-display uppercase px-2 py-0.5 rounded-full shrink-0"
-                  style={{ backgroundColor: `${DIFFICULTY_COLOR[topic.difficulty]}1A`, color: DIFFICULTY_COLOR[topic.difficulty] }}
-                >
-                  {topic.difficulty}
-                </span>
+        <div className="flex flex-col gap-3">
+          {topics.map((topic) => (
+            <Link
+              key={topic._id}
+              to={`/learn/${subjectSlug}/${topic.slug}`}
+              state={{ topicId: topic._id }}
+              className="group flex items-center justify-between gap-6 px-6 py-5 rounded-xl border border-[#2D3342] bg-[#0E1015] hover:border-[#4C5363] hover:bg-[#161B22] transition-all shadow-sm"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-3 mb-1.5">
+                  <h3 className="text-[15px] font-bold text-white group-hover:text-[#4375FF] transition-colors truncate">{topic.name}</h3>
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 border"
+                    style={{ 
+                      backgroundColor: `${DIFFICULTY_COLOR[topic.difficulty]}1A`, 
+                      color: DIFFICULTY_COLOR[topic.difficulty],
+                      borderColor: `${DIFFICULTY_COLOR[topic.difficulty]}33`
+                    }}
+                  >
+                    {topic.difficulty}
+                  </span>
+                </div>
+                <p className="text-[13px] text-[#8B949E] truncate leading-relaxed">{topic.description}</p>
               </div>
-              <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{topic.description}</p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <Clock size={13} /> {topic.estimatedMinutes}m
+              
+              <div className="flex items-center gap-6 shrink-0 pl-4">
+                <div className="flex items-center gap-1.5 text-[13px] font-mono text-[#8B949E]">
+                  <Clock size={14} /> {topic.estimatedMinutes}m
+                </div>
+                <ChevronRight size={16} className="text-[#4C5363] group-hover:text-white transition-colors" />
               </div>
-              <ChevronRight size={18} style={{ color: 'var(--text-muted)' }} />
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
