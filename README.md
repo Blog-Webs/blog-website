@@ -1,55 +1,99 @@
 # HttpTechNex 🚀
 
-**HttpTechNex** is a comprehensive, modern developer ecosystem designed to combine learning, productivity, and community engagement into a single unified platform. 
+A full-stack MERN learning platform for **DSA**, **Java & Advanced Java**, and **Aptitude** — built around chapter-by-chapter progress tracking, a Medium-style blog, Google-only authentication, and a hidden admin portal.
 
-It seamlessly merges the capabilities of a modern tech blog, an interactive community forum, a structured learning management system (LMS), and a personal productivity suite (StudentOS).
 HttpTechNex combines the capabilities of a modern tech blog, a structured learning management system (LMS), and a personal productivity suite (StudentOS with an AI assistant) into a single unified platform.
 
 ***
 
----
+## Table of contents
 
-## 🏗️ System Architecture
+1. [What's inside](#whats-inside)
+2. [Technology stack](#technology-stack)
+3. [Architecture overview](#architecture-overview)
+4. [Prerequisites](#prerequisites)
+5. [Step 1 — Clone & install](#step-1--clone--install)
+6. [Step 2 — Set up MongoDB](#step-2--set-up-mongodb)
+7. [Step 3 — Set up Google OAuth (Sign in with Google)](#step-3--set-up-google-oauth-sign-in-with-google)
+8. [Step 4 — Set up Cloudinary (image uploads)](#step-4--set-up-cloudinary-image-uploads)
+9. [Step 5 — Set up SMTP (newsletter emails)](#step-5--set-up-smtp-newsletter-emails)
+10. [Step 6 — Configure environment variables](#step-6--configure-environment-variables)
+11. [Step 7 — Seed the database](#step-7--seed-the-database)
+12. [Step 7.5 — Migrate content to the rich-text editor](#step-75--migrate-content-to-the-rich-text-editor-run-once)
+13. [Step 8 — Run the project](#step-8--run-the-project)
+14. [Becoming the Admin](#becoming-the-admin)
+15. [Project structure](#project-structure)
+16. [API reference (quick overview)](#api-reference-quick-overview)
+17. [Performance & caching](#performance--caching)
+18. [Recent feature additions](#recent-feature-additions)
+19. [Upgrading StudentOS AI to a real RAG agent](#upgrading-studentos-ai-to-a-real-rag-agent)
+20. [Deployment notes](#deployment-notes)
+21. [Troubleshooting](#troubleshooting)
 
-HttpTechNex is built using a highly decoupled client-server model, utilizing a **React Single Page Application (SPA)** on the frontend and an **Event-Driven Node.js/Express API** on the backend.
+***
 
-### Frontend Architecture (React + Vite)
-The frontend breaks away from traditional file-type organization (grouping all pages together) and instead uses a **Domain-Driven Modular Structure**. 
-* **Modules:** The app is split into isolated domains: `core`, `auth`, `admin`, `blog`, `forum`, `learn`, and `StudentOS`.
-* **State Management:** Uses React Context (`AuthContext`, `ThemeContext`, `StudentOSContext`) for global state, minimizing prop-drilling.
-* **API Layer:** A dedicated Axios client handles all HTTP requests, keeping UI components completely isolated from network logic.
+## What's inside
 
-### Backend Architecture (Node.js + Event-Driven Design)
-The backend utilizes an **MVC (Model-View-Controller)** pattern enhanced by a powerful **Event-Driven Architecture (EDA)**.
-* **The EventBus:** Instead of performing slow, synchronous tasks (like sending emails or writing logs) during API requests, controllers immediately emit events (e.g., `UserRegistered`, `ActionOccurred`) to an internal EventBus and return a fast response to the user. Background listeners catch these events and process the heavy lifting asynchronously.
-* **Database & Cache:** Uses **MongoDB** for primary data persistence and **Redis** for high-speed caching of frequently accessed routes (like blog lists and metadata).
+- **No visible admin login.** The only sign-in method on the public site is **Sign in with Google**. Some content (the first chapter of every track) is readable by anyone; everything past that requires a Google session.
+- **DSA / Java & Advanced Java / Aptitude** learning tracks, each structured as: `Subject → Topic → Track ("Deep Analysis" / "Data Research") → Chapter 1, 2, 3…` with a left sidebar (tracks), a middle pane (chapter list + studied checkboxes), and a right reading pane.
+- **Per-chapter progress tracking** — a checkbox per chapter, persisted per user.
+- **Bookmarks** for both chapters and blog posts, with a dropdown in the header.
+- **Blog & Newsletter**, Medium-style: cover image upload, title/subtitle/body, tags, categories, drafts vs published, likes, comments, a rich-text toolbar (bold, italic, headings, links, quotes, dividers, code blocks, inline images), a "what's covered" outline rail, and "up next" recommendations. Only the Admin can write posts.
+- **Newsletter email notifications** — every active subscriber gets emailed automatically the moment the Admin publishes a new post (via any SMTP provider — see Step 5).
+- **Site-wide search** on the homepage across blog posts, topics, and chapters, with results grouped and deep-linked straight to the right page.
+- **Help / Contact widget** on the homepage — Bug report, Support, and Review forms, viewable by the Admin in a dedicated Contact Inbox.
+- **Dark / light theme toggle**, persisted locally and synced to the user's account.
+- **Live user counter** via Socket.io, shown in the header and on the admin dashboard.
+- **A personal to-do list** (plus a Notes tab) for logged-in users.
+- **Expandable content tree** — the Admin isn't limited to the seeded DSA / Java / Aptitude subjects; new subjects (e.g. "System Design"), topics, and tracks can all be created directly from the admin portal, with the same rich-text + image-upload chapter editor used in the blog.
+- **Hidden Admin Portal** at `/admin-portal` — invisible in all navigation, gated **server-side** by a list of admin emails, and returns a generic 404 (not a 401/403) to anyone who isn't an admin, so the route's existence is never confirmed to outsiders.
+- **StudentOS** — a personal productivity suite with calendar/email/drive integration and an AI assistant (see [Upgrading StudentOS AI](#upgrading-studentos-ai-to-a-real-rag-agent) for the roadmap toward a full RAG agent).
 
----
+***
 
-## 🛠️ Technology Stack
+## Technology stack
 
-**Frontend:**
-* **React 18** (UI Library)
-* **Vite** (Next-generation bundler for lightning-fast builds)
-* **React Router v6** (Client-side routing)
-* **BlockNote** (Notion-style rich text editor for blogs)
-* **Lucide React** (Premium, lightweight SVG icons)
-* **CSS Modules / Vanilla CSS** (For high-performance glassmorphism and custom animations)
+**Frontend**
+- React 18 (Vite bundler)
+- React Router v6
+- BlockNote (Notion-style rich-text editor for blogs and chapters)
+- Lucide React (icons)
+- Tailwind CSS v4 / CSS Modules for styling, glassmorphism, and animations
+
+**Backend**
+- Node.js & Express.js
+- MongoDB & Mongoose
+- Socket.io (live user counter)
+- In-memory TTL cache, upgradeable to Redis (see [Performance & caching](#performance--caching))
+- NodeMailer (SMTP email delivery)
+- Cloudinary (image hosting/CDN)
+- Google OAuth 2.0 (`google-auth-library`) for authentication
+- `@google/generative-ai` (current StudentOS AI), with a roadmap to LangChain/LangGraph + a vector database
+
+**DevOps**
+- GitHub Actions (CI: dependency install, syntax checks, production build validation)
+- Vercel (frontend hosting) / Render (backend hosting)
+
+***
+
+## Architecture overview
+
+```
+httptechnex/
+├── server/      Express + MongoDB (Mongoose) + Socket.io API
+└── client/      React (Vite) + Tailwind CSS v4 frontend
+```
 
 - **Auth model:** Google Identity Services on the frontend produces a Google ID token → sent to `/api/auth/google` → backend verifies it with `google-auth-library` → backend issues its **own** JWT in an `httpOnly` cookie. The frontend never sees or stores any token directly; all API calls are cookie-authenticated (`withCredentials: true`).
 - **Admin gating:** a user is promoted to `role: 'admin'` automatically on login **only if** their email is in the server's `ADMIN_EMAILS` environment variable. The `/admin-portal` route checks this server-side on every request; an unauthenticated or non-admin request gets an indistinguishable `404`.
 - **Real-time live users:** a raw `http.Server` (not just Express) is created in `server.js` so Socket.io can attach to it. Every connected browser tab counts as one "live user."
 
-**DevOps & CI/CD:**
-* **GitHub Actions** (Continuous Integration for syntax checking and build validation)
-* **Vercel** (Frontend Hosting)
-* **Render** (Backend Hosting)
+***
 
----
+## Prerequisites
 
-## ✨ Core Features & Recent Additions
+Install these before starting:
 
-We have heavily invested in expanding the platform's capabilities to make it a state-of-the-art ecosystem. Here is a breakdown of the newest features and *why* they were built:
 | Tool | Why | Check with |
 | --- | --- | --- |
 | [Node.js](https://nodejs.org/) v18+ | Runs both server and client | `node -v` |
@@ -59,17 +103,10 @@ We have heavily invested in expanding the platform's capabilities to make it a s
 | A free [Cloudinary](https://cloudinary.com/users/register/free) account | To host blog images | — |
 | Git | To clone/manage the repo | `git --version` |
 
-### 1. Event-Driven Architecture (EDA)
-* **What it is:** A central `EventBus` that handles background tasks.
-* **Why we built it:** Previously, if a user signed up, they had to wait for the backend to connect to the SMTP server and send an email before the API would respond. By introducing EDA, the API responds in milliseconds, and the email is sent silently in the background. It allows the platform to scale massively without UI blocking.
+***
 
-### 2. Automated Welcome Emails
-* **What it is:** When a new user logs in via Google OAuth for the first time, they automatically receive a beautifully formatted welcome email outlining the platform's features.
-* **Why we built it:** To improve user retention and onboarding. It immediately guides new developers toward the Forum, Blogs, and StudentOS.
+## Step 1 — Clone & install
 
-### 3. Real-Time Admin Notification System
-* **What it is:** A dedicated notification feed built into the Admin Dashboard (`AdminDashboard.jsx`). It tracks user engagement globally.
-* **Why we built it:** Admins need to know when the community is active. By listening to `ActionOccurred` events, the system automatically logs whenever a user likes a blog, likes a comment, or replies to a forum topic, giving admins a bird's-eye view of platform engagement.
 ```bash
 git clone https://github.com/Blog-Webs/blog-website.git
 cd blog-website
@@ -77,35 +114,18 @@ cd blog-website
 cd server
 npm install
 
-### 4. Admin Content Moderation (CRUD)
-* **What it is:** Authorized Admins now have the ability to delete any user comment on a Tech Blog, or any reply within the Community Forum. 
-* **Why we built it:** Essential for community safety. If a user posts spam or inappropriate content, admins can instantly purge it from the UI.
+cd ../client
+npm install
+```
 
-### 5. Premium UI/UX Overhaul
-* **What it is:** Implementation of glassmorphism (frosted glass effects), fluid micro-animations, curated dark-mode color palettes, and responsive layouts across the Forum and Blog modules.
-* **Why we built it:** Modern developers expect a premium aesthetic. A beautiful, dynamic interface significantly increases user trust, time-on-site, and overall engagement.
+***
 
-### 6. Automated CI/CD Pipeline
-* **What it is:** A GitHub Actions workflow (`ci.yml`) that automatically triggers on Pull Requests and pushes to the `master` branch.
-* **Why we built it:** To act as a "Gatekeeper". It automatically installs dependencies, runs syntax checks across the backend, and executes a production build of the Vite frontend. This guarantees that broken code is never accidentally merged and deployed to production (Vercel/Render).
+## Step 2 — Set up MongoDB
 
----
+You have two options. Pick one.
 
-## 🚀 Getting Started Locally
+### Option A — Local MongoDB (simplest for development)
 
-1. **Clone the repository**
-   \`\`\`bash
-   git clone https://github.com/Blog-Webs/blog-website.git
-   cd blog-website
-   \`\`\`
-
-2. **Setup Backend**
-   \`\`\`bash
-   cd server
-   npm install
-   # Create a .env file with your MongoDB, Redis, and Cloudinary credentials
-   npm run dev
-   \`\`\`
 1. Install MongoDB Community Server for your OS: https://www.mongodb.com/try/download/community
 2. Start it:
    - **macOS (Homebrew):** `brew services start mongodb-community`
@@ -117,15 +137,8 @@ npm install
    mongodb://127.0.0.1:27017/httptechnex
    ```
 
-3. **Setup Frontend**
-   \`\`\`bash
-   cd ../client
-   npm install
-   npm run dev
-   \`\`\`
+### Option B — MongoDB Atlas (free cloud cluster, no local install)
 
----
-*Built with ❤️ for the developer community.*
 1. Go to https://www.mongodb.com/cloud/atlas/register and create a free account.
 2. Create a new **free shared cluster** (M0).
 3. Under **Database Access**, create a database user with a username and password.
