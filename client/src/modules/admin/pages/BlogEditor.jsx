@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Image as ImageIcon, X, Save, Send, Eye, CloudUpload, Settings, Plus, LayoutList, Calendar, Link as LinkIcon, Image, Code, List, ListOrdered, Quote } from 'lucide-react';
+import { Image as ImageIcon, X, Save, Send, Eye, CloudUpload, Settings, Plus, LayoutList, Calendar, Link as LinkIcon, Image, Code, List, ListOrdered, Quote, Bot } from 'lucide-react';
 import { blogApi } from '../../blog/api/blog';
 import { seriesApi } from '../../blog/api/series';
 import BlockEditor from '../../core/components/ui/BlockEditor';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Cpu, Server, Eye, ExternalLink, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Users, Cpu, Server, Eye, ExternalLink, Plus, Edit2, Trash2, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
