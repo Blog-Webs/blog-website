@@ -21,7 +21,7 @@ const Home = () => {
           <span className="text-[#abc4ff] italic">Engineering</span> at Depth
         </h1>
         
-        <p className="text-[17px] text-gray-400 max-w-2xl leading-[1.6] mb-10">
+        <p className="text-[17px] text-gray-400 max-w-[672px] leading-[1.6] mb-10">
           Structured learning paths, in-depth documentation, and expert articles for 
           software engineers who demand precision. Build your expertise from 
           fundamentals to production-grade architectures.
@@ -79,7 +79,7 @@ const Home = () => {
             Personal Productivity <br />
             <span className="text-[#abc4ff]">Engineered for Devs</span>
           </h2>
-          <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-md">
+          <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-[448px]">
             A unified workspace built for the technical mind. Manage complex documentation tracks, maintain task lists for your side projects, and store code snippets—all in one encrypted vault.
           </p>
           
@@ -214,7 +214,7 @@ const Home = () => {
             <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-20 pointer-events-none">
               <span className="material-symbols-outlined text-[200px] text-[#0a0a0a]">mail</span>
             </div>
-            <div className="relative z-10 max-w-sm">
+            <div className="relative z-10 max-w-[384px]">
               <h3 className="text-2xl font-bold text-[#0a0a0a] mb-2 tracking-tight">Join the Dispatch</h3>
               <p className="text-sm text-[#0a0a0a]/70 mb-6">Weekly technical reports on the state of engineering delivered to your inbox.</p>
               <form className="flex bg-[#0a0a0a]/5 rounded-lg p-1 border border-[#0a0a0a]/10">
