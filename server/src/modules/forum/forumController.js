@@ -198,6 +198,31 @@ const forumController = {
     } catch (error) {
       res.status(500).json({ message: 'Error searching topics' });
     }
+  },
+
+  deleteReply: async (req, res) => {
+    try {
+      const reply = await ForumReply.findById(req.params.id);
+      if (!reply) return res.status(404).json({ message: 'Reply not found' });
+
+      // Check auth: Must be admin or the author
+      if (req.user.role !== 'admin' && req.user.id !== reply.author.toString()) {
+        return res.status(403).json({ message: 'Not authorized to delete this reply' });
+      }
+
+      await ForumReply.findByIdAndDelete(req.params.id);
+      
+      // Update topic reply count
+      const topic = await ForumTopic.findById(reply.topic);
+      if (topic) {
+        topic.replyCount = Math.max(0, topic.replyCount - 1);
+        await topic.save();
+      }
+
+      res.json({ message: 'Reply deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Error deleting reply', error: error.message });
+    }
   }
 };
 

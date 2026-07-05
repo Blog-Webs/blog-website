@@ -15,5 +15,6 @@ router.post('/topics', requireAuth, forumController.createTopic);
 router.post('/topics/:id/likes', requireAuth, forumController.toggleLikeTopic);
 router.post('/topics/:id/replies', requireAuth, forumController.createReply);
 router.post('/replies/:id/like', requireAuth, forumController.toggleLikeReply);
+router.delete('/replies/:id', requireAuth, forumController.deleteReply);
 
 module.exports = router;
