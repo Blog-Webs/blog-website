@@ -890,7 +890,7 @@ const Home = () => {
             <p className="text-gray-400 mb-10 max-w-[42rem] mx-auto text-lg">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
             <form className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center items-stretch mx-auto relative z-10">
               <input 
-                className="flex-grow w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500 text-sm" 
+                className="w-full sm:w-auto sm:flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500 text-sm" 
                 placeholder="Enter your work email" 
                 type="email"
                 required
