@@ -40,7 +40,7 @@ export const GlobalSearch = () => {
   const SearchBarUI = ({ floating = false }) => (
     <button
       onClick={() => setIsModalOpen(true)}
-      className={`w-full max-w-xl flex items-center px-4.5 h-[56px] rounded-2xl border text-left cursor-pointer transition-all duration-300 relative group select-none outline-none ${
+      className={`w-full max-w-xl flex items-center px-4 h-[56px] rounded-2xl border text-left cursor-pointer transition-all duration-300 relative group select-none outline-none ${
         floating
           ? 'bg-[#111217]/90 backdrop-blur-xl border-white/10 shadow-[0_0_30px_rgba(124,92,255,0.15)] hover:border-[#7C5CFF]/40'
           : 'bg-[#111217]/50 backdrop-blur-md border-white/5 shadow-inner hover:border-[#7C5CFF]/30'
@@ -64,11 +64,11 @@ export const GlobalSearch = () => {
       {/* Search Bar Container Placeholder */}
       <div 
         ref={placeholderRef} 
-        className="w-full flex justify-center py-6 px-4 relative z-20 min-h-[104px]"
+        className="w-full py-6 px-4 relative z-20 min-h-[104px]"
       >
         {/* Inline Search Bar - visible when not sticky, transitions opacity */}
         <div 
-          className={`w-full max-w-xl transition-all duration-300 ${
+          className={`w-full max-w-xl mx-auto transition-all duration-300 ${
             isSticky 
               ? 'opacity-0 scale-95 pointer-events-none' 
               : 'opacity-100 scale-100'
