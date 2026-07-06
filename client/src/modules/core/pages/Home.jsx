@@ -662,7 +662,7 @@ const Home = () => {
         <div className="w-[800px] h-[500px] bg-gradient-to-tr from-[#4F46E5]/20 to-[#06B6D4]/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="relative z-10 pt-32 pb-16">
+      <div className="relative z-10 pt-8 pb-16">
         {/* Global Search Bar */}
         <GlobalSearch />
         
