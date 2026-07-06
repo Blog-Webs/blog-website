@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import SearchModal from './SearchModal';
 
@@ -60,6 +61,19 @@ export const GlobalSearch = () => {
     </button>
   );
 
+  const floatingSearchBar = (
+    <div 
+      className={`fixed left-1/2 -translate-x-1/2 z-[60] px-4 transition-all duration-300 ease-out transform ${
+        isSticky 
+          ? 'top-4 opacity-100 translate-y-0 scale-100 pointer-events-auto' 
+          : '-top-20 opacity-0 -translate-y-4 scale-95 pointer-events-none'
+      }`}
+      style={{ width: '100%', maxWidth: '576px' }}
+    >
+      <SearchBarUI floating={true} />
+    </div>
+  );
+
   return (
     <>
       {/* Search Bar Container Placeholder */}
@@ -81,23 +95,17 @@ export const GlobalSearch = () => {
         </div>
       </div>
 
-      {/* Floating Sticky Search Bar - centered, slides down from top */}
-      <div 
-        className={`fixed left-1/2 -translate-x-1/2 z-[60] px-4 transition-all duration-300 ease-out transform ${
-          isSticky 
-            ? 'top-4 opacity-100 translate-y-0 scale-100 pointer-events-auto' 
-            : '-top-20 opacity-0 -translate-y-4 scale-95 pointer-events-none'
-        }`}
-        style={{ width: '100%', maxWidth: '576px' }}
-      >
-        <SearchBarUI floating={true} />
-      </div>
+      {/* Render the floating sticky bar at root level */}
+      {typeof document !== 'undefined' && createPortal(floatingSearchBar, document.body)}
 
-      {/* Search Modal overlay */}
-      <SearchModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      {/* Render the modal at root level */}
+      {typeof document !== 'undefined' && createPortal(
+        <SearchModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />,
+        document.body
+      )}
     </>
   );
 };
