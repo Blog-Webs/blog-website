@@ -139,6 +139,33 @@
   animation: float 6s ease-in-out infinite;
 }
 
+@keyframes macSlideDown {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes macFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-mac-slide-down {
+  animation: macSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-mac-fade-in {
+  animation: macFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 html, body {
   margin: 0;
   padding: 0;

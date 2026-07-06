@@ -33,6 +33,10 @@ const BlogDetail = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [replyText, setReplyText] = useState('');
 
+  // Table of Contents
+  const [toc, setToc] = useState([]);
+  const [activeId, setActiveId] = useState('');
+
   // SVG Reading Progress calculations
   const progress = useReadingProgress(scrollRef);
   const radius = 28;
@@ -50,8 +54,8 @@ const BlogDetail = () => {
       
       // Ensure we have mock "UP NEXT" data if empty to match the design
       setUpNext(data.upNext?.length > 0 ? data.upNext : [
-        { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
-        { title: 'Silicon vs. Graphene: The Next Frontier', readTimeMinutes: 12, _id: 'mock2', coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300' },
+        { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', slug: 'beyond-transformers', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
+        { title: 'Silicon vs. Graphene: The Next Frontier', readTimeMinutes: 12, _id: 'mock2', slug: 'ephemeral-infrastructure', coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300' },
       ]);
       setLoading(false);
       window.scrollTo({ top: 0 });
@@ -71,13 +75,63 @@ const BlogDetail = () => {
       setLikeCount(42);
       setLiked(false);
       setUpNext([
-        { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
-        { title: 'Silicon vs. Graphene: The Next Frontier', readTimeMinutes: 12, _id: 'mock2', coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300' },
+        { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', slug: 'beyond-transformers', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
+        { title: 'Silicon vs. Graphene: The Next Frontier', readTimeMinutes: 12, _id: 'mock2', slug: 'ephemeral-infrastructure', coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300' },
       ]);
       setLoading(false);
       window.scrollTo({ top: 0 });
     });
   }, [slug, user]);
+
+  useEffect(() => {
+    if (blog) {
+      let headings = [];
+      if (blog.contentBlocks && blog.contentBlocks.length > 0) {
+        blog.contentBlocks.forEach((block) => {
+          if (block.type === 'heading' && block.content && block.content.length > 0) {
+            const text = block.content.map(c => c.text || '').join('');
+            const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            headings.push({ id, text, level: block.props?.level || 2 });
+          }
+        });
+      } else if (blog.content) {
+        const headingRegex = /^(##|###)\s+(.*)$/gm;
+        const matches = [...blog.content.matchAll(headingRegex)];
+        headings = matches.map((match) => {
+          const text = match[2].trim();
+          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          return { id, text, level: match[1].length };
+        });
+      }
+      setToc(headings);
+    }
+  }, [blog]);
+
+  useEffect(() => {
+    if (toc.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries.find((entry) => entry.isIntersecting);
+        if (visibleEntry) {
+          setActiveId(visibleEntry.target.id);
+        }
+      },
+      { rootMargin: '-100px 0px -40% 0px', threshold: 0.1 }
+    );
+
+    toc.forEach((item) => {
+      const el = document.getElementById(item.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      toc.forEach((item) => {
+        const el = document.getElementById(item.id);
+        if (el) observer.unobserve(el);
+      });
+    };
+  }, [toc]);
 
   useEffect(() => {
     if (user && blog && blog._id !== 'fallback-blog-id') {
@@ -146,6 +200,25 @@ const BlogDetail = () => {
     }
   };
 
+  const getHeadingText = (children) => {
+    if (typeof children === 'string') return children;
+    if (Array.isArray(children)) return children.map(getHeadingText).join('');
+    if (children?.props?.children) return getHeadingText(children.props.children);
+    return '';
+  };
+
+  const Heading2 = ({ children }) => {
+    const text = getHeadingText(children);
+    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return <h2 id={id} className="scroll-mt-24">{children}</h2>;
+  };
+
+  const Heading3 = ({ children }) => {
+    const text = getHeadingText(children);
+    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return <h3 id={id} className="scroll-mt-24">{children}</h3>;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-24 bg-[#0a0a0a]">
@@ -176,20 +249,20 @@ const BlogDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16">
           
           {/* LEFT SIDEBAR: UP NEXT */}
-          <aside className="hidden lg:block lg:col-span-3">
+          <aside className="hidden lg:block lg:col-span-3 text-left">
             <div className="sticky top-28">
               <h4 className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant uppercase mb-6">UP NEXT</h4>
               <div className="space-y-8">
                 {upNext.map((post) => (
-                  <div key={post._id} className="group cursor-pointer">
+                  <Link key={post._id} to={`/blog/${post.slug}`} className="group block text-left">
                     {post.coverImage && (
-                      <div className="w-full h-28 rounded-lg overflow-hidden mb-3 border border-outline-variant/10 shadow-lg">
+                      <div className="w-full h-28 rounded-lg overflow-hidden mb-3 border border-outline-variant/10 shadow-lg relative">
                          <img src={optimizeImage(post.coverImage)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
                       </div>
                     )}
-                    <h5 className="font-bold text-sm text-on-surface leading-snug group-hover:text-primary transition-colors mb-1.5">{post.title}</h5>
+                    <h5 className="font-bold text-sm text-on-surface leading-snug group-hover:text-primary transition-colors duration-300 mb-1.5">{post.title}</h5>
                     <div className="text-xs text-on-surface-variant font-mono">{post.readTimeMinutes} min read</div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -227,8 +300,7 @@ const BlogDetail = () => {
                 <img 
                   src={optimizeImage(blog.coverImage)} 
                   alt={blog.title} 
-                  className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-[2000ms] ease-out brightness-90 group-hover:brightness-100" 
-                  style={{ transform: `translateY(${progress * 0.2}px)` }}
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out brightness-90 group-hover:brightness-100" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0E1015] via-transparent to-transparent pointer-events-none transition-opacity duration-500 opacity-60"></div>
                 
@@ -239,7 +311,6 @@ const BlogDetail = () => {
             )}
 
             {/* Content Body */}
-            {/* The drop cap uses an arbitrary variant to target the first letter of the first paragraph */}
             <div 
               className="prose prose-invert max-w-none prose-lg font-body-lg text-on-surface-variant leading-[1.8] mb-12
                 prose-p:mb-8 prose-h2:font-display prose-h2:font-bold prose-h2:text-3xl prose-h2:text-on-surface prose-h2:mt-16 prose-h2:mb-6
@@ -253,7 +324,11 @@ const BlogDetail = () => {
               ) : (
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
-                  components={{ code: CodeBlock }}
+                  components={{ 
+                    code: CodeBlock,
+                    h2: Heading2,
+                    h3: Heading3
+                  }}
                 >
                   {blog.content}
                 </ReactMarkdown>
@@ -264,7 +339,7 @@ const BlogDetail = () => {
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 sm:gap-6 py-2 px-3 sm:py-3 sm:px-6 rounded-full bg-[#15171D]/80 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] transition-all duration-300 transform">
               
               {/* Previous Navigation */}
-              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110" title="Previous Post">
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110 active:scale-95 duration-200" title="Previous Post">
                 <ChevronLeft size={20} />
               </button>
 
@@ -274,7 +349,7 @@ const BlogDetail = () => {
               <div className="flex items-center gap-3">
                 <button 
                   onClick={handleLike}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-all shadow-[0_0_20px_rgba(171,196,255,0.3)] hover:scale-105 transform ${
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-all hover:scale-[1.03] active:scale-95 duration-200 shadow-[0_0_20px_rgba(171,196,255,0.3)] transform ${
                     liked 
                       ? 'bg-gradient-to-r from-[#abc4ff] to-[#818CF8] text-[#0E1015]' 
                       : 'bg-white/5 text-on-surface hover:bg-white/10'
@@ -285,7 +360,7 @@ const BlogDetail = () => {
                 </button>
                 <button 
                   onClick={handleBookmark}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all hover:scale-110 transform ${
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all hover:scale-110 active:scale-95 duration-200 transform ${
                     bookmarked 
                       ? 'bg-[#abc4ff]/20 text-[#abc4ff] border border-[#abc4ff]/30' 
                       : 'bg-white/5 text-on-surface hover:bg-white/10'
@@ -295,7 +370,7 @@ const BlogDetail = () => {
                 </button>
                 <button 
                   onClick={handleShare}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-all hover:scale-110 active:scale-95 duration-200 transform"
                 >
                   <Share2 size={16} />
                 </button>
@@ -315,7 +390,7 @@ const BlogDetail = () => {
               <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
 
               {/* Next Navigation */}
-              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110" title="Next Post">
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10 transition-all hover:scale-110 active:scale-95 duration-200" title="Next Post">
                 <ChevronRight size={20} />
               </button>
             </div>
@@ -325,11 +400,11 @@ const BlogDetail = () => {
               <h2 className="text-3xl font-display font-bold text-on-surface mb-8">Discussions ({comments.length})</h2>
               
               {/* Comment Input */}
-              <div className="bg-[#15171D] border border-outline-variant/10 rounded-xl p-6 mb-10 shadow-lg text-left">
+              <div className="bg-[#15171D] border border-outline-variant/10 rounded-xl p-6 mb-10 shadow-lg text-left transition-all duration-300">
                 <div className="flex gap-4 mb-4">
                   <img src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'} className="w-10 h-10 rounded-full bg-surface-container object-cover" alt="User" />
                   <textarea 
-                    className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2 font-normal"
+                    className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2 font-normal focus:placeholder:opacity-0 transition-opacity duration-200"
                     placeholder="Join the discussion..."
                     rows="2"
                     value={commentText}
@@ -344,7 +419,7 @@ const BlogDetail = () => {
                   </div>
                   <button 
                     onClick={handlePostComment}
-                    className="bg-[#abc4ff] text-[#0E1015] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#b9cdff] transition-colors"
+                    className="bg-[#abc4ff] text-[#0E1015] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#b9cdff] transition-all hover:scale-[1.03] active:scale-95 duration-200 cursor-pointer"
                   >
                     Post Comment
                   </button>
@@ -356,7 +431,7 @@ const BlogDetail = () => {
                 {comments.filter(c => !c.parentComment).map(comment => {
                   const replies = comments.filter(c => c.parentComment === comment._id || c.parentComment?._id === comment._id);
                   return (
-                    <div key={comment._id} className="flex gap-4 text-left">
+                    <div key={comment._id} className="flex gap-4 text-left p-2 rounded-xl hover:bg-white/[0.01] transition-all duration-300 ease-out transform animate-mac-fade-in">
                       <img src={comment.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} className="w-10 h-10 rounded-full bg-surface-container shrink-0 object-cover" alt="User" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -369,7 +444,7 @@ const BlogDetail = () => {
                         <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
                           <button 
                             onClick={() => setReplyTo(replyTo?._id === comment._id ? null : comment)}
-                            className="flex items-center gap-1 hover:text-on-surface transition-colors"
+                            className="flex items-center gap-1 hover:text-on-surface transition-colors duration-200 active:scale-95 transform"
                           >
                             <MessageSquare size={12} /> Reply
                           </button>
@@ -377,7 +452,7 @@ const BlogDetail = () => {
 
                         {/* Inline Reply Input */}
                         {replyTo?._id === comment._id && (
-                          <div className="mt-4 bg-[#15171D] border border-outline-variant/10 rounded-xl p-4 shadow-md text-left">
+                          <div className="mt-4 bg-[#15171D] border border-outline-variant/10 rounded-xl p-4 shadow-md text-left transition-all duration-300 transform origin-top animate-mac-slide-down">
                             <textarea 
                               className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2 font-normal"
                               placeholder={`Reply to ${comment.user?.name}...`}
@@ -388,13 +463,13 @@ const BlogDetail = () => {
                             <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-outline-variant/10">
                               <button 
                                 onClick={() => setReplyTo(null)}
-                                className="px-3 py-1 rounded text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+                                className="px-3 py-1 rounded text-xs text-on-surface-variant hover:text-on-surface transition-all duration-200 active:scale-95"
                               >
                                 Cancel
                               </button>
                               <button 
                                 onClick={() => handlePostReply(comment._id)}
-                                className="bg-[#abc4ff] text-[#0E1015] px-4 py-1.5 rounded font-bold text-xs hover:bg-[#b9cdff] transition-colors"
+                                className="bg-[#abc4ff] text-[#0E1015] px-4 py-1.5 rounded font-bold text-xs hover:bg-[#b9cdff] transition-all hover:scale-[1.03] active:scale-95 duration-200"
                               >
                                 Post Reply
                               </button>
@@ -406,7 +481,7 @@ const BlogDetail = () => {
                         {replies.length > 0 && (
                           <div className="space-y-6 mt-6 border-l-2 border-outline-variant/10 pl-6">
                             {replies.map(reply => (
-                              <div key={reply._id} className="flex gap-4">
+                              <div key={reply._id} className="flex gap-4 p-1.5 rounded-lg hover:bg-white/[0.01] transition-all duration-300 ease-out transform animate-mac-fade-in">
                                 <img src={reply.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || 'User'}`} className="w-8 h-8 rounded-full bg-surface-container shrink-0 object-cover" alt="User" />
                                 <div className="flex-1 text-left">
                                   <div className="flex items-center gap-2 mb-1">
@@ -461,25 +536,35 @@ const BlogDetail = () => {
               </div>
 
               {/* Table of Contents */}
-              <div>
-                <h4 className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant uppercase mb-4">ON THIS PAGE</h4>
-                <nav className="flex flex-col gap-3">
-                  {mockToc.map((item, i) => (
-                    <a key={i} href={`#${item.id}`} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors font-medium">
-                      {item.text}
-                    </a>
-                  ))}
-                </nav>
-              </div>
+              {toc.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant uppercase mb-4">ON THIS PAGE</h4>
+                  <nav className="flex flex-col gap-3 relative">
+                    {toc.map((item, i) => (
+                      <a 
+                        key={i} 
+                        href={`#${item.id}`} 
+                        className={`text-sm transition-all duration-300 font-medium block text-left ${
+                          activeId === item.id 
+                            ? 'text-[#abc4ff] border-l-2 border-[#abc4ff] pl-3 -ml-[25px]' 
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        } ${item.level === 3 ? 'pl-4' : ''}`}
+                      >
+                        {item.text}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+              )}
 
               {/* Share */}
               <div>
                 <h4 className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant uppercase mb-4">SHARE THIS INSIGHT</h4>
                 <div className="flex gap-3">
-                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
+                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-all hover:scale-110 active:scale-95 duration-200">
                     <Mail size={16} />
                   </button>
-                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
+                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-all hover:scale-110 active:scale-95 duration-200">
                     <LinkIcon size={16} />
                   </button>
                 </div>
