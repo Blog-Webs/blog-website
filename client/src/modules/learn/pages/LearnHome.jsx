@@ -1,6 +1,42 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Binary, 
+  Coffee, 
+  Calculator, 
+  Network, 
+  Database, 
+  Cpu, 
+  Globe, 
+  Layers, 
+  BookOpen, 
+  Bolt, 
+  Brain, 
+  Code2, 
+  Settings, 
+  Cloud 
+} from 'lucide-react';
+
+const ICONS = {
+  'binary-tree': Binary,
+  'coffee': Coffee,
+  'local_cafe': Coffee,
+  'calculator': Calculator,
+  'network': Network,
+  'database': Database,
+  'cpu': Cpu,
+  'globe': Globe,
+  'layers': Layers,
+  'bolt': Bolt,
+  'psychology': Brain,
+  'account_tree': Layers,
+  'code_blocks': Code2,
+  'javascript': Globe,
+  'cloud': Cloud,
+  'settings': Settings,
+  'book': BookOpen
+};
 import { contentApi } from '../api/content';
 
 const LearnHome = () => {
@@ -139,8 +175,8 @@ const LearnHome = () => {
           const linkPath = isDbSubject ? `/learn/${track.slug}` : track.link;
           const title = isDbSubject ? track.name : track.title;
           const desc = track.description;
-          const icon = track.icon || 'book';
           const accentColor = track.color || '#3B82F6';
+          const IconComponent = ICONS[track.icon] || BookOpen;
 
           return (
             <Link 
@@ -155,9 +191,7 @@ const LearnHome = () => {
                 className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
                 style={{ backgroundColor: `${accentColor}1A` }}
               >
-                <span className="material-symbols-outlined text-[24px]" style={{ color: accentColor }}>
-                  {icon}
-                </span>
+                <IconComponent size={24} style={{ color: accentColor }} />
               </div>
               
               <h3 className="text-lg font-semibold text-white mb-3">
