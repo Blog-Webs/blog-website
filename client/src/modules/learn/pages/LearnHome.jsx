@@ -97,22 +97,22 @@ const LearnHome = () => {
     <div className="w-full bg-[#0E1015] min-h-screen">
       <div className="pt-20 pb-32 px-6 max-w-[1280px] mx-auto w-full">
         {/* Header */}
-        <div className="mb-16 text-center w-full max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
-          Master the Modern Tech Stack
-        </h1>
-        <p className="text-[#8B949E] text-[17px] leading-relaxed mb-8 max-w-2xl mx-auto">
-          From enterprise backends to generative AI, explore curated learning paths designed by industry experts to accelerate your engineering career.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <div className="px-5 py-2 rounded-full bg-[#3B82F6] text-white text-xs font-bold tracking-wide">
-            8 LEARNING DOMAINS
+        <section className="flex flex-col items-center text-center px-4 mb-16 w-full">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+            Master the Modern Tech Stack
+          </h1>
+          <p className="text-[#8B949E] text-[17px] leading-relaxed mb-8 max-w-[600px]">
+            From enterprise backends to generative AI, explore curated learning paths designed by industry experts to accelerate your engineering career.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <div className="px-5 py-2 rounded-full bg-[#3B82F6] text-white text-xs font-bold tracking-wide">
+              8 LEARNING DOMAINS
+            </div>
+            <div className="px-5 py-2 rounded-full bg-[#8B5CF6] text-white text-xs font-bold tracking-wide">
+              300+ EXPERT COURSES
+            </div>
           </div>
-          <div className="px-5 py-2 rounded-full bg-[#8B5CF6] text-white text-xs font-bold tracking-wide">
-            300+ EXPERT COURSES
-          </div>
-        </div>
-      </div>
+        </section>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-24 w-full">
@@ -144,11 +144,11 @@ const LearnHome = () => {
 
       {/* Bottom CTA */}
       <div className="bg-[#1C202B] border border-[#2D3342] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10 w-full">
-        <div className="flex-1 w-full max-w-xl">
+        <div className="flex-1 w-full max-w-[600px]">
           <h2 className="text-3xl font-bold text-white mb-4">
             Can't decide where to start?
           </h2>
-          <p className="text-[#8B949E] text-[15px] leading-relaxed mb-8">
+          <p className="text-[#8B949E] text-[15px] leading-relaxed mb-8 max-w-[500px]">
             Take our personalized skills assessment to get a custom learning roadmap tailored to your experience level and career goals.
           </p>
           <button className="flex items-center gap-2 px-6 py-3 bg-[#a5b4fc] text-[#1e1b4b] font-semibold rounded-xl hover:bg-[#c7d2fe] transition-colors">
