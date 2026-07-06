@@ -83,7 +83,7 @@ export const GlobalSearch = () => {
 
       {/* Floating Sticky Search Bar - centered, slides down from top */}
       <div 
-        className={`fixed left-1/2 -translate-x-1/2 z-50 px-4 transition-all duration-300 ease-out transform ${
+        className={`fixed left-1/2 -translate-x-1/2 z-[60] px-4 transition-all duration-300 ease-out transform ${
           isSticky 
             ? 'top-4 opacity-100 translate-y-0 scale-100 pointer-events-auto' 
             : '-top-20 opacity-0 -translate-y-4 scale-95 pointer-events-none'

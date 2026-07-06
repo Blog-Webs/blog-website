@@ -129,8 +129,10 @@ export const SearchModal = ({ isOpen, onClose }) => {
       <div 
         ref={modalRef}
         onKeyDown={handleKeyDown}
-        className="relative w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-[#111217]/95 backdrop-blur-xl flex flex-col scale-in animate-scale-up"
+        className="relative rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-[#111217]/95 backdrop-blur-xl flex flex-col scale-in animate-scale-up"
         style={{ 
+          width: '100%',
+          maxWidth: '672px',
           maxHeight: '75vh',
           boxShadow: '0 0 40px rgba(124, 92, 255, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.5)'
         }}
