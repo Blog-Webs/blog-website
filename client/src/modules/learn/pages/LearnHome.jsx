@@ -1,7 +1,25 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { contentApi } from '../api/content';
 
 const LearnHome = () => {
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    contentApi.getSubjects()
+      .then(({ data }) => {
+        setSubjects(data.subjects || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch subjects:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   const tracks = [
     {
       id: 'java',
@@ -116,30 +134,47 @@ const LearnHome = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-24 w-full">
-        {tracks.map((track) => (
-          <Link 
-            key={track.id} 
-            to={track.link}
-            className="flex flex-col bg-[#161B22] border border-[#2D3342] rounded-2xl p-6 hover:border-[#4375FF] hover:-translate-y-1 transition-all duration-300 group"
-          >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 ${track.iconBg}`}>
-              <span className={`material-symbols-outlined text-[24px] ${track.iconColor}`}>{track.icon}</span>
-            </div>
-            
-            <h3 className="text-lg font-semibold text-white mb-3">
-              {track.title}
-            </h3>
-            
-            <p className="text-[#8B949E] text-[13px] leading-[1.6] mb-8 flex-grow">
-              {track.description}
-            </p>
+        {(subjects.length > 0 ? subjects : tracks).map((track) => {
+          const isDbSubject = !track.id;
+          const linkPath = isDbSubject ? `/learn/${track.slug}` : track.link;
+          const title = isDbSubject ? track.name : track.title;
+          const desc = track.description;
+          const icon = track.icon || 'book';
+          const accentColor = track.color || '#3B82F6';
 
-            <div className="flex items-center justify-between mt-auto pt-5 text-[11px] text-[#8B949E] border-t border-[#2D3342]">
-              <span>{track.courses}</span>
-              <span>{track.articles}</span>
-            </div>
-          </Link>
-        ))}
+          return (
+            <Link 
+              key={track._id || track.id} 
+              to={linkPath}
+              className="flex flex-col bg-[#161B22] border border-[#2D3342] rounded-2xl p-6 hover:-translate-y-1 transition-all duration-300 group text-left"
+              style={{ borderColor: '#2D3342' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = accentColor; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2D3342'; }}
+            >
+              <div 
+                className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+                style={{ backgroundColor: `${accentColor}1A` }}
+              >
+                <span className="material-symbols-outlined text-[24px]" style={{ color: accentColor }}>
+                  {icon}
+                </span>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-white mb-3">
+                {title}
+              </h3>
+              
+              <p className="text-[#8B949E] text-[13px] leading-[1.6] mb-8 flex-grow">
+                {desc}
+              </p>
+
+              <div className="flex items-center justify-between mt-auto pt-5 text-[11px] text-[#8B949E] border-t border-[#2D3342]">
+                <span>{isDbSubject ? 'Full Roadmap' : track.courses}</span>
+                <span>{isDbSubject ? 'Interactive Chapters' : track.articles}</span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Bottom CTA */}
