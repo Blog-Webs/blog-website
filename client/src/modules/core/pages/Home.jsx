@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, BookOpen, Star, Loader2 } from 'lucide-react';
 import GlobalSearch from '../components/search/GlobalSearch';
+import { blogApi, newsletterApi } from '../../blog/api/blog';
 
 const docsData = {
   'user-guide': {
@@ -80,6 +81,40 @@ const docsData = {
 
 const Home = () => {
   const [activeDocId, setActiveDocId] = useState('user-guide');
+  const [featuredBlogs, setFeaturedBlogs] = useState([]);
+  const [blogsLoading, setBlogsLoading] = useState(true);
+  const [ctaEmail, setCtaEmail] = useState('');
+  const [ctaSuccessMessage, setCtaSuccessMessage] = useState('');
+  const [ctaErrorMessage, setCtaErrorMessage] = useState('');
+
+  useEffect(() => {
+    blogApi.getBlogs({ limit: 3 })
+      .then(({ data }) => {
+        setFeaturedBlogs(data.blogs || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch featured blogs:', err);
+      })
+      .finally(() => {
+        setBlogsLoading(false);
+      });
+  }, []);
+
+  const handleCtaSubscribe = async (e) => {
+    e.preventDefault();
+    if (!ctaEmail.trim() || !ctaEmail.includes('@')) return;
+    try {
+      await newsletterApi.subscribe(ctaEmail);
+      setCtaSuccessMessage('Subscribed! Check your inbox.');
+      setCtaErrorMessage('');
+      setCtaEmail('');
+      setTimeout(() => setCtaSuccessMessage(''), 4000);
+    } catch (err) {
+      setCtaErrorMessage(err.response?.data?.message || 'Subscription failed. Please try again.');
+      setCtaSuccessMessage('');
+      setTimeout(() => setCtaErrorMessage(''), 4000);
+    }
+  };
 
   const renderUserGuide = () => (
     <div className="text-gray-300 text-xs md:text-sm leading-relaxed space-y-6">
@@ -760,75 +795,141 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Article 1 */}
-            <div className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer fade-up" style={{ transitionDelay: '100ms' }}>
-              <div className="h-48 w-full overflow-hidden relative">
-                <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
-                <div className="absolute top-4 left-4 bg-[#4F46E5] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Advanced</div>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 12 min read</span>
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 2.4k views</span>
-                </div>
-                <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Microservices: Scaling Beyond the Monolith</h4>
-                <p className="text-gray-400 text-sm line-clamp-2 mb-6">Explore how Netflix and Amazon orchestrate thousands of services without compromising on performance.</p>
-                <div className="flex items-center justify-between border-t border-[#222] pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
-                    <span className="text-sm font-medium text-gray-300">Alex Chen</span>
+            {featuredBlogs.length > 0 ? (
+              featuredBlogs.map((blog, idx) => {
+                const badgeColor = blog.category === 'advanced' || blog.category === 'Expert' || blog.category === 'Advanced'
+                  ? 'bg-[#4F46E5]'
+                  : blog.category === 'intermediate' || blog.category === 'Intermediate'
+                    ? 'bg-[#06B6D4]'
+                    : 'bg-[#F43F5E]';
+                
+                return (
+                  <Link 
+                    key={blog._id} 
+                    to={`/blog/${blog.slug}`}
+                    className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer flex flex-col h-full fade-up text-left"
+                    style={{ transitionDelay: `${(idx + 1) * 100}ms` }}
+                  >
+                    <div className="h-48 w-full overflow-hidden relative">
+                      <img 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        src={blog.coverImage || "https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&q=80&w=800"} 
+                        alt={blog.title}
+                      />
+                      <div className={`absolute top-4 left-4 ${badgeColor} text-white text-[10px] px-2 py-1 rounded font-bold uppercase`}>
+                        {blog.category || 'General'}
+                      </div>
+                    </div>
+                    <div className="p-6 flex flex-col flex-grow text-left">
+                      <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">schedule</span> 
+                          {blog.readTimeMinutes || 5} min read
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">visibility</span> 
+                          {blog.views || 0} views
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors line-clamp-2">
+                        {blog.title}
+                      </h4>
+                      <p className="text-gray-400 text-sm line-clamp-2 mb-6 flex-grow font-normal text-left">
+                        {blog.excerpt || blog.subtitle}
+                      </p>
+                      <div className="flex items-center justify-between border-t border-[#222] pt-4 mt-auto">
+                        <div className="flex items-center gap-2">
+                          {blog.author?.avatar ? (
+                            <img 
+                              className="w-8 h-8 rounded-full bg-[#1e1e1e] object-cover" 
+                              src={blog.author.avatar} 
+                              alt={blog.author.name}
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#1e1e1e] flex items-center justify-center text-xs text-gray-400 font-bold uppercase">
+                              {(blog.author?.name || 'SW')[0]}
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-300">{blog.author?.name || 'Staff Writer'}</span>
+                        </div>
+                        <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <>
+                {/* Article 1 */}
+                <Link to="/blog" className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer text-left fade-up" style={{ transitionDelay: '100ms' }}>
+                  <div className="h-48 w-full overflow-hidden relative">
+                    <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
+                    <div className="absolute top-4 left-4 bg-[#4F46E5] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Advanced</div>
                   </div>
-                  <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
-                </div>
-              </div>
-            </div>
-            {/* Article 2 */}
-            <div className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer fade-up" style={{ transitionDelay: '200ms' }}>
-              <div className="h-48 w-full overflow-hidden relative">
-                <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
-                <div className="absolute top-4 left-4 bg-[#06B6D4] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Intermediate</div>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 8 min read</span>
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 1.8k views</span>
-                </div>
-                <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Mastering Spring Security 6.x</h4>
-                <p className="text-gray-400 text-sm line-clamp-2 mb-6">Implement enterprise-grade OAuth2 and JWT authentication in your reactive applications.</p>
-                <div className="flex items-center justify-between border-t border-[#222] pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
-                    <span className="text-sm font-medium text-gray-300">Sarah Miller</span>
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 12 min read</span>
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 2.4k views</span>
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Microservices: Scaling Beyond the Monolith</h4>
+                    <p className="text-gray-400 text-sm line-clamp-2 mb-6">Explore how Netflix and Amazon orchestrate thousands of services without compromising on performance.</p>
+                    <div className="flex items-center justify-between border-t border-[#222] pt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
+                        <span className="text-sm font-medium text-gray-300">Alex Chen</span>
+                      </div>
+                      <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
+                    </div>
                   </div>
-                  <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
-                </div>
-              </div>
-            </div>
-            {/* Article 3 */}
-            <div className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer fade-up" style={{ transitionDelay: '300ms' }}>
-              <div className="h-48 w-full overflow-hidden relative">
-                <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
-                <div className="absolute top-4 left-4 bg-[#F43F5E] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Expert</div>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 15 min read</span>
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 3.2k views</span>
-                </div>
-                <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Distributed Systems: CAP Theorem 2.0</h4>
-                <p className="text-gray-400 text-sm line-clamp-2 mb-6">How modern cloud-native databases manage consistency and availability.</p>
-                <div className="flex items-center justify-between border-t border-[#222] pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
-                    <span className="text-sm font-medium text-gray-300">David Wu</span>
+                </Link>
+                {/* Article 2 */}
+                <Link to="/blog" className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer text-left fade-up" style={{ transitionDelay: '200ms' }}>
+                  <div className="h-48 w-full overflow-hidden relative">
+                    <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
+                    <div className="absolute top-4 left-4 bg-[#06B6D4] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Intermediate</div>
                   </div>
-                  <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
-                </div>
-            </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 8 min read</span>
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 1.8k views</span>
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Mastering Spring Security 6.x</h4>
+                    <p className="text-gray-400 text-sm line-clamp-2 mb-6">Implement enterprise-grade OAuth2 and JWT authentication in your reactive applications.</p>
+                    <div className="flex items-center justify-between border-t border-[#222] pt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
+                        <span className="text-sm font-medium text-gray-300">Sarah Miller</span>
+                      </div>
+                      <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
+                    </div>
+                  </div>
+                </Link>
+                {/* Article 3 */}
+                <Link to="/blog" className="bg-[#121212] border border-[#222] rounded-2xl overflow-hidden group hover:-translate-y-2 hover:border-[#333] transition-all duration-300 cursor-pointer text-left fade-up" style={{ transitionDelay: '300ms' }}>
+                  <div className="h-48 w-full overflow-hidden relative">
+                    <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800" alt="Cover"/>
+                    <div className="absolute top-4 left-4 bg-[#F43F5E] text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Expert</div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">schedule</span> 15 min read</span>
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> 3.2k views</span>
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-3 group-hover:text-[#60A5FA] transition-colors">Distributed Systems: CAP Theorem 2.0</h4>
+                    <p className="text-gray-400 text-sm line-clamp-2 mb-6">How modern cloud-native databases manage consistency and availability.</p>
+                    <div className="flex items-center justify-between border-t border-[#222] pt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#1e1e1e]"></div>
+                        <span className="text-sm font-medium text-gray-300">David Wu</span>
+                      </div>
+                      <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
+                    </div>
+                  </div>
+                </Link>
+              </>
+            )}
           </div>
-        </div>
-      </section>
-
+        </section>
       {/* Popular Categories */}
       <section className="py-24 bg-[#0A0A0A] border-y border-[#1a1a1a] relative z-10 fade-up">
         <div className="max-w-[1200px] mx-auto px-6">
@@ -888,12 +989,14 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/10 to-transparent pointer-events-none"></div>
             <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Level Up Your Engineering Career</h3>
             <p className="text-gray-400 mb-10 max-w-[42rem] mx-auto text-lg">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
-            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-xl justify-center items-stretch mx-auto relative z-10">
+            <form onSubmit={handleCtaSubscribe} className="flex flex-col sm:flex-row gap-4 w-full max-w-xl justify-center items-stretch mx-auto relative z-10">
               <input 
                 className="w-full sm:w-auto sm:flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500 text-sm" 
                 placeholder="Enter your work email" 
                 type="email"
                 required
+                value={ctaEmail}
+                onChange={(e) => setCtaEmail(e.target.value)}
               />
               <button 
                 type="submit"
@@ -902,6 +1005,12 @@ const Home = () => {
                 Subscribe Now
               </button>
             </form>
+            {ctaSuccessMessage && (
+              <p className="text-emerald-400 mt-4 text-sm font-semibold animate-pulse">{ctaSuccessMessage}</p>
+            )}
+            {ctaErrorMessage && (
+              <p className="text-red-400 mt-4 text-sm font-semibold animate-pulse">{ctaErrorMessage}</p>
+            )}
           </div>
         </div>
       </section>
