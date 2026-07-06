@@ -888,7 +888,7 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/10 to-transparent pointer-events-none"></div>
             <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Level Up Your Engineering Career</h3>
             <p className="text-gray-400 mb-10 max-w-[42rem] mx-auto text-lg">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
-            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center items-stretch mx-auto relative z-10">
+            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-xl justify-center items-stretch mx-auto relative z-10">
               <input 
                 className="w-full sm:w-auto sm:flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500 text-sm" 
                 placeholder="Enter your work email" 
