@@ -888,13 +888,17 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/10 to-transparent pointer-events-none"></div>
             <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Level Up Your Engineering Career</h3>
             <p className="text-gray-400 mb-10 max-w-[42rem] mx-auto text-lg">Weekly curated content on distributed systems, modern tech stacks, and career growth delivered straight to your inbox.</p>
-            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
+            <form className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center items-stretch mx-auto relative z-10">
               <input 
-                className="flex-grow bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500" 
+                className="flex-grow w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5] outline-none transition-all text-white placeholder-gray-500 text-sm" 
                 placeholder="Enter your work email" 
                 type="email"
+                required
               />
-              <button className="bg-[#4F46E5] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#4338CA] transition-all cursor-pointer shadow-lg shadow-[#4F46E5]/20">
+              <button 
+                type="submit"
+                className="bg-[#4F46E5] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#4338CA] transition-all cursor-pointer shadow-lg shadow-[#4F46E5]/20 whitespace-nowrap text-sm flex items-center justify-center flex-shrink-0"
+              >
                 Subscribe Now
               </button>
             </form>
