@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
-import GlobalSearchModal from '../components/ui/GlobalSearchModal';
+import SearchModal from '../components/search/SearchModal';
 
 const navLinkClass = ({ isActive }) =>
   `text-[11px] uppercase tracking-widest transition-colors duration-200 ${
@@ -159,7 +159,7 @@ const Header = () => {
         </div>
       )}
       
-      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 };

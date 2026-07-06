@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, BookOpen, Star } from 'lucide-react';
+import GlobalSearch from '../components/search/GlobalSearch';
 
 const Home = () => {
   useEffect(() => {
@@ -42,6 +43,9 @@ const Home = () => {
       </div>
 
       <div className="relative z-10 pt-32 pb-16">
+        {/* Global Search Bar */}
+        <GlobalSearch />
+        
         {/* Hero Section */}
         <section className="flex flex-col items-center text-center px-4">
           
@@ -386,7 +390,6 @@ const Home = () => {
                   </div>
                   <span className="material-symbols-outlined text-gray-500 hover:text-[#60A5FA] cursor-pointer">bookmark</span>
                 </div>
-              </div>
             </div>
           </div>
         </div>
