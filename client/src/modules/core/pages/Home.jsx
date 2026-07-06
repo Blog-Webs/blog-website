@@ -1,9 +1,629 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, BookOpen, Star } from 'lucide-react';
+import { Send, BookOpen, Star, Loader2 } from 'lucide-react';
 import GlobalSearch from '../components/search/GlobalSearch';
 
+const docsData = {
+  caching: {
+    title: 'Caching Strategies',
+    path: 'docs/system-design/caching',
+    sidebarTitle: 'Caching Strategies',
+    category: 'System Design',
+    sections: [
+      { id: 'cache-aside', label: 'Cache-Aside Pattern' },
+      { id: 'write-through', label: 'Write-Through' },
+      { id: 'write-behind', label: 'Write-Behind' },
+      { id: 'invalidation', label: 'Invalidation Strategies' }
+    ],
+    lastUpdated: 'Jan 14, 2025'
+  },
+  'user-guide': {
+    title: 'Welcome to HttpTechNex! 🚀',
+    path: 'docs/user-guide',
+    sidebarTitle: 'User Guide',
+    category: 'General',
+    sections: [
+      { id: 'learn-platform', label: '📚 1. The Learn Platform' },
+      { id: 'student-os', label: '🛠️ 2. StudentOS' },
+      { id: 'forum', label: '💬 3. Community Forum' },
+      { id: 'blogs', label: '✍️ 4. Tech Blogs' },
+      { id: 'personalization', label: '⚙️ 5. Personalization' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  },
+  'learn-platform': {
+    title: 'The Learn Platform',
+    path: 'docs/learn-platform',
+    sidebarTitle: 'Learn Platform',
+    category: 'Features',
+    sections: [
+      { id: 'subjects-topics', label: '1. Navigating Subjects' },
+      { id: 'interactive-chapters', label: '2. Interactive Chapters' },
+      { id: 'progress-tracking', label: '3. Progress Tracking' },
+      { id: 'inline-notes', label: '4. Inline Notes' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  },
+  'student-os': {
+    title: 'StudentOS (Your Workspace)',
+    path: 'docs/student-os',
+    sidebarTitle: 'StudentOS Workspace',
+    category: 'Features',
+    sections: [
+      { id: 'drive', label: '☁️ 1. Your Drive' },
+      { id: 'task-manager', label: '📋 2. Task Manager' },
+      { id: 'calendar', label: '📅 3. Calendar' },
+      { id: 'focus-mode', label: '⏱️ 4. Focus Mode' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  },
+  'community-forum': {
+    title: 'The Community Forum',
+    path: 'docs/community-forum',
+    sidebarTitle: 'Community Forum',
+    category: 'Features',
+    sections: [
+      { id: 'asking-questions', label: '1. Asking Questions' },
+      { id: 'rich-text-editor', label: '2. Rich Text Editor' },
+      { id: 'upvotes-answers', label: '3. Upvotes & Answers' },
+      { id: 'real-time-notifications', label: '4. Notifications' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  },
+  'tech-blogs': {
+    title: 'Tech Blogs Feed',
+    path: 'docs/tech-blogs',
+    sidebarTitle: 'Tech Blogs',
+    category: 'Features',
+    sections: [
+      { id: 'reading-experience', label: '1. Reading Experience' },
+      { id: 'bookmarking', label: '2. Bookmarking' },
+      { id: 'engagement', label: '3. Engagement' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  },
+  'personalization': {
+    title: 'Personalization & Account',
+    path: 'docs/personalization',
+    sidebarTitle: 'Account & Customization',
+    category: 'Features',
+    sections: [
+      { id: 'google-login', label: '1. Google Login' },
+      { id: 'welcome-dashboard', label: '2. Welcome Dashboard' },
+      { id: 'dark-mode', label: '3. Dark Mode' },
+      { id: 'newsletter', label: '4. Newsletter' }
+    ],
+    lastUpdated: 'Jan 18, 2025'
+  }
+};
+
 const Home = () => {
+  const [activeDocId, setActiveDocId] = useState('caching');
+
+  // User Guide Onboarding Progress
+  const [onboardingProgress, setOnboardingProgress] = useState({
+    learn: true,
+    workspace: false,
+    forum: false,
+    blogs: false,
+    profile: false
+  });
+  const toggleOnboarding = (key) => {
+    setOnboardingProgress(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Learn Platform Notes & Scroll Progress
+  const [inlineNoteText, setInlineNoteText] = useState('');
+  const [noteSavedMessage, setNoteSavedMessage] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(60);
+  const saveNoteMock = () => {
+    if (!inlineNoteText.trim()) return;
+    setNoteSavedMessage(true);
+    setTimeout(() => setNoteSavedMessage(false), 2000);
+  };
+
+  // StudentOS Tasks & Pomodoro
+  const [tasks, setTasks] = useState([
+    { id: 1, text: 'Study Cache-Aside Flowchart', status: 'todo' },
+    { id: 2, text: 'Read Caching Strategies article', status: 'in-progress' },
+    { id: 3, text: 'Take notes on TTL validation', status: 'done' }
+  ]);
+  const [pomodoroTime, setPomodoroTime] = useState(1500);
+  const [pomoActive, setPomoActive] = useState(false);
+  useEffect(() => {
+    let timer = null;
+    if (pomoActive && pomodoroTime > 0) {
+      timer = setInterval(() => {
+        setPomodoroTime(t => t - 1);
+      }, 1000);
+    } else if (pomodoroTime === 0) {
+      setPomoActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [pomoActive, pomodoroTime]);
+  const toggleTaskStatus = (id) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === id) {
+        const nextStatus = t.status === 'todo' ? 'in-progress' : t.status === 'in-progress' ? 'done' : 'todo';
+        return { ...t, status: nextStatus };
+      }
+      return t;
+    }));
+  };
+  const formatPomoTime = () => {
+    const mins = Math.floor(pomodoroTime / 60);
+    const secs = pomodoroTime % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Forum Upvotes & Status
+  const [upvotes, setUpvotes] = useState(42);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [isAnswerAccepted, setIsAnswerAccepted] = useState(true);
+  const toggleUpvote = () => {
+    if (hasUpvoted) {
+      setUpvotes(v => v - 1);
+    } else {
+      setUpvotes(v => v + 1);
+    }
+    setHasUpvoted(!hasUpvoted);
+  };
+
+  // Tech Blogs Bookmarks & Comments
+  const [blogBookmarks, setBlogBookmarks] = useState(12);
+  const [hasBookmarked, setHasBookmarked] = useState(false);
+  const [comments, setComments] = useState([
+    { id: 1, author: 'AlexD', text: 'This design layout looks extremely premium!' },
+  ]);
+  const [newComment, setNewComment] = useState('');
+  const toggleBookmark = () => {
+    if (hasBookmarked) {
+      setBlogBookmarks(b => b - 1);
+    } else {
+      setBlogBookmarks(b => b + 1);
+    }
+    setHasBookmarked(!hasBookmarked);
+  };
+  const addComment = () => {
+    if (!newComment.trim()) return;
+    setComments(prev => [...prev, {
+      id: Date.now(),
+      author: 'You (Preview)',
+      text: newComment
+    }]);
+    setNewComment('');
+  };
+
+  // Personalization Mock Toggling & Newsletter
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [subscribedMessage, setSubscribedMessage] = useState(false);
+  const [isLightModeMock, setIsLightModeMock] = useState(false);
+  const handleSubscribe = () => {
+    if (!newsletterEmail.trim() || !newsletterEmail.includes('@')) return;
+    setSubscribedMessage(true);
+    setTimeout(() => {
+      setSubscribedMessage(false);
+      setNewsletterEmail('');
+    }, 2000);
+  };
+
+  // Sub-document renderers
+  const renderCachingDoc = () => (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span className="text-[11px] font-mono text-gray-400">CacheService.java</span>
+      </div>
+      <div className="bg-[#05070D] border border-gray-805 rounded-xl p-5 mb-8 font-mono text-xs text-gray-300 leading-relaxed shadow-inner overflow-x-auto whitespace-pre">
+        <div className="text-gray-500">// 1. Check cache first</div>
+        <div>
+          <span className="text-pink-500">User</span> cached = cache.<span className="text-blue-400">get</span>(userId);
+        </div>
+        <div className="mt-1">
+          <span className="text-purple-400">if</span> (cached != <span className="text-yellow-500">null</span>) &#123;
+        </div>
+        <div className="pl-4 mt-1">
+          <span className="text-purple-400">return</span> cached; <span className="text-gray-500">// Cache HIT</span>
+        </div>
+        <div className="mt-1">&#125;</div>
+        
+        <div className="text-gray-500 mt-4">// 2. Cache MISS - load from DB</div>
+        <div className="mt-1">
+          <span className="text-pink-500">User</span> user = db.<span className="text-blue-400">findById</span>(userId);
+        </div>
+        <div className="mt-1">
+          cache.<span className="text-blue-400">set</span>(userId, user, TTL.<span className="text-amber-550">30_MIN</span>);
+        </div>
+        <div className="mt-1">
+          <span className="text-purple-400">return</span> user;
+        </div>
+      </div>
+      <h3 id="invalidation" className="text-xl font-bold text-white mb-4">
+        Cache Invalidation Strategies
+      </h3>
+      <div className="border border-gray-805 rounded-xl overflow-hidden bg-[#070A12] text-xs">
+        <div className="grid grid-cols-3 bg-[#0B0F19] p-3 text-gray-400 font-semibold border-b border-gray-800">
+          <div>Strategy</div>
+          <div>Use Case</div>
+          <div>Consistency</div>
+        </div>
+        <div className="divide-y divide-gray-800">
+          {[
+            { strategy: 'TTL-based', useCase: 'Read-heavy data', consistency: 'Eventual', badgeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
+            { strategy: 'Write-through', useCase: 'Write-heavy workloads', consistency: 'Strong', badgeColor: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+            { strategy: 'Event-driven', useCase: 'Microservices', consistency: 'Near-strong', badgeColor: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' },
+          ].map((row) => (
+            <div key={row.strategy} className="grid grid-cols-3 p-3 text-gray-300 items-center">
+              <div className="font-semibold text-white">{row.strategy}</div>
+              <div>{row.useCase}</div>
+              <div>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${row.badgeColor}`}>
+                  {row.consistency}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderUserGuide = () => {
+    const progressCount = Object.values(onboardingProgress).filter(Boolean).length;
+    return (
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-2">Welcome to HttpTechNex! 🚀</h2>
+        <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+          HttpTechNex is your all-in-one developer ecosystem. Explore our platform features below or complete your onboarding checklist!
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div 
+            onClick={() => setActiveDocId('learn-platform')} 
+            className="p-4 rounded-xl border border-gray-800 bg-[#0B0F19]/40 hover:border-[#4F46E5] transition-all cursor-pointer group"
+          >
+            <h4 className="text-white text-sm font-semibold mb-1 group-hover:text-[#818CF8]">📚 The Learn Platform</h4>
+            <p className="text-gray-400 text-[11px] leading-relaxed">Coding bootcamps, structured subjects, inline notes, and progress trackers.</p>
+          </div>
+          <div 
+            onClick={() => setActiveDocId('student-os')} 
+            className="p-4 rounded-xl border border-gray-800 bg-[#0B0F19]/40 hover:border-[#4F46E5] transition-all cursor-pointer group"
+          >
+            <h4 className="text-white text-sm font-semibold mb-1 group-hover:text-[#818CF8]">🛠️ StudentOS Workspace</h4>
+            <p className="text-gray-400 text-[11px] leading-relaxed">Secure cloud drive, visual Kanban board, due date calendar, and Pomodoro timer.</p>
+          </div>
+        </div>
+        <h3 id="learn-platform" className="text-lg font-bold text-white mb-3">Onboarding Checklist</h3>
+        <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-gray-400 font-mono">Progress: {progressCount}/5 steps</span>
+            <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#4F46E5] to-[#06B6D4] transition-all duration-500" 
+                style={{ width: `${(progressCount / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { key: 'learn', label: 'Explore the Learn Platform and select a Topic' },
+              { key: 'workspace', label: 'Set up your StudentOS task board' },
+              { key: 'forum', label: 'Bookmark or like your first Forum topic' },
+              { key: 'blogs', label: 'Check the Tech Blogs for trending tutorials' },
+              { key: 'profile', label: 'Sync your account profile with Google Sign-In' }
+            ].map((step) => (
+              <label key={step.key} className="flex items-center gap-3 text-xs text-gray-300 cursor-pointer select-none">
+                <input 
+                  type="checkbox"
+                  checked={onboardingProgress[step.key]}
+                  onChange={() => toggleOnboarding(step.key)}
+                  className="rounded border-gray-800 text-[#4F46E5] focus:ring-0 focus:ring-offset-0 bg-[#05070D]"
+                />
+                <span className={onboardingProgress[step.key] ? 'line-through text-gray-500' : ''}>
+                  {step.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLearnPlatformDoc = () => (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-2">The Learn Platform</h2>
+      <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+        Acquire engineering mastery. The Learn Platform takes you from a beginner to an expert in Web Development, Machine Learning, and Data Structures.
+      </p>
+      <h3 id="progress-tracking" className="text-lg font-bold text-white mb-3">Interactive Progress Tracking</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+        <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+          Simulate scrolling to see the chapter progress bar fill up dynamically!
+        </p>
+        <div className="flex items-center gap-4">
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            value={scrollProgress}
+            onChange={(e) => setScrollProgress(e.target.value)}
+            className="flex-1 accent-[#4F46E5] bg-gray-800 h-1 rounded-lg appearance-none cursor-pointer"
+          />
+          <span className="text-xs text-white font-mono">{scrollProgress}% Read</span>
+        </div>
+        <div className="mt-4 border-t border-gray-800/60 pt-3">
+          <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-[#818CF8]" 
+              style={{ width: `${scrollProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+      <h3 id="inline-notes" className="text-lg font-bold text-white mb-3">Inline Note Taking</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+        <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+          Jot down private notes linked to this document. They will be saved to your dashboard!
+        </p>
+        <textarea
+          rows="3"
+          value={inlineNoteText}
+          onChange={(e) => setInlineNoteText(e.target.value)}
+          placeholder="e.g. Cache-aside is great for read-heavy workloads but event-driven handles microservice updates better..."
+          className="w-full text-xs bg-[#05070D] border border-gray-800 rounded-lg p-2.5 text-white placeholder-gray-650 outline-none focus:border-[#4F46E5] transition-colors resize-none mb-3"
+        />
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-gray-500 font-mono">100% private to your profile</span>
+          <button 
+            onClick={saveNoteMock}
+            className="px-4 py-1.5 bg-[#4F46E5] hover:bg-[#3b33bd] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            Save Note
+          </button>
+        </div>
+        {noteSavedMessage && (
+          <div className="text-[11px] text-green-400 mt-2 flex items-center gap-1 font-medium animate-pulse">
+            <span>✓ Note saved successfully to cloud sync!</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderStudentOSDoc = () => (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-2">StudentOS Workspace</h2>
+      <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+        Eliminate tool clutter. StudentOS is a unified workspace with file drives, calendar schedules, tasks, and coding pomodoro timers.
+      </p>
+      <h3 id="task-manager" className="text-lg font-bold text-white mb-3">Interactive Kanban Tasks</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+        <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+          Click any task to advance it along the Kanban pipeline (To Do → In Progress → Completed)!
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {['todo', 'in-progress', 'done'].map((col) => (
+            <div key={col} className="p-2.5 rounded-lg bg-[#05070D] border border-gray-800/40">
+              <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex justify-between items-center">
+                <span>{col.replace('-', ' ')}</span>
+                <span className="px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 font-mono text-[9px]">
+                  {tasks.filter(t => t.status === col).length}
+                </span>
+              </h4>
+              <div className="space-y-2">
+                {tasks.filter(t => t.status === col).map((t) => (
+                  <div 
+                    key={t.id} 
+                    onClick={() => toggleTaskStatus(t.id)}
+                    className="p-2 rounded bg-[#0A0D16] border border-gray-800 hover:border-[#4F46E5]/40 transition-all cursor-pointer text-[11px] text-gray-300 leading-tight select-none"
+                  >
+                    {t.text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <h3 id="focus-mode" className="text-lg font-bold text-white mb-3">Simulated Pomodoro Timer</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6 flex flex-col items-center">
+        <div className="text-4xl font-extrabold text-white tracking-wider mb-3 font-mono">
+          {formatPomoTime()}
+        </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setPomoActive(!pomoActive)}
+            className="px-4 py-1.5 bg-[#4F46E5] hover:bg-[#3b33bd] text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            {pomoActive ? 'Pause' : 'Start Timer'}
+          </button>
+          <button 
+            onClick={() => { setPomoActive(false); setPomodoroTime(1500); }}
+            className="px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-lg transition-colors border border-gray-800"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCommunityForumDoc = () => (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-2">The Community Forum</h2>
+      <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+        Connect, debug, and share. Ask questions using our rich text editor, bookmark topics, and find verified accepted answers.
+      </p>
+      <h3 id="upvotes-answers" className="text-lg font-bold text-white mb-3">Upvote & Accepted Answer Simulation</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+        <div className="flex gap-3 items-start mb-4">
+          <div className="flex flex-col items-center flex-shrink-0">
+            <button 
+              onClick={toggleUpvote}
+              className={`p-1.5 rounded-lg border transition-all ${
+                hasUpvoted 
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' 
+                  : 'bg-[#05070D] border-gray-850 text-gray-400 hover:text-white'
+              }`}
+            >
+              ♥
+            </button>
+            <span className="text-xs font-mono font-bold text-white mt-1.5">{upvotes}</span>
+          </div>
+          <div className="flex-1">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-gray-400 font-semibold">User: DevPro</span>
+              <span className="text-[10px] text-gray-600 font-mono">2 hours ago</span>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed mb-3">
+              To resolve the client caching mismatch, ensure that your HTTP header returns <code className="px-1 py-0.5 rounded bg-black text-rose-400 text-[10px]">Cache-Control: no-store</code>. This forces the browser request client to fetch latest assets.
+            </p>
+            {isAnswerAccepted && (
+              <div className="p-3 border border-emerald-500/20 bg-emerald-500/5 rounded-lg flex items-start gap-2.5">
+                <span className="text-emerald-400 font-bold text-sm">✓</span>
+                <div>
+                  <h5 className="text-[11px] font-bold text-emerald-400">Accepted Answer</h5>
+                  <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">
+                    This response solved the topic issue! Marked as correct by the topic creator.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="border-t border-gray-850 pt-3 flex justify-between items-center text-xs">
+          <span className="text-[10px] text-gray-500 font-mono">Click checkbox to toggle answer status</span>
+          <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+            <input 
+              type="checkbox"
+              checked={isAnswerAccepted}
+              onChange={() => setIsAnswerAccepted(!isAnswerAccepted)}
+              className="rounded border-gray-850 text-emerald-500 focus:ring-0 focus:ring-offset-0 bg-[#05070D]"
+            />
+            <span>Toggle Checkmark</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTechBlogsDoc = () => (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-2">Tech Blogs Feed</h2>
+      <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+        Gain deep-dive insights. Read high-quality, long-form articles with active layouts and save them to your personal reading list.
+      </p>
+      <h3 id="bookmarking" className="text-lg font-bold text-white mb-3">Bookmarking and Saving Articles</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6 flex justify-between items-center">
+        <div>
+          <h4 className="text-xs text-white font-semibold">"Redis vs. Memcached: 2025 Deep Dive"</h4>
+          <p className="text-[10px] text-gray-500 mt-0.5">By Staff Engineer, 12 min read</p>
+        </div>
+        <button 
+          onClick={toggleBookmark}
+          className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            hasBookmarked 
+              ? 'bg-[#818CF8]/10 border-[#818CF8]/30 text-[#818CF8]' 
+              : 'bg-[#05070D] border-gray-850 text-gray-400 hover:text-white'
+          }`}
+        >
+          <span>{hasBookmarked ? '★ Bookmarked' : '☆ Bookmark'}</span>
+          <span className="font-mono text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-white">{blogBookmarks}</span>
+        </button>
+      </div>
+      <h3 id="engagement" className="text-lg font-bold text-white mb-3">Nested Comments & Feedback</h3>
+      <div className="p-4 border border-gray-800 rounded-xl bg-[#080B13] mb-6">
+        <div className="space-y-3 mb-4 max-h-[120px] overflow-y-auto pr-2">
+          {comments.map(c => (
+            <div key={c.id} className="p-2 rounded bg-[#05070D] border border-gray-850">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-gray-400">{c.author}</span>
+                <span className="text-[9px] text-gray-600 font-mono">Just now</span>
+              </div>
+              <p className="text-[11px] text-gray-300 leading-normal">{c.text}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input 
+            type="text" 
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Type a feedback comment..."
+            className="flex-1 bg-[#05070D] border border-gray-855 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-650 outline-none focus:border-[#4F46E5] transition-colors"
+            onKeyDown={(e) => e.key === 'Enter' && addComment()}
+          />
+          <button 
+            onClick={addComment}
+            className="px-4 py-1.5 bg-[#4F46E5] hover:bg-[#3b33bd] text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPersonalizationDoc = () => (
+    <div className={`transition-colors duration-500 p-4 rounded-xl ${isLightModeMock ? 'bg-gray-100 text-gray-900' : ''}`}>
+      <h2 className={`text-2xl font-bold mb-2 ${isLightModeMock ? 'text-gray-900' : 'text-white'}`}>Personalization</h2>
+      <p className={`text-sm mb-6 leading-relaxed ${isLightModeMock ? 'text-gray-600' : 'text-gray-450'}`}>
+        Sync profile logins, customize workspaces, set system layouts, and configure newsletters.
+      </p>
+      <h3 className={`text-lg font-bold mb-3 ${isLightModeMock ? 'text-gray-800' : 'text-white'}`}>Simulate Theme Toggling</h3>
+      <div className={`p-4 border rounded-xl mb-6 flex justify-between items-center ${
+        isLightModeMock ? 'bg-white border-gray-300 shadow-sm' : 'bg-[#080B13] border-gray-850'
+      }`}>
+        <div>
+          <h4 className={`text-xs font-semibold ${isLightModeMock ? 'text-gray-800' : 'text-white'}`}>Mock Theme Toggle</h4>
+          <p className="text-[10px] text-gray-500 mt-0.5">Click switch to toggle dark/light container theme</p>
+        </div>
+        <button 
+          onClick={() => setIsLightModeMock(!isLightModeMock)}
+          className={`px-4 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+            isLightModeMock 
+              ? 'bg-[#4F46E5] border-[#4F46E5] text-white' 
+              : 'bg-[#05070D] border-gray-850 text-gray-400 hover:text-white'
+          }`}
+        >
+          {isLightModeMock ? '☀ Light Theme' : '🌙 Dark Theme'}
+        </button>
+      </div>
+      <h3 id="newsletter" className={`text-lg font-bold mb-3 ${isLightModeMock ? 'text-gray-800' : 'text-white'}`}>Newsletter Signup</h3>
+      <div className={`p-4 border rounded-xl mb-6 ${
+        isLightModeMock ? 'bg-white border-gray-300 shadow-sm' : 'bg-[#080B13] border-gray-855'
+      }`}>
+        <p className={`text-xs mb-3 leading-relaxed ${isLightModeMock ? 'text-gray-550' : 'text-gray-400'}`}>
+          Join our newsletter to receive the absolute best tutorials and platform updates.
+        </p>
+        <div className="flex gap-2">
+          <input 
+            type="email" 
+            value={newsletterEmail}
+            onChange={(e) => setNewsletterEmail(e.target.value)}
+            placeholder="enter-email@domain.com"
+            className={`flex-1 border rounded-lg px-3 py-1.5 text-xs outline-none transition-colors ${
+              isLightModeMock 
+                ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-[#4F46E5]' 
+                : 'bg-[#05070D] border-gray-850 text-white focus:border-[#4F46E5]'
+            }`}
+          />
+          <button 
+            onClick={handleSubscribe}
+            className="px-4 py-1.5 bg-[#4F46E5] hover:bg-[#3b33bd] text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            Subscribe
+          </button>
+        </div>
+        {subscribedMessage && (
+          <div className="text-[11px] text-green-500 mt-2 flex items-center gap-1 font-medium animate-pulse">
+            <span>✓ Subscribed successfully! Check inbox for confirmation email.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -156,7 +776,7 @@ const Home = () => {
               {/* Address Bar */}
               <div className="flex items-center gap-2 bg-[#080B13] border border-gray-800 rounded-lg px-4 py-1.5 w-[380px] justify-center text-xs text-gray-500 flex-shrink-0">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
-                <span className="truncate">httptechnex.dev/docs/system-design/caching</span>
+                <span className="truncate">httptechnex.dev/{docsData[activeDocId].path}</span>
               </div>
               {/* Icons */}
               <div className="flex items-center gap-3 text-gray-500 flex-shrink-0">
@@ -171,51 +791,42 @@ const Home = () => {
               <aside className="w-full lg:w-[240px] border-r border-gray-800 p-5 bg-[#080B14] flex-shrink-0">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="material-symbols-outlined text-[20px] text-gray-400">menu_book</span>
-                  <span className="text-sm font-semibold text-white">System Design</span>
+                  <span className="text-sm font-semibold text-white">Documentation</span>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">Fundamentals</h4>
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">System Design</h4>
                     <ul className="space-y-1.5">
-                      {['Introduction', 'Scalability'].map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-xs text-gray-400 py-1 hover:text-white cursor-pointer transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
-                          {item}
-                        </li>
-                      ))}
-                      <li className="flex items-center gap-2 text-xs text-white py-1 px-2.5 bg-[#4F46E5]/15 border border-[#4F46E5]/30 rounded-lg font-medium cursor-pointer shadow-[0_0_15px_rgba(79,70,229,0.15)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#818CF8]"></span>
+                      <li 
+                        onClick={() => setActiveDocId('caching')}
+                        className={`flex items-center gap-2 text-xs py-1 px-2.5 rounded-lg cursor-pointer transition-all duration-300 ${
+                          activeDocId === 'caching' 
+                            ? 'text-white bg-[#4F46E5]/15 border border-[#4F46E5]/30' 
+                            : 'text-gray-400 border border-transparent hover:text-white'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${activeDocId === 'caching' ? 'bg-[#818CF8]' : 'bg-gray-600'}`}></span>
                         Caching Strategies
                       </li>
-                      {['Load Balancing', 'Database Design'].map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-xs text-gray-400 py-1 hover:text-white cursor-pointer transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
-                          {item}
-                        </li>
-                      ))}
                     </ul>
                   </div>
 
                   <div>
-                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">Advanced</h4>
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">Platform Docs</h4>
                     <ul className="space-y-1.5">
-                      {['Consistent Hashing', 'Message Queues', 'CDN Architecture', 'Rate Limiting'].map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-xs text-gray-400 py-1 hover:text-white cursor-pointer transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">Case Studies</h4>
-                    <ul className="space-y-1.5">
-                      {['Design Twitter', 'Design YouTube'].map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-xs text-gray-400 py-1 hover:text-white cursor-pointer transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
-                          {item}
+                      {Object.keys(docsData).filter(key => key !== 'caching').map((key) => (
+                        <li 
+                          key={key}
+                          onClick={() => setActiveDocId(key)}
+                          className={`flex items-center gap-2 text-xs py-1 px-2.5 rounded-lg cursor-pointer transition-all duration-300 ${
+                            activeDocId === key 
+                              ? 'text-white bg-[#4F46E5]/15 border border-[#4F46E5]/30' 
+                              : 'text-gray-400 border border-transparent hover:text-white'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${activeDocId === key ? 'bg-[#818CF8]' : 'bg-gray-600'}`}></span>
+                          {docsData[key].sidebarTitle}
                         </li>
                       ))}
                     </ul>
@@ -224,68 +835,15 @@ const Home = () => {
               </aside>
 
               {/* Main Content Pane */}
-              <div className="flex-1 p-6 md:p-8 bg-[#090D18] flex flex-col justify-between overflow-x-hidden">
+              <div className="flex-1 p-6 md:p-8 bg-[#090D18] flex flex-col justify-between overflow-y-auto max-h-[500px]">
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span className="text-[11px] font-mono text-gray-400">CacheService.java</span>
-                  </div>
-
-                  {/* Code Editor Mock */}
-                  <div className="bg-[#05070D] border border-gray-800 rounded-xl p-5 mb-8 font-mono text-xs text-gray-300 leading-relaxed shadow-inner overflow-x-auto whitespace-pre">
-                    <div className="text-gray-500">// 1. Check cache first</div>
-                    <div>
-                      <span className="text-pink-500">User</span> cached = cache.<span className="text-blue-400">get</span>(userId);
-                    </div>
-                    <div className="mt-1">
-                      <span className="text-purple-400">if</span> (cached != <span className="text-yellow-500">null</span>) &#123;
-                    </div>
-                    <div className="pl-4 mt-1">
-                      <span className="text-purple-400">return</span> cached; <span className="text-gray-500">// Cache HIT</span>
-                    </div>
-                    <div className="mt-1">&#125;</div>
-                    
-                    <div className="text-gray-500 mt-4">// 2. Cache MISS - load from DB</div>
-                    <div className="mt-1">
-                      <span className="text-pink-500">User</span> user = db.<span className="text-blue-400">findById</span>(userId);
-                    </div>
-                    <div className="mt-1">
-                      cache.<span className="text-blue-400">set</span>(userId, user, TTL.<span className="text-amber-500">30_MIN</span>);
-                    </div>
-                    <div className="mt-1">
-                      <span className="text-purple-400">return</span> user;
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-white mb-4">
-                    Cache Invalidation Strategies
-                  </h3>
-
-                  {/* Strategy Table */}
-                  <div className="border border-gray-800 rounded-xl overflow-hidden bg-[#070A12] text-xs">
-                    <div className="grid grid-cols-3 bg-[#0B0F19] p-3 text-gray-400 font-semibold border-b border-gray-800">
-                      <div>Strategy</div>
-                      <div>Use Case</div>
-                      <div>Consistency</div>
-                    </div>
-                    <div className="divide-y divide-gray-800">
-                      {[
-                        { strategy: 'TTL-based', useCase: 'Read-heavy data', consistency: 'Eventual', badgeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
-                        { strategy: 'Write-through', useCase: 'Write-heavy workloads', consistency: 'Strong', badgeColor: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
-                        { strategy: 'Event-driven', useCase: 'Microservices', consistency: 'Near-strong', badgeColor: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' },
-                      ].map((row) => (
-                        <div key={row.strategy} className="grid grid-cols-3 p-3 text-gray-300 items-center">
-                          <div className="font-semibold text-white">{row.strategy}</div>
-                          <div>{row.useCase}</div>
-                          <div>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${row.badgeColor}`}>
-                              {row.consistency}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {activeDocId === 'caching' && renderCachingDoc()}
+                  {activeDocId === 'user-guide' && renderUserGuide()}
+                  {activeDocId === 'learn-platform' && renderLearnPlatformDoc()}
+                  {activeDocId === 'student-os' && renderStudentOSDoc()}
+                  {activeDocId === 'community-forum' && renderCommunityForumDoc()}
+                  {activeDocId === 'tech-blogs' && renderTechBlogsDoc()}
+                  {activeDocId === 'personalization' && renderPersonalizationDoc()}
                 </div>
               </div>
 
@@ -294,12 +852,16 @@ const Home = () => {
                 <div>
                   <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">On This Page</h4>
                   <ul className="space-y-2.5 text-[11px]">
-                    <li className="text-[#818CF8] font-medium cursor-pointer hover:text-white transition-colors">
-                      Cache-Aside Pattern
-                    </li>
-                    {['Write-Through', 'Write-Behind', 'Async flushing', 'Invalidation Strategies', 'TTL-based', 'Event-driven', 'Redis vs Memcached', 'Best Practices', 'Interview Tips'].map((item) => (
-                      <li key={item} className="text-gray-500 cursor-pointer hover:text-gray-300 transition-colors">
-                        {item}
+                    {docsData[activeDocId].sections.map((sec) => (
+                      <li 
+                        key={sec.id}
+                        onClick={() => {
+                          const el = document.getElementById(sec.id);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }}
+                        className="text-gray-500 cursor-pointer hover:text-gray-300 transition-colors"
+                      >
+                        {sec.label}
                       </li>
                     ))}
                   </ul>
@@ -307,7 +869,7 @@ const Home = () => {
 
                 <div className="text-[10px] text-gray-600 mt-8 border-t border-[#1a1a1a] pt-4">
                   Last updated<br />
-                  <span className="text-gray-400 font-medium">Jan 14, 2025</span>
+                  <span className="text-gray-400 font-medium">{docsData[activeDocId].lastUpdated}</span>
                 </div>
               </aside>
             </div>
