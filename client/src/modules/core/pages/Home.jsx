@@ -666,12 +666,7 @@ const Home = () => {
               {/* Address Bar */}
               <div className="flex items-center gap-2 bg-[#080B13] border border-gray-800 rounded-lg px-4 py-1.5 w-[380px] justify-center text-xs text-gray-500 flex-shrink-0">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
-                <span className="truncate">
-                  {import.meta.env.VITE_ENABLE_INTERACTIVE_DOCS === 'true' 
-                    ? `httptechnex.dev/${docsData[activeDocId].path}`
-                    : `httptechnex.dev/${docsData['user-guide'].path}`
-                  }
-                </span>
+                <span className="truncate">httptechnex.dev/{docsData[activeDocId].path}</span>
               </div>
               {/* Icons */}
               <div className="flex items-center gap-3 text-gray-500 flex-shrink-0">
@@ -696,11 +691,7 @@ const Home = () => {
                       {Object.keys(docsData).map((key) => (
                         <li 
                           key={key}
-                          onClick={() => {
-                            if (import.meta.env.VITE_ENABLE_INTERACTIVE_DOCS === 'true') {
-                              setActiveDocId(key);
-                            }
-                          }}
+                          onClick={() => setActiveDocId(key)}
                           className={`flex items-center gap-2 text-xs py-1 px-2.5 rounded-lg cursor-pointer transition-all duration-300 ${
                             activeDocId === key 
                               ? 'text-white bg-[#4F46E5]/15 border border-[#4F46E5]/30' 
@@ -719,18 +710,12 @@ const Home = () => {
               {/* Main Content Pane */}
               <div className="flex-1 p-6 md:p-8 bg-[#090D18] flex flex-col justify-between overflow-y-auto max-h-[500px]">
                 <div>
-                  {import.meta.env.VITE_ENABLE_INTERACTIVE_DOCS === 'true' ? (
-                    <>
-                      {activeDocId === 'user-guide' && renderUserGuide()}
-                      {activeDocId === 'learn-platform' && renderLearnPlatformDoc()}
-                      {activeDocId === 'student-os' && renderStudentOSDoc()}
-                      {activeDocId === 'community-forum' && renderCommunityForumDoc()}
-                      {activeDocId === 'tech-blogs' && renderTechBlogsDoc()}
-                      {activeDocId === 'personalization' && renderPersonalizationDoc()}
-                    </>
-                  ) : (
-                    renderUserGuide()
-                  )}
+                  {activeDocId === 'user-guide' && renderUserGuide()}
+                  {activeDocId === 'learn-platform' && renderLearnPlatformDoc()}
+                  {activeDocId === 'student-os' && renderStudentOSDoc()}
+                  {activeDocId === 'community-forum' && renderCommunityForumDoc()}
+                  {activeDocId === 'tech-blogs' && renderTechBlogsDoc()}
+                  {activeDocId === 'personalization' && renderPersonalizationDoc()}
                 </div>
               </div>
 
@@ -739,40 +724,24 @@ const Home = () => {
                 <div>
                   <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">On This Page</h4>
                   <ul className="space-y-2.5 text-[11px]">
-                    {import.meta.env.VITE_ENABLE_INTERACTIVE_DOCS === 'true' ? (
-                      docsData[activeDocId].sections.map((sec) => (
-                        <li 
-                          key={sec.id}
-                          onClick={() => {
-                            const el = document.getElementById(sec.id);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                          }}
-                          className="text-gray-500 cursor-pointer hover:text-gray-300 transition-colors"
-                        >
-                          {sec.label}
-                        </li>
-                      ))
-                    ) : (
-                      docsData['user-guide'].sections.map((sec) => (
-                        <li 
-                          key={sec.id}
-                          className="text-gray-500 cursor-default"
-                        >
-                          {sec.label}
-                        </li>
-                      ))
-                    )}
+                    {docsData[activeDocId].sections.map((sec) => (
+                      <li 
+                        key={sec.id}
+                        onClick={() => {
+                          const el = document.getElementById(sec.id);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }}
+                        className="text-gray-500 cursor-pointer hover:text-gray-300 transition-colors"
+                      >
+                        {sec.label}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
                 <div className="text-[10px] text-gray-600 mt-8 border-t border-[#1a1a1a] pt-4">
                   Last updated<br />
-                  <span className="text-gray-400 font-medium">
-                    {import.meta.env.VITE_ENABLE_INTERACTIVE_DOCS === 'true' 
-                      ? docsData[activeDocId].lastUpdated 
-                      : docsData['user-guide'].lastUpdated
-                    }
-                  </span>
+                  <span className="text-gray-400 font-medium">{docsData[activeDocId].lastUpdated}</span>
                 </div>
               </aside>
             </div>
