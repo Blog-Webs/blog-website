@@ -10,6 +10,7 @@ import { optimizeImage } from '../../../utils/image';
 import CodeBlock from '../../core/components/ui/CodeBlock';
 import { ArticleSkeleton } from '../../core/components/ui/Skeleton';
 import { useReadingProgress } from '../../core/hooks/useReadingProgress';
+import { bookmarkApi } from '../../workspace/api/userFeatures';
 
 const BlogDetail = () => {
   const { slug } = useParams();
@@ -23,6 +24,15 @@ const BlogDetail = () => {
   const [upNext, setUpNext] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [comments, setComments] = useState([]);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [bookmarked, setBookmarked] = useState(false);
+
+  const [commentText, setCommentText] = useState('');
+  const [replyTo, setReplyTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+
   // SVG Reading Progress calculations
   const progress = useReadingProgress(scrollRef);
   const radius = 28;
@@ -33,6 +43,11 @@ const BlogDetail = () => {
     setLoading(true);
     blogApi.getBlogBySlug(slug).then(({ data }) => {
       setBlog(data.blog);
+      setComments(data.comments || []);
+      setLikeCount(data.likeCount || 0);
+      const isLiked = data.blog?.likes?.some(id => id.toString() === user?._id?.toString());
+      setLiked(isLiked || false);
+      
       // Ensure we have mock "UP NEXT" data if empty to match the design
       setUpNext(data.upNext?.length > 0 ? data.upNext : [
         { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
@@ -43,6 +58,7 @@ const BlogDetail = () => {
     }).catch(() => {
       // Fallback for UI demonstration if API fails or backend isn't seeded
       setBlog({
+        _id: 'fallback-blog-id',
         title: 'Quantum Superiority: Moving Beyond the Hype and Into Real-World Applications',
         category: 'QUANTUM COMPUTING',
         createdAt: new Date().toISOString(),
@@ -51,6 +67,9 @@ const BlogDetail = () => {
         coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1000',
         content: 'For Decades, quantum computing was relegated to the realm of theoretical physics—a collection of complex equations and "blackboard experiments" that promised a revolution but offered few tangible results. Today, that narrative is shifting with unprecedented speed.\n\n## The Entanglement Problem\n\nAt the heart of the current quantum renaissance lies the mastery of qubit stability. Unlike classical bits, which are binary, qubits exist in a state of superposition. This allows for parallel processing power that scales exponentially. However, maintaining this state requires temperatures colder than deep space.\n\n> "The challenge isn\'t just building a quantum computer; it\'s building one that doesn\'t forget its own state the moment a stray photon passes by."\n\n## Algorithmic Sovereignty\n\nThe applications extend far beyond cryptography. We are seeing early-stage breakthroughs in molecular simulation for drug discovery and the optimization of global supply chains that would take classical supercomputers centuries to solve.\n\n```python\ndef quantum_simulate(qubits, circuit):\n    # Initialize hardware state\n    state = q_engine.init_state(qubits)\n    # Execute entanglement gates\n    for gate in circuit:\n        state = apply_gate(gate, state)\n    return state.measure()\n```\n\nAs we look toward 2030, the goal is "Quantum Advantage"—the point where these machines provide a distinct economic or scientific value that justifies their immense complexity.',
       });
+      setComments([]);
+      setLikeCount(42);
+      setLiked(false);
       setUpNext([
         { title: 'The Evolution of Neural Architectures', readTimeMinutes: 8, _id: 'mock1', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=300' },
         { title: 'Silicon vs. Graphene: The Next Frontier', readTimeMinutes: 12, _id: 'mock2', coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300' },
@@ -59,6 +78,73 @@ const BlogDetail = () => {
       window.scrollTo({ top: 0 });
     });
   }, [slug, user]);
+
+  useEffect(() => {
+    if (user && blog && blog._id !== 'fallback-blog-id') {
+      bookmarkApi.getAll().then(({ data }) => {
+        const isBookmarked = data.bookmarks?.some(
+          (b) => b.itemType === 'blog' && b.itemId === blog._id
+        );
+        setBookmarked(isBookmarked || false);
+      }).catch(err => console.error(err));
+    }
+  }, [blog, user]);
+
+  const handleLike = async () => {
+    if (!user) {
+      alert('Please log in to like posts.');
+      return;
+    }
+    try {
+      const { data } = await blogApi.toggleLike(slug);
+      setLiked(data.liked);
+      setLikeCount(data.likeCount);
+    } catch (err) {
+      console.error('Failed to like:', err);
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!user) {
+      alert('Please log in to bookmark posts.');
+      return;
+    }
+    try {
+      const { data } = await bookmarkApi.toggle('blog', blog._id);
+      setBookmarked(data.bookmarked);
+    } catch (err) {
+      console.error('Failed to bookmark:', err);
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Link copied to clipboard!');
+  };
+
+  const handlePostComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    try {
+      const { data } = await blogApi.addComment(slug, commentText);
+      setComments(prev => [data.comment, ...prev]);
+      setCommentText('');
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    }
+  };
+
+  const handlePostReply = async (parentCommentId) => {
+    if (!replyText.trim()) return;
+    try {
+      const { data } = await blogApi.addComment(slug, replyText, parentCommentId);
+      setComments(prev => [...prev, data.comment]);
+      setReplyText('');
+      setReplyTo(null);
+    } catch (err) {
+      console.error('Failed to post reply:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -186,23 +272,45 @@ const BlogDetail = () => {
 
               {/* Core Actions */}
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 bg-gradient-to-r from-[#abc4ff] to-[#818CF8] text-[#0E1015] px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(171,196,255,0.3)] hover:scale-105 transform">
-                  <ThumbsUp size={16} fill="currentColor" />
-                  1.2k
+                <button 
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-all shadow-[0_0_20px_rgba(171,196,255,0.3)] hover:scale-105 transform ${
+                    liked 
+                      ? 'bg-gradient-to-r from-[#abc4ff] to-[#818CF8] text-[#0E1015]' 
+                      : 'bg-white/5 text-on-surface hover:bg-white/10'
+                  }`}
+                >
+                  <ThumbsUp size={16} fill={liked ? "currentColor" : "none"} />
+                  {likeCount}
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform">
-                  <Bookmark size={16} />
+                <button 
+                  onClick={handleBookmark}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all hover:scale-110 transform ${
+                    bookmarked 
+                      ? 'bg-[#abc4ff]/20 text-[#abc4ff] border border-[#abc4ff]/30' 
+                      : 'bg-white/5 text-on-surface hover:bg-white/10'
+                  }`}
+                >
+                  <Bookmark size={16} fill={bookmarked ? "currentColor" : "none"} />
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform">
+                <button 
+                  onClick={handleShare}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 text-on-surface hover:bg-white/10 transition-colors hover:scale-110 transform"
+                >
                   <Share2 size={16} />
                 </button>
               </div>
 
-              <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-on-surface-variant uppercase mr-1">Tags</span>
-                <span className="text-[11px] font-mono bg-white/5 border border-white/10 text-[#abc4ff] px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors">#Quantum</span>
-                <span className="text-[11px] font-mono bg-white/5 border border-white/10 text-[#abc4ff] px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors">#AI</span>
-              </div>
+              {blog.tags?.length > 0 && (
+                <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-on-surface-variant uppercase mr-1">Tags</span>
+                  {blog.tags.slice(0, 2).map((t, idx) => (
+                    <span key={idx} className="text-[11px] font-mono bg-white/5 border border-white/10 text-[#abc4ff] px-3 py-1 rounded-full">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
 
@@ -214,16 +322,18 @@ const BlogDetail = () => {
 
             {/* Discussions Section */}
             <section className="mb-8">
-              <h2 className="text-3xl font-display font-bold text-on-surface mb-8">Discussions (24)</h2>
+              <h2 className="text-3xl font-display font-bold text-on-surface mb-8">Discussions ({comments.length})</h2>
               
               {/* Comment Input */}
-              <div className="bg-[#15171D] border border-outline-variant/10 rounded-xl p-6 mb-10 shadow-lg">
+              <div className="bg-[#15171D] border border-outline-variant/10 rounded-xl p-6 mb-10 shadow-lg text-left">
                 <div className="flex gap-4 mb-4">
-                  <img src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'} className="w-10 h-10 rounded-full bg-surface-container" alt="User" />
+                  <img src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'} className="w-10 h-10 rounded-full bg-surface-container object-cover" alt="User" />
                   <textarea 
-                    className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2"
+                    className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2 font-normal"
                     placeholder="Join the discussion..."
                     rows="2"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
                   ></textarea>
                 </div>
                 <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
@@ -232,74 +342,99 @@ const BlogDetail = () => {
                     <button className="p-1 hover:text-on-surface transition-colors italic font-serif px-2">I</button>
                     <button className="p-1 hover:text-on-surface transition-colors px-2"><LinkIcon size={14} /></button>
                   </div>
-                  <button className="bg-[#abc4ff] text-[#0E1015] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#b9cdff] transition-colors">
+                  <button 
+                    onClick={handlePostComment}
+                    className="bg-[#abc4ff] text-[#0E1015] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#b9cdff] transition-colors"
+                  >
                     Post Comment
                   </button>
                 </div>
               </div>
 
-              {/* Mock Comments */}
+              {/* Comments List */}
               <div className="space-y-8">
-                {/* Comment 1 */}
-                <div className="flex gap-4">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Julian" className="w-10 h-10 rounded-full bg-surface-container shrink-0" alt="User" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-sm text-on-surface">Julian Pearce</span>
-                      <span className="text-xs text-on-surface-variant">2 hours ago</span>
-                    </div>
-                    <p className="text-sm text-on-surface-variant mb-3 leading-relaxed">
-                      Exceptional breakdown. I think the timeline for Quantum Advantage in logistics might be even sooner—some firms are already seeing 10x speedups in pathfinding experiments.
-                    </p>
-                    <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
-                      <button className="flex items-center gap-1 hover:text-on-surface transition-colors"><ThumbsUp size={12} /> 42</button>
-                      <button className="flex items-center gap-1 hover:text-on-surface transition-colors"><MessageSquare size={12} /> Reply</button>
-                    </div>
-
-                    {/* Reply */}
-                    <div className="flex gap-4 mt-6 border-l-2 border-outline-variant/10 pl-6">
-                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sara" className="w-8 h-8 rounded-full bg-surface-container shrink-0" alt="User" />
+                {comments.filter(c => !c.parentComment).map(comment => {
+                  const replies = comments.filter(c => c.parentComment === comment._id || c.parentComment?._id === comment._id);
+                  return (
+                    <div key={comment._id} className="flex gap-4 text-left">
+                      <img src={comment.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} className="w-10 h-10 rounded-full bg-surface-container shrink-0 object-cover" alt="User" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-sm text-on-surface">Sara T.</span>
-                          <span className="text-xs text-on-surface-variant">1 hour ago</span>
+                          <span className="font-bold text-sm text-on-surface">{comment.user?.name || 'Anonymous'}</span>
+                          <span className="text-xs text-on-surface-variant font-mono">{new Date(comment.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <p className="text-sm text-on-surface-variant mb-3 leading-relaxed">
-                          Agreed @Julian! The optimization potential for urban traffic flows is particularly exciting for smart city data.
+                        <p className="text-sm text-on-surface-variant mb-3 leading-relaxed font-normal">
+                          {comment.text}
                         </p>
                         <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
-                          <button className="hover:text-on-surface transition-colors">Like</button>
-                          <button className="hover:text-on-surface transition-colors">Reply</button>
+                          <button 
+                            onClick={() => setReplyTo(replyTo?._id === comment._id ? null : comment)}
+                            className="flex items-center gap-1 hover:text-on-surface transition-colors"
+                          >
+                            <MessageSquare size={12} /> Reply
+                          </button>
                         </div>
+
+                        {/* Inline Reply Input */}
+                        {replyTo?._id === comment._id && (
+                          <div className="mt-4 bg-[#15171D] border border-outline-variant/10 rounded-xl p-4 shadow-md text-left">
+                            <textarea 
+                              className="w-full bg-transparent border-none text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-0 resize-none pt-2 font-normal"
+                              placeholder={`Reply to ${comment.user?.name}...`}
+                              rows="2"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                            ></textarea>
+                            <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-outline-variant/10">
+                              <button 
+                                onClick={() => setReplyTo(null)}
+                                className="px-3 py-1 rounded text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button 
+                                onClick={() => handlePostReply(comment._id)}
+                                className="bg-[#abc4ff] text-[#0E1015] px-4 py-1.5 rounded font-bold text-xs hover:bg-[#b9cdff] transition-colors"
+                              >
+                                Post Reply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Replies */}
+                        {replies.length > 0 && (
+                          <div className="space-y-6 mt-6 border-l-2 border-outline-variant/10 pl-6">
+                            {replies.map(reply => (
+                              <div key={reply._id} className="flex gap-4">
+                                <img src={reply.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || 'User'}`} className="w-8 h-8 rounded-full bg-surface-container shrink-0 object-cover" alt="User" />
+                                <div className="flex-1 text-left">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-sm text-on-surface">{reply.user?.name || 'Anonymous'}</span>
+                                    <span className="text-xs text-on-surface-variant font-mono">{new Date(reply.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                  <p className="text-sm text-on-surface-variant mb-3 leading-relaxed font-normal">
+                                    {reply.text}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Comment 2 */}
-                <div className="flex gap-4">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" className="w-10 h-10 rounded-full bg-surface-container shrink-0" alt="User" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-sm text-on-surface">Marcus Chen</span>
-                      <span className="text-xs text-on-surface-variant">5 hours ago</span>
-                    </div>
-                    <p className="text-sm text-on-surface-variant mb-3 leading-relaxed">
-                      Great article. But we also need to talk about the ethical implications of breaking current encryption standards. Are we ready for a post-RSA world?
-                    </p>
-                    <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
-                      <button className="flex items-center gap-1 hover:text-on-surface transition-colors"><ThumbsUp size={12} /> 18</button>
-                      <button className="flex items-center gap-1 hover:text-on-surface transition-colors"><MessageSquare size={12} /> Reply</button>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
+                {comments.filter(c => !c.parentComment).length === 0 && (
+                  <p className="text-sm text-on-surface-variant/60 italic text-center py-6 font-normal">No discussions yet. Be the first to share your thoughts!</p>
+                )}
               </div>
             </section>
 
           </main>
 
           {/* RIGHT SIDEBAR: TOC & PROGRESS */}
-          <aside className="hidden lg:block lg:col-span-3">
+          <aside className="hidden lg:block lg:col-span-3 text-left">
             <div className="sticky top-28 space-y-12 pl-6 border-l border-outline-variant/10">
               
               {/* Reading Progress */}
@@ -341,10 +476,10 @@ const BlogDetail = () => {
               <div>
                 <h4 className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant uppercase mb-4">SHARE THIS INSIGHT</h4>
                 <div className="flex gap-3">
-                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
+                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
                     <Mail size={16} />
                   </button>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
+                  <button onClick={handleShare} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#15171D] border border-outline-variant/10 hover:border-outline-variant/30 text-on-surface-variant hover:text-on-surface transition-colors">
                     <LinkIcon size={16} />
                   </button>
                 </div>
