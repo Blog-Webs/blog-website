@@ -14,6 +14,7 @@ const TodoPage = () => {
   // Todos state
   const [todos, setTodos] = useState([]);
   const [text, setText] = useState('');
+  const [priority, setPriority] = useState('medium');
 
   // Notes state
   const [notes, setNotes] = useState([]);
@@ -25,22 +26,27 @@ const TodoPage = () => {
 
   const [loading, setLoading] = useState(true);
 
+  // Dynamic Metrics
+  const doneTodos = todos.filter(t => t.isDone).length;
+  const totalTodos = todos.length;
+  const donePercentage = totalTodos > 0 ? Math.round((doneTodos / totalTodos) * 100) : 0;
+  const urgentCount = todos.filter(t => t.priority === 'high' && !t.isDone).length;
+
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      todoApi.getAll().then(({ data }) => setTodos(data.todos)),
-      noteApi.getAll().then(({ data }) => setNotes(data.notes)),
+      todoApi.getAll().then(({ data }) => setTodos(data.todos || [])),
+      noteApi.getAll().then(({ data }) => setNotes(data.notes || [])),
     ]).finally(() => setLoading(false));
   }, [user]);
 
   const handleAddTodo = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    // Default to medium or high priority randomly for demo purposes, or just medium
-    const isPriority = text.toLowerCase().includes('urgent') || text.toLowerCase().includes('priority');
-    const { data } = await todoApi.create(text, isPriority ? 'high' : 'medium');
+    const { data } = await todoApi.create(text, priority);
     setTodos((prev) => [data.todo, ...prev]);
     setText('');
+    setPriority('medium');
   };
 
   const handleToggleTodo = async (todo) => {
@@ -105,9 +111,18 @@ const TodoPage = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {notes.map((note) => (
-                  <div key={note._id} className="bg-[#161B22] border border-[#2D3342] rounded-xl p-6 flex flex-col h-56 relative group hover:border-[#4375FF] transition-colors shadow-sm">
+                  <div 
+                    key={note._id} 
+                    className="bg-[#161B22] border border-[#2D3342] rounded-xl p-6 flex flex-col h-56 relative group transition-colors shadow-sm text-left"
+                    style={{ borderColor: '#2D3342' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = note.color || '#5EEAD4'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2D3342'; }}
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 text-[10px] font-bold tracking-wide uppercase rounded-full bg-[#1C202B] text-[#8B949E] border border-[#2D3342]">
+                      <span 
+                        className="px-3 py-1 text-[10px] font-bold tracking-wide uppercase rounded-full bg-[#1C202B] border border-[#2D3342]"
+                        style={{ color: note.color || '#5EEAD4' }}
+                      >
                         {note.subject || 'General'}
                       </span>
                       <button onClick={() => handleDeleteNote(note._id)} className="opacity-0 group-hover:opacity-100 text-[#8B949E] hover:text-[#F87171] transition-all">
@@ -147,13 +162,13 @@ const TodoPage = () => {
                 <div className="relative w-[52px] h-[52px] flex items-center justify-center shrink-0">
                   <svg className="w-full h-full -rotate-90 absolute" viewBox="0 0 36 36">
                     <path className="text-[#4A262B]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                    <path className="text-[#FCA5A5]" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                    <path className="text-[#FCA5A5]" strokeDasharray={`${donePercentage}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
                   </svg>
-                  <span className="text-[11px] font-bold text-[#FCA5A5] relative z-10">75%</span>
+                  <span className="text-[11px] font-bold text-[#FCA5A5] relative z-10">{donePercentage}%</span>
                 </div>
                 <div>
                   <h4 className="text-[#FCA5A5] font-bold text-[15px] mb-1">Project Nexus Release</h4>
-                  <p className="text-xs text-[#8B949E]">Critical deadline in 18 hours</p>
+                  <p className="text-xs text-[#8B949E]">{urgentCount > 0 ? `${urgentCount} urgent tasks remaining` : 'All clean! No urgent tasks'}</p>
                 </div>
               </div>
 
@@ -204,6 +219,15 @@ const TodoPage = () => {
                       placeholder="Add a new task..."
                       className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-[#8B949E]"
                     />
+                    <select
+                      value={priority}
+                      onChange={e => setPriority(e.target.value)}
+                      className="bg-[#1C202B] border border-[#2D3342] rounded-lg px-2 py-1 text-xs text-white outline-none mr-1"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
                     <button type="submit" className="px-4 py-1.5 bg-[#a5b4fc] hover:bg-[#c7d2fe] text-[#1e1b4b] text-xs font-bold rounded-lg transition-colors">
                       Add
                     </button>
