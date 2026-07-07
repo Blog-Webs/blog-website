@@ -19,6 +19,7 @@ const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 
 // Forum
 const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
+const CreateTopicPage = lazy(() => import('./modules/forum/pages/CreateTopicPage'));
 const CategoryPage = lazy(() => import('./modules/forum/pages/CategoryPage'));
 const TopicDetail = lazy(() => import('./modules/forum/pages/TopicDetail'));
 const AdminGuard = lazy(() => import('./modules/admin/components/AdminGuard'));
@@ -52,6 +53,7 @@ function App() {
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
           <Route path="/forum" element={<ForumHome />} />
+          <Route path="/forum/create" element={<CreateTopicPage />} />
           <Route path="/forum/:categorySlug" element={<CategoryPage />} />
           <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
         </Route>
