@@ -4,20 +4,43 @@ const forumController = {
   // --- Categories ---
   getCategories: async (req, res) => {
     try {
-      let categories = await ForumCategory.find().sort({ order: 1 });
-      if (categories.length < 4) {
-        await ForumCategory.deleteMany({});
-        await ForumCategory.insertMany([
-          { name: 'Announcements', slug: 'announcements', description: 'Official announcements and updates.', icon: 'megaphone', order: 1 },
-          { name: 'General Discussion', slug: 'general-discussion', description: 'Chat about anything related to the platform.', icon: 'message-circle', order: 2 },
-          { name: 'Help & Support', slug: 'help-support', description: 'Ask questions and get help from the community.', icon: 'help-circle', order: 3 },
-          { name: 'Showcase', slug: 'showcase', description: 'Show off what you have built.', icon: 'star', order: 4 }
-        ]);
-        categories = await ForumCategory.find().sort({ order: 1 });
+      let categories = await ForumCategory.find();
+      const defaults = [
+        { name: 'Announcements', slug: 'announcements', description: 'Official announcements and updates.', icon: 'megaphone', order: 1 },
+        { name: 'General Discussion', slug: 'general-discussion', description: 'Chat about anything related to the platform.', icon: 'message-circle', order: 2 },
+        { name: 'Help & Support', slug: 'help-support', description: 'Ask questions and get help from the community.', icon: 'help-circle', order: 3 },
+        { name: 'Showcase', slug: 'showcase', description: 'Show off what you have built.', icon: 'star', order: 4 }
+      ];
+
+      for (const d of defaults) {
+        let existing = null;
+        if (d.slug === 'announcements') {
+          existing = categories.find(c => c.slug === 'announcements');
+        } else if (d.slug === 'general-discussion') {
+          existing = categories.find(c => c.slug === 'general-discussion' || c.slug === 'general');
+        } else if (d.slug === 'help-support') {
+          existing = categories.find(c => c.slug === 'help-support' || c.slug === 'q-a');
+        } else if (d.slug === 'showcase') {
+          existing = categories.find(c => c.slug === 'showcase' || c.slug === 'show-tell');
+        }
+
+        if (existing) {
+          existing.name = d.name;
+          existing.slug = d.slug;
+          existing.description = d.description;
+          existing.icon = d.icon;
+          existing.order = d.order;
+          await existing.save();
+        } else {
+          const newCat = new ForumCategory(d);
+          await newCat.save();
+        }
       }
+
+      categories = await ForumCategory.find().sort({ order: 1 });
       res.json(categories);
     } catch (error) {
-      res.status(500).json({ message: 'Error fetching categories' });
+      res.status(500).json({ message: 'Error fetching categories', error: error.message });
     }
   },
 
