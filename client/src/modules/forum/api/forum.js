@@ -11,6 +11,7 @@ export const forumApi = {
   createTopic: (topicData) => api.post('/forum/topics', topicData),
   getTopicBySlug: (slug) => api.get(`/forum/topics/${slug}`),
   toggleLikeTopic: (topicId) => api.post(`/forum/topics/${topicId}/likes`),
+  getForumStats: () => api.get('/forum/stats'),
 
   // Replies
   createReply: (topicId, content) => api.post(`/forum/topics/${topicId}/replies`, { content }),

@@ -11,6 +11,12 @@ const ForumHome = () => {
   const [recentTopics, setRecentTopics] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    activeDiscussions: [],
+    topContributors: [],
+    activeUsersCount: 0,
+    threadsTodayCount: 0
+  });
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -51,12 +57,16 @@ const ForumHome = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [categoriesRes, topicsRes] = await Promise.all([
+        const [categoriesRes, topicsRes, statsRes] = await Promise.all([
           forumApi.getCategories(),
-          forumApi.getRecentTopics()
+          forumApi.getRecentTopics(),
+          forumApi.getForumStats()
         ]);
-        setCategories(categoriesRes.data);
-        setRecentTopics(topicsRes.data);
+        setCategories(categoriesRes.data || []);
+        setRecentTopics(topicsRes.data || []);
+        if (statsRes.data) {
+          setStats(statsRes.data);
+        }
       } catch (err) {
         console.error('Failed to fetch forum data:', err);
       } finally {
@@ -157,7 +167,7 @@ const ForumHome = () => {
               ) : (
                 <>
                   {displayedTopics.map(topic => (
-                    <div key={topic._id} className="p-5 rounded-xl border border-white/5 bg-[#131315] hover:bg-white/5 transition-colors flex gap-5 cursor-pointer text-left" onClick={() => navigate(`/forum/${topic._id}`)}>
+                    <div key={topic._id} className="p-5 rounded-xl border border-white/5 bg-[#131315] hover:bg-white/5 transition-colors flex gap-5 cursor-pointer text-left" onClick={() => navigate(`/forum/topic/${topic.slug}`)}>
                       {/* Voting */}
                       <div className="flex flex-col items-center gap-1">
                         <button className="text-gray-500 hover:text-white transition-colors">
@@ -213,66 +223,61 @@ const ForumHome = () => {
 
           {/* Right Column: Active Discussions & Stats */}
           <div className="lg:col-span-3 hidden lg:flex flex-col gap-8">
-            <div className="rounded-xl border border-white/5 bg-[#131315] p-5">
+            <div className="rounded-xl border border-white/5 bg-[#131315] p-5 text-left">
               <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">Active Discussions</h3>
               <div className="flex flex-col gap-5">
-                <div>
-                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">How to build a custom CLI with Node.js and TUI libraries?</h4>
-                  <p className="text-[11px] text-gray-500">24 new comments today</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">Migrating from Prisma to Drizzle: A post-mortem.</h4>
-                  <p className="text-[11px] text-gray-500">12 new comments today</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#6366F1] transition-colors">Best practices for AuthN in Next.js App Router?</h4>
-                  <p className="text-[11px] text-gray-500">8 new comments today</p>
-                </div>
+                {stats.activeDiscussions.map((topic) => (
+                  <div key={topic._id}>
+                    <h4 
+                      onClick={() => navigate(`/forum/topic/${topic.slug}`)}
+                      className="font-semibold text-white text-sm mb-1 line-clamp-2 cursor-pointer hover:text-[#abc4ff] transition-colors"
+                    >
+                      {topic.title}
+                    </h4>
+                    <p className="text-[11px] text-gray-500">{topic.replyCount || 0} comments</p>
+                  </div>
+                ))}
+                {stats.activeDiscussions.length === 0 && (
+                  <p className="text-xs text-gray-500">No active discussions.</p>
+                )}
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/5 bg-[#131315] p-5">
+            <div className="rounded-xl border border-white/5 bg-[#131315] p-5 text-left">
               <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">Top Contributors</h3>
               <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-900 border border-blue-700 flex items-center justify-center text-xs font-bold text-white">AR</div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-white">Alex River</p>
-                      <p className="text-[11px] text-gray-400">2.4k Karma</p>
+                {stats.topContributors.map((contrib, index) => (
+                  <div key={contrib._id || index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={contrib.avatar || `https://ui-avatars.com/api/?name=${contrib.name}`} 
+                        alt={contrib.name} 
+                        className="w-8 h-8 rounded-full object-cover border border-[#2D3342]/50"
+                      />
+                      <div>
+                        <p className="text-[13px] font-semibold text-white">{contrib.name}</p>
+                        <p className="text-[11px] text-gray-400">{contrib.karma || 0} Karma ({contrib.commentCount || 0} comments)</p>
+                      </div>
                     </div>
+                    {index === 0 && (
+                      <span className="material-symbols-outlined text-[#abc4ff] text-[18px]">workspace_premium</span>
+                    )}
                   </div>
-                  <span className="material-symbols-outlined text-[#abc4ff] text-[18px]">workspace_premium</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-900 border border-purple-700 flex items-center justify-center text-xs font-bold text-white">SC</div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-white">Sarah Connor</p>
-                      <p className="text-[11px] text-gray-400">1.9k Karma</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-900 border border-orange-700 flex items-center justify-center text-xs font-bold text-white">MA</div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-white">Marcus Aurelius</p>
-                      <p className="text-[11px] text-gray-400">1.5k Karma</p>
-                    </div>
-                  </div>
-                </div>
+                ))}
+                {stats.topContributors.length === 0 && (
+                  <p className="text-xs text-gray-500">No contributors yet.</p>
+                )}
               </div>
             </div>
 
-            <div className="px-1 flex flex-col gap-3 text-sm text-gray-400">
+            <div className="px-1 flex flex-col gap-3 text-sm text-gray-400 text-left">
               <div className="flex justify-between items-center pb-3 border-b border-white/5">
                 <span>Active users</span>
-                <span className="font-bold text-white">1,204</span>
+                <span className="font-bold text-white">{stats.activeUsersCount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-white/5">
                 <span>Threads today</span>
-                <span className="font-bold text-white">142</span>
+                <span className="font-bold text-white">{stats.threadsTodayCount.toLocaleString()}</span>
               </div>
             </div>
           </div>

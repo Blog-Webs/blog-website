@@ -223,6 +223,47 @@ const forumController = {
     } catch (error) {
       res.status(500).json({ message: 'Error deleting reply', error: error.message });
     }
+  },
+
+  getForumStats: async (req, res) => {
+    try {
+      const activeDiscussions = await ForumTopic.find()
+        .sort({ replyCount: -1, lastActivityAt: -1 })
+        .limit(3)
+        .select('title slug replyCount');
+
+      const topContributorsData = await ForumReply.aggregate([
+        { $group: { _id: '$author', commentCount: { $sum: 1 } } },
+        { $sort: { commentCount: -1 } },
+        { $limit: 3 }
+      ]);
+
+      const populatedContributors = await Promise.all(
+        topContributorsData.map(async (item) => {
+          const user = await User.findById(item._id).select('name avatar');
+          return {
+            _id: item._id,
+            name: user ? user.name : 'Unknown',
+            avatar: user ? user.avatar : '',
+            commentCount: item.commentCount,
+            karma: item.commentCount * 100
+          };
+        })
+      );
+
+      const activeUsersCount = await User.countDocuments();
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const threadsTodayCount = await ForumTopic.countDocuments({ createdAt: { $gte: oneDayAgo } });
+
+      res.json({
+        activeDiscussions,
+        topContributors: populatedContributors,
+        activeUsersCount,
+        threadsTodayCount
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching forum stats', error: error.message });
+    }
   }
 };
 

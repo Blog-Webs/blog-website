@@ -9,6 +9,7 @@ router.get('/categories/:slug', forumController.getCategoryBySlug);
 router.get('/topics/search', forumController.searchTopics);
 router.get('/topics/recent', forumController.getRecentTopics);
 router.get('/topics/:slug', forumController.getTopicBySlug);
+router.get('/stats', forumController.getForumStats);
 
 // Protected routes (Write)
 router.post('/topics', requireAuth, forumController.createTopic);
