@@ -102,4 +102,4 @@ We have heavily invested in expanding the platform's capabilities to make it a s
    \`\`\`
 
 ---
-*Built with ❤️ for the developer community.*
+*Built by Tanish Dewase.*
