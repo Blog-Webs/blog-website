@@ -9,6 +9,7 @@ const ForumHome = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [categories, setCategories] = useState([]);
   const [recentTopics, setRecentTopics] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const handleSearch = async (e) => {
@@ -16,7 +17,7 @@ const ForumHome = () => {
     if (!searchQuery.trim()) {
       setIsLoading(true);
       const res = await forumApi.getRecentTopics();
-      setRecentTopics(res.data);
+      setRecentTopics(res.data || []);
       setIsLoading(false);
       return;
     }
@@ -24,7 +25,7 @@ const ForumHome = () => {
     setIsLoading(true);
     try {
       const res = await forumApi.searchTopics(searchQuery);
-      setRecentTopics(res.data);
+      setRecentTopics(res.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -32,6 +33,20 @@ const ForumHome = () => {
       setIsLoading(false);
     }
   };
+
+  const formatRelativeTime = (dateStr) => {
+    const diffMs = new Date() - new Date(dateStr);
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  const displayedTopics = selectedCategory 
+    ? recentTopics.filter(t => (t.category?._id || t.category) === selectedCategory)
+    : recentTopics;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,18 +77,24 @@ const ForumHome = () => {
             <div>
               <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 ml-3">Categories</h3>
               <div className="flex flex-col gap-1">
-                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg bg-[#6366F1] text-white font-medium">
+                <button 
+                  onClick={() => setSelectedCategory(null)}
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${!selectedCategory ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                >
                   <span className="material-symbols-outlined text-[20px]">grid_view</span> All Threads
                 </button>
-                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">chat_bubble</span> General
-                </button>
-                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">contact_support</span> Q&A
-                </button>
-                <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">campaign</span> Show & Tell
-                </button>
+                {categories.map(cat => (
+                  <button 
+                    key={cat._id}
+                    onClick={() => setSelectedCategory(cat._id)}
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === cat._id ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {cat.slug === 'general' ? 'chat_bubble' : cat.slug === 'q-a' ? 'contact_support' : 'campaign'}
+                    </span> 
+                    {cat.name}
+                  </button>
+                ))}
               </div>
             </div>
             
@@ -98,21 +119,45 @@ const ForumHome = () => {
                 <span className="material-symbols-outlined text-[18px]">add</span> New Discussion
               </button>
             </div>
+
+            {/* Search Input Bar */}
+            <form onSubmit={handleSearch} className="mb-6 flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-[#131315] focus-within:border-[#abc4ff] transition-colors text-left">
+              <Search size={18} className="text-gray-500 shrink-0 ml-1" />
+              <input 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search topics by title or keyword..."
+                className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-gray-500 focus:ring-0"
+              />
+              {searchQuery && (
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsLoading(true);
+                    forumApi.getRecentTopics().then(res => setRecentTopics(res.data || [])).finally(() => setIsLoading(false));
+                  }} 
+                  className="text-xs text-gray-500 hover:text-white px-2"
+                >
+                  Clear
+                </button>
+              )}
+            </form>
             
             <div className="flex flex-col gap-4">
               {isLoading ? (
                 <div className="flex flex-col gap-4">
                   {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-xl bg-white/5 animate-pulse border border-white/5" />)}
                 </div>
-              ) : recentTopics.length === 0 ? (
+              ) : displayedTopics.length === 0 ? (
                 <div className="p-12 text-center text-gray-500 flex flex-col items-center border border-white/5 rounded-xl bg-[#131315]">
                   <MessagesSquare size={48} className="mb-4 opacity-20" />
                   <p>No conversations yet.</p>
                 </div>
               ) : (
                 <>
-                  {recentTopics.map(topic => (
-                    <div key={topic._id} className="p-5 rounded-xl border border-white/5 bg-[#131315] hover:bg-white/5 transition-colors flex gap-5 cursor-pointer" onClick={() => navigate(`/forum/${topic._id}`)}>
+                  {displayedTopics.map(topic => (
+                    <div key={topic._id} className="p-5 rounded-xl border border-white/5 bg-[#131315] hover:bg-white/5 transition-colors flex gap-5 cursor-pointer text-left" onClick={() => navigate(`/forum/${topic._id}`)}>
                       {/* Voting */}
                       <div className="flex flex-col items-center gap-1">
                         <button className="text-gray-500 hover:text-white transition-colors">
@@ -130,7 +175,7 @@ const ForumHome = () => {
                             {topic.category?.name || 'General'}
                           </span>
                           <span className="text-[12px] text-gray-400">
-                            Posted by <span className="text-white font-medium">{topic.author?.name}</span> • 2h ago
+                            Posted by <span className="text-white font-medium">{topic.author?.name || 'Anonymous'}</span> • {formatRelativeTime(topic.createdAt)}
                           </span>
                         </div>
                         <h2 className="text-lg font-bold text-white mb-2 leading-tight">

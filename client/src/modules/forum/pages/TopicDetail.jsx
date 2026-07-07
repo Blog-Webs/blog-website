@@ -105,6 +105,7 @@ const TopicDetail = () => {
                   key={reply._id} 
                   reply={reply} 
                   isOp={reply.author?._id === topic.author?._id}
+                  onDelete={handleDeleteReply}
                 />
               ))
             ) : (
