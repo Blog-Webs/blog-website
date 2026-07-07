@@ -601,3 +601,5 @@ If your AI is currently returning errors or saying it's unavailable, it's usuall
 **Newsletter subscribers aren't receiving emails when I publish a post** → Check the server console for a `[Mailer]` warning — if `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` aren't set, emails are skipped (not an error) so the rest of the app keeps working. If using Gmail, confirm you're using a 16-character **App Password**, not your normal account password — Gmail rejects normal passwords for SMTP. Also confirm the post actually transitioned from **draft to published** — editing an already-published post again does not re-trigger emails.
 
 **StudentOS AI says it's unavailable / returns errors** → Add `GEMINI_API_KEY` to your backend's environment variables (see [Quick fix](#upgrading-studentos-ai-to-a-real-rag-agent)) and restart the server.
+
+
