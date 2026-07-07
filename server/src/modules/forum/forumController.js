@@ -4,17 +4,17 @@ const forumController = {
   // --- Categories ---
   getCategories: async (req, res) => {
     try {
-      // Auto-create default categories if empty
-      const count = await ForumCategory.countDocuments();
-      if (count === 0) {
+      let categories = await ForumCategory.find().sort({ order: 1 });
+      if (categories.length < 4) {
+        await ForumCategory.deleteMany({});
         await ForumCategory.insertMany([
           { name: 'Announcements', slug: 'announcements', description: 'Official announcements and updates.', icon: 'megaphone', order: 1 },
           { name: 'General Discussion', slug: 'general-discussion', description: 'Chat about anything related to the platform.', icon: 'message-circle', order: 2 },
           { name: 'Help & Support', slug: 'help-support', description: 'Ask questions and get help from the community.', icon: 'help-circle', order: 3 },
           { name: 'Showcase', slug: 'showcase', description: 'Show off what you have built.', icon: 'star', order: 4 }
         ]);
+        categories = await ForumCategory.find().sort({ order: 1 });
       }
-      const categories = await ForumCategory.find().sort({ order: 1 });
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching categories' });
