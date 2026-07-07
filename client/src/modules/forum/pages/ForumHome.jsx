@@ -50,6 +50,21 @@ const ForumHome = () => {
     return new Date(dateStr).toLocaleDateString();
   };
 
+  const getCategoryIcon = (slug) => {
+    switch (slug) {
+      case 'announcements':
+        return 'campaign';
+      case 'general-discussion':
+        return 'chat_bubble';
+      case 'help-support':
+        return 'contact_support';
+      case 'showcase':
+        return 'star';
+      default:
+        return 'grid_view';
+    }
+  };
+
   const displayedTopics = selectedCategory 
     ? recentTopics.filter(t => (t.category?._id || t.category) === selectedCategory)
     : recentTopics;
@@ -100,7 +115,7 @@ const ForumHome = () => {
                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === cat._id ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                   >
                     <span className="material-symbols-outlined text-[20px]">
-                      {cat.slug === 'general' ? 'chat_bubble' : cat.slug === 'q-a' ? 'contact_support' : 'campaign'}
+                      {getCategoryIcon(cat.slug)}
                     </span> 
                     {cat.name}
                   </button>

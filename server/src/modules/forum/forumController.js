@@ -8,10 +8,10 @@ const forumController = {
       const count = await ForumCategory.countDocuments();
       if (count === 0) {
         await ForumCategory.insertMany([
-          { name: 'Announcements', description: 'Official announcements and updates.', icon: 'megaphone', order: 1 },
-          { name: 'General Discussion', description: 'Chat about anything related to the platform.', icon: 'message-circle', order: 2 },
-          { name: 'Help & Support', description: 'Ask questions and get help from the community.', icon: 'help-circle', order: 3 },
-          { name: 'Showcase', description: 'Show off what you have built.', icon: 'star', order: 4 }
+          { name: 'Announcements', slug: 'announcements', description: 'Official announcements and updates.', icon: 'megaphone', order: 1 },
+          { name: 'General Discussion', slug: 'general-discussion', description: 'Chat about anything related to the platform.', icon: 'message-circle', order: 2 },
+          { name: 'Help & Support', slug: 'help-support', description: 'Ask questions and get help from the community.', icon: 'help-circle', order: 3 },
+          { name: 'Showcase', slug: 'showcase', description: 'Show off what you have built.', icon: 'star', order: 4 }
         ]);
       }
       const categories = await ForumCategory.find().sort({ order: 1 });
