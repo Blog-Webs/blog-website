@@ -54,7 +54,7 @@ function App() {
           <Route path="/todos" element={<TodoPage />} />
           <Route path="/forum" element={<ForumHome />} />
           <Route path="/forum/create" element={<CreateTopicPage />} />
-          <Route path="/forum/:categorySlug" element={<CategoryPage />} />
+          <Route path="/forum/:categorySlug" element={<ForumHome />} />
           <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
         </Route>
 

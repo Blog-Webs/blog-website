@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, MessagesSquare } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { forumApi } from '../api/forum';
 
 const ForumHome = () => {
@@ -65,22 +65,34 @@ const ForumHome = () => {
     }
   };
 
-  const displayedTopics = selectedCategory 
-    ? recentTopics.filter(t => (t.category?._id || t.category) === selectedCategory)
-    : recentTopics;
+  const displayedTopics = recentTopics;
+
+  const { categorySlug } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const [categoriesRes, topicsRes, statsRes] = await Promise.all([
+        const [categoriesRes, statsRes] = await Promise.all([
           forumApi.getCategories(),
-          forumApi.getRecentTopics(),
           forumApi.getForumStats()
         ]);
         setCategories(categoriesRes.data || []);
-        setRecentTopics(topicsRes.data || []);
-        if (statsRes.data) {
-          setStats(statsRes.data);
+        setStats(statsRes.data || {});
+
+        if (categorySlug) {
+          const categoryRes = await forumApi.getCategoryBySlug(categorySlug);
+          setRecentTopics(categoryRes.data.topics || []);
+          const matchedCat = (categoriesRes.data || []).find(c => c.slug === categorySlug);
+          if (matchedCat) {
+            setSelectedCategory(matchedCat._id);
+          } else {
+            setSelectedCategory(categorySlug);
+          }
+        } else {
+          const topicsRes = await forumApi.getRecentTopics();
+          setRecentTopics(topicsRes.data || []);
+          setSelectedCategory(null);
         }
       } catch (err) {
         console.error('Failed to fetch forum data:', err);
@@ -89,7 +101,7 @@ const ForumHome = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [categorySlug]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans pb-24">
@@ -102,9 +114,9 @@ const ForumHome = () => {
             <div>
               <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 ml-3">Categories</h3>
               <div className="flex flex-col gap-1">
-                <button 
-                  onClick={() => setSelectedCategory(null)}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${!selectedCategory ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                 <button 
+                  onClick={() => navigate('/forum')}
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${!categorySlug ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                 >
                   <span className="material-symbols-outlined text-[20px]">grid_view</span> All Threads
                 </button>
@@ -112,8 +124,8 @@ const ForumHome = () => {
                   categories.map(cat => (
                     <button 
                       key={cat._id}
-                      onClick={() => setSelectedCategory(cat._id)}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === cat._id ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                      onClick={() => navigate(`/forum/${cat.slug}`)}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${categorySlug === cat.slug ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">
                         {getCategoryIcon(cat.slug)}
@@ -124,26 +136,26 @@ const ForumHome = () => {
                 ) : (
                   <>
                     <button 
-                      onClick={() => setSelectedCategory('announcements')}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'announcements' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                      onClick={() => navigate('/forum/announcements')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${categorySlug === 'announcements' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">campaign</span> Announcements
                     </button>
                     <button 
-                      onClick={() => setSelectedCategory('general-discussion')}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'general-discussion' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                      onClick={() => navigate('/forum/general-discussion')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${categorySlug === 'general-discussion' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">chat_bubble</span> General Discussion
                     </button>
                     <button 
-                      onClick={() => setSelectedCategory('help-support')}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'help-support' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                      onClick={() => navigate('/forum/help-support')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${categorySlug === 'help-support' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">contact_support</span> Help & Support
                     </button>
                     <button 
-                      onClick={() => setSelectedCategory('showcase')}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'showcase' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                      onClick={() => navigate('/forum/showcase')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${categorySlug === 'showcase' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">star</span> Showcase
                     </button>
