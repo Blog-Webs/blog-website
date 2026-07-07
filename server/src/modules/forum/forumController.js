@@ -53,8 +53,18 @@ const forumController = {
         .populate('author', 'name avatar')
         .sort({ isPinned: -1, lastActivityAt: -1 })
         .limit(50);
+
+      const topicsWithReplies = await Promise.all(topics.map(async (topic) => {
+        const latestReply = await ForumReply.findOne({ topic: topic._id })
+          .populate('author', 'name avatar')
+          .sort({ createdAt: -1 })
+          .select('content author createdAt');
+        const topicObj = topic.toObject();
+        topicObj.latestReply = latestReply;
+        return topicObj;
+      }));
         
-      res.json({ category, topics });
+      res.json({ category, topics: topicsWithReplies });
     } catch (error) {
       res.status(500).json({ message: 'Error fetching category' });
     }
@@ -68,7 +78,18 @@ const forumController = {
         .populate('category', 'name slug')
         .sort({ lastActivityAt: -1 })
         .limit(10);
-      res.json(topics);
+
+      const topicsWithReplies = await Promise.all(topics.map(async (topic) => {
+        const latestReply = await ForumReply.findOne({ topic: topic._id })
+          .populate('author', 'name avatar')
+          .sort({ createdAt: -1 })
+          .select('content author createdAt');
+        const topicObj = topic.toObject();
+        topicObj.latestReply = latestReply;
+        return topicObj;
+      }));
+
+      res.json(topicsWithReplies);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching recent topics' });
     }
@@ -216,8 +237,18 @@ const forumController = {
       .populate('category', 'name slug')
       .sort({ lastActivityAt: -1 })
       .limit(20);
+
+      const topicsWithReplies = await Promise.all(topics.map(async (topic) => {
+        const latestReply = await ForumReply.findOne({ topic: topic._id })
+          .populate('author', 'name avatar')
+          .sort({ createdAt: -1 })
+          .select('content author createdAt');
+        const topicObj = topic.toObject();
+        topicObj.latestReply = latestReply;
+        return topicObj;
+      }));
       
-      res.json(topics);
+      res.json(topicsWithReplies);
     } catch (error) {
       res.status(500).json({ message: 'Error searching topics' });
     }

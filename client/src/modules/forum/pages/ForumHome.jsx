@@ -108,18 +108,47 @@ const ForumHome = () => {
                 >
                   <span className="material-symbols-outlined text-[20px]">grid_view</span> All Threads
                 </button>
-                {categories.map(cat => (
-                  <button 
-                    key={cat._id}
-                    onClick={() => setSelectedCategory(cat._id)}
-                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === cat._id ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      {getCategoryIcon(cat.slug)}
-                    </span> 
-                    {cat.name}
-                  </button>
-                ))}
+                {categories.length > 0 ? (
+                  categories.map(cat => (
+                    <button 
+                      key={cat._id}
+                      onClick={() => setSelectedCategory(cat._id)}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === cat._id ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {getCategoryIcon(cat.slug)}
+                      </span> 
+                      {cat.name}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setSelectedCategory('announcements')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'announcements' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">campaign</span> Announcements
+                    </button>
+                    <button 
+                      onClick={() => setSelectedCategory('general-discussion')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'general-discussion' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">chat_bubble</span> General Discussion
+                    </button>
+                    <button 
+                      onClick={() => setSelectedCategory('help-support')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'help-support' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">contact_support</span> Help & Support
+                    </button>
+                    <button 
+                      onClick={() => setSelectedCategory('showcase')}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg font-medium text-left ${selectedCategory === 'showcase' ? 'bg-[#abc4ff] text-[#0a0a0a]' : 'text-gray-400 hover:text-white hover:bg-white/5 transition-colors'}`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">star</span> Showcase
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             
@@ -209,6 +238,29 @@ const ForumHome = () => {
                         <p className="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">
                           {topic.content?.substring(0, 150) || 'No description provided.'}
                         </p>
+
+                        {/* Latest Comment / Reply block */}
+                        {topic.latestReply ? (
+                          <div className="mt-3 mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5 text-left">
+                            <img 
+                              src={topic.latestReply.author?.avatar || `https://ui-avatars.com/api/?name=${topic.latestReply.author?.name || 'User'}`}
+                              alt={topic.latestReply.author?.name}
+                              className="w-6 h-6 rounded-full object-cover shrink-0"
+                            />
+                            <div className="flex-1 min-w-0 text-xs">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-semibold text-white/90">
+                                  {topic.latestReply.author?.name || 'Anonymous'}
+                                </span>
+                                <span className="text-[10px] text-gray-500 font-mono">
+                                  {formatRelativeTime(topic.latestReply.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-gray-400 line-clamp-2" dangerouslySetInnerHTML={{ __html: topic.latestReply.content }}>
+                              </p>
+                            </div>
+                          </div>
+                        ) : null}
                         
                         <div className="flex items-center justify-between mt-auto">
                           <div className="flex items-center gap-2">
