@@ -23,3 +23,8 @@ export const noteApi = {
   update: (id, patch) => api.patch(`/notes/${id}`, patch),
   remove: (id) => api.delete(`/notes/${id}`),
 };
+
+export const notificationApi = {
+  getAll: () => api.get('/notifications'),
+  readAll: () => api.put('/notifications/read-all'),
+};

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
 import SearchModal from '../components/search/SearchModal';
+import { Bell, FileText, BookOpen, Megaphone } from 'lucide-react';
+import { notificationApi } from '../../workspace/api/userFeatures';
 
 const navLinkClass = ({ isActive }) =>
   `text-[11px] uppercase tracking-widest transition-colors duration-200 ${
@@ -20,10 +22,60 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const profileRef = useRef(null);
 
+  const [notifications, setNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  // Fetch notifications
+  const fetchNotifications = () => {
+    notificationApi.getAll()
+      .then(({ data }) => setNotifications(data || []))
+      .catch(err => console.error('Error fetching notifications:', err));
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationApi.readAll();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error('Failed to mark all read:', err);
+    }
+  };
+
+  const formatTime = (dateStr) => {
+    const diffMs = new Date() - new Date(dateStr);
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case 'BLOG_PUBLISHED':
+        return <FileText size={16} className="text-[#818CF8]" />;
+      case 'CONTENT_PUBLISHED':
+        return <BookOpen size={16} className="text-[#A78BFA]" />;
+      default:
+        return <Megaphone size={16} className="text-[#5EEAD4]" />;
+    }
+  };
+
   useEffect(() => {
     const handleClick = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
       }
     };
     
@@ -90,9 +142,74 @@ const Header = () => {
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             <span className="text-[11px] font-bold text-green-400">{liveUsers} Online</span>
           </div>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            <span className="material-symbols-outlined text-[18px]">notifications</span>
-          </button>
+          {/* Notification Button & Inline Dropdown */}
+          <div className="relative flex items-center" ref={notifRef}>
+            <button 
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="text-gray-400 hover:text-white transition-colors relative flex items-center justify-center p-1 rounded-full hover:bg-white/5"
+            >
+              <Bell size={18} />
+              {notifications.some(n => !n.isRead) && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#abc4ff] rounded-full"></span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div 
+                className="absolute right-0 top-full mt-3 w-80 bg-[#15171D] border border-[#2D3342] rounded-2xl shadow-2xl py-4 z-50 animate-mac-slide-down text-left"
+              >
+                <div className="px-4 pb-3 border-b border-[#2D3342]/60 flex justify-between items-center">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Updates</h4>
+                  <button 
+                    onClick={handleMarkAllRead}
+                    className="text-[10px] font-bold text-[#abc4ff] hover:text-[#b9cdff] uppercase tracking-wider transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                </div>
+                
+                <div className="max-h-72 overflow-y-auto divide-y divide-[#2D3342]/40 scrollbar-none">
+                  {notifications.map((notif) => (
+                    <div 
+                      key={notif._id} 
+                      onClick={() => {
+                        if (notif.link) navigate(notif.link);
+                        setNotifOpen(false);
+                      }}
+                      className={`flex gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors cursor-pointer items-start ${!notif.isRead ? 'bg-[#abc4ff]/5' : ''}`}
+                    >
+                      <div className="p-2 bg-[#1C202B] rounded-lg border border-[#2D3342]/50 shrink-0 font-normal">
+                        {getNotifIcon(notif.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-white/95 leading-relaxed font-normal">
+                          {notif.message}
+                        </p>
+                        <span className="text-[10px] text-gray-400 font-mono mt-1 block">
+                          {formatTime(notif.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {notifications.length === 0 && (
+                    <div className="px-4 py-8 text-center text-xs text-gray-500">
+                      No notifications yet
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-4 pt-3 border-t border-[#2D3342]/60 text-center">
+                  <Link 
+                    to="/student-os" 
+                    onClick={() => setNotifOpen(false)}
+                    className="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+                  >
+                    View all notifications
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
           <button className="text-gray-400 hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[18px]">settings</span>
           </button>

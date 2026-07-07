@@ -1,6 +1,7 @@
 const slugify = require('slugify');
 const { Subject, Chapter, Progress, Bookmark, IconOption } = require('../../models');
 const cache = require('../../utils/cache');
+const UserNotification = require('../admin/UserNotification');
 
 // Deletes Progress and Bookmark rows that reference any of the given
 // chapter ids, so removing content upstream never leaves dangling
@@ -94,6 +95,17 @@ const createChapter = async (req, res) => {
   });
   
   await cache.del(`subject:${subject}:chapters`); // Updates chapter count
+  
+  // Find subject name to make the notification content descriptive
+  const subjectDoc = await Subject.findById(subject);
+  const subjectName = subjectDoc ? subjectDoc.name : 'Subjects';
+  
+  await UserNotification.create({
+    type: 'CONTENT_PUBLISHED',
+    title: `New Chapter added to ${subjectName}`,
+    message: `New Chapter added to ${subjectName}: '${chapter.title}'`,
+    link: `/learn`
+  }).catch(err => console.error('Failed to create user notification:', err));
   
   res.status(201).json({ chapter });
 };
