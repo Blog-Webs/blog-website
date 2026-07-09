@@ -1,6 +1,6 @@
 # System Architecture: HttpTechNex
 
-Here is a high-level overview of the HttpTechNex platform's architecture. The application follows a modern decoupled client-server model, utilizing a React frontend and a Node.js/Express backend.
+Here is a high-level overview of the HttpTechNex platform's architecture. The application follows the modern decoupled client-server model, utilizing a React frontend and a Node.js/Express backend.
 
 ---
 
