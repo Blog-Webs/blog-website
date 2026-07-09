@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your OTP Code — httpTechNex</title>
+</head>
+<body style="margin:0;padding:0;background:#0f1117;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1117;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#1a1d2e;border-radius:16px;overflow:hidden;border:1px solid rgba(99,102,241,0.2);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:28px 40px;text-align:center;">
+              <h1 style="margin:0;font-size:22px;color:#fff;font-family:monospace;">httpTechNex</h1>
+              <p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">Security Verification</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:15px;color:#94a3b8;">Hi <strong style="color:#e2e8f0;">{{userName}}</strong>,</p>
+              <p style="margin:0 0 32px;font-size:15px;color:#94a3b8;line-height:1.7;">
+                Use the code below to verify your identity. It expires in
+                <strong style="color:#e2e8f0;">{{expiryMinutes}} minutes</strong>.
+              </p>
+
+              <!-- OTP Box -->
+              <div style="display:inline-block;background:#12151f;border:2px solid #6366f1;border-radius:16px;padding:24px 48px;margin-bottom:32px;">
+                <p style="margin:0;font-size:42px;font-weight:800;font-family:monospace;letter-spacing:12px;color:#e2e8f0;text-align:center;">
+                  {{otpCode}}
+                </p>
+              </div>
+
+              <p style="margin:0 0 8px;font-size:13px;color:#475569;">
+                ⚠️ Never share this code with anyone — httpTechNex staff will never ask for it.
+              </p>
+              <p style="margin:0;font-size:13px;color:#475569;">
+                If you didn't request this, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+              <p style="margin:0;font-size:12px;color:#334155;">
+                © 2025 httpTechNex · <a href="https://www.httptechnex.online" style="color:#6366f1;text-decoration:none;">httptechnex.online</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
