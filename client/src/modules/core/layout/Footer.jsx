@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Github, MessageSquare, BookOpen, Shield, FileText, Cookie, Zap } from 'lucide-react';
+import { GitBranch, MessageSquare, BookOpen, Shield, Zap } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -35,7 +35,7 @@ const Footer = () => {
                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
                   aria-label="GitHub"
                 >
-                  <Github size={14} />
+                  <GitBranch size={14} />
                 </a>
                 <Link
                   to="/forum"
