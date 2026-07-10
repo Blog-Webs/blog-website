@@ -356,7 +356,7 @@ public class PaymentService {
                 }
               ],
               externalLinks: [
-                { label: 'Spring Dependency Injection', url: 'https://www.geeksforgeeks.org/spring-dependency-injection-di/', source: 'spring' }
+                { label: 'Spring Dependency Injection', url: 'https://www.geeksforgeeks.org/spring-dependency-injection-di/', source: 'other' }
               ]
             },
             {
@@ -395,7 +395,7 @@ public class ProductController {
                 }
               ],
               externalLinks: [
-                { label: 'Build REST API with Spring Boot', url: 'https://www.geeksforgeeks.org/spring-boot-rest-controller/', source: 'spring' }
+                { label: 'Build REST API with Spring Boot', url: 'https://www.geeksforgeeks.org/spring-boot-rest-controller/', source: 'other' }
               ]
             }
           ]

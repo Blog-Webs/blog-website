@@ -109,6 +109,15 @@ Stop counting problems solved. Start counting patterns you can recognize cold, f
 
 const run = async () => {
   await connectDB();
+  
+  // Drop legacy index to support new flattened Chapter schema
+  try {
+    await mongoose.connection.collection('chapters').dropIndex('track_1_chapterNumber_1');
+    console.log('🧹 Dropped legacy index track_1_chapterNumber_1');
+  } catch (e) {
+    // Ignore if it does not exist
+  }
+
   console.log('Seeding HttpTechNex content...\n');
 
   for (const subjectData of SUBJECTS) {
