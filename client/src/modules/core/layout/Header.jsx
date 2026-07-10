@@ -26,18 +26,19 @@ const Header = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
 
-  // Fetch notifications
+  // Fetch notifications — only for logged-in users
   const fetchNotifications = () => {
+    if (!user) return; // notifications are user-specific, skip for guests
     notificationApi.getAll()
       .then(({ data }) => setNotifications(data || []))
-      .catch(err => console.error('Error fetching notifications:', err));
+      .catch(() => {}); // silently ignore — route may not be live on first deploy
   };
 
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]); // re-run when login state changes
 
   const handleMarkAllRead = async () => {
     try {
