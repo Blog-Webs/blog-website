@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
 import SearchModal from '../components/search/SearchModal';
 import GoogleSignInButton from '../components/ui/GoogleSignInButton';
-import { Bell, FileText, BookOpen, Megaphone, Sun, Moon, LayoutDashboard, LogOut } from 'lucide-react';
+import { Bell, FileText, BookOpen, Megaphone, LayoutDashboard, LogOut } from 'lucide-react';
 import { notificationApi } from '../../workspace/api/userFeatures';
 
 const navLinkClass = ({ isActive }) =>
@@ -15,7 +14,6 @@ const navLinkClass = ({ isActive }) =>
 
 const Header = () => {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const liveUsers = useLiveUserCount();
 
@@ -220,16 +218,6 @@ const Header = () => {
               </div>
             )}
           </div>
-
-          {/* Dark / Light mode toggle — replaces the settings ⚙️ icon */}
-          <button
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="text-gray-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
 
           {/* Auth — Google Sign In or user avatar */}
           {user ? (
