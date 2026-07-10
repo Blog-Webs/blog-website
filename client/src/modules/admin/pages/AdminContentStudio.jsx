@@ -53,13 +53,13 @@ const AdminContentStudio = () => {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  
   // Tree State
   const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState([]);
   const [expandedSubject, setExpandedSubject] = useState(null);
   const [chapters, setChapters] = useState({});
-
+  
   const [addingSubject, setAddingSubject] = useState(false);
   const [subjectForm, setSubjectForm] = useState(emptySubjectForm);
   const [editingSubjectId, setEditingSubjectId] = useState(null);
@@ -76,7 +76,7 @@ const AdminContentStudio = () => {
   const [existingChapterCount, setExistingChapterCount] = useState(0);
   const [savingChapter, setSavingChapter] = useState(false);
   const [chapterLoaded, setChapterLoaded] = useState(false);
-
+  
   const [tagInput, setTagInput] = useState('');
 
   const wordCount = chapter.content ? chapter.content.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -105,7 +105,7 @@ const AdminContentStudio = () => {
       return;
     }
     setChapterLoaded(false);
-
+    
     if (isCreatingChapter) {
       setChapter(emptyChapter);
       if (subjectIdFromQuery) {
@@ -135,7 +135,7 @@ const AdminContentStudio = () => {
         setBreadcrumb({
           subjectName: found.subject?.name,
         });
-
+        
         // Ensure subject is loaded and expanded in tree to show "Recently Modified"
         if (found.subject) {
           contentApi.getChaptersForSubject(found.subject._id).then(res => {
@@ -173,20 +173,20 @@ const AdminContentStudio = () => {
     setSubjectForm(emptySubjectForm);
     setAddingSubject(false);
   };
-
+  
   const handleSaveSubjectEdit = async () => {
     if (!subjectForm.name.trim()) return;
     const { data } = await adminApi.updateSubject(editingSubjectId, subjectForm);
     setSubjects((prev) => prev.map((s) => (s._id === editingSubjectId ? data.subject : s)));
     setEditingSubjectId(null);
   };
-
+  
   const handleDeleteSubject = async (subjectId, subjectName) => {
     const snapshot = [...subjects];
     setSubjects((prev) => prev.filter((s) => s._id !== subjectId));
     let undone = false;
     showToast(`Deleted subject "${subjectName}"`, () => { undone = true; setSubjects(snapshot); dismissToast(); });
-    setTimeout(async () => { if (!undone) try { await adminApi.deleteSubject(subjectId); } catch { } }, 5100);
+    setTimeout(async () => { if (!undone) try { await adminApi.deleteSubject(subjectId); } catch {} }, 5100);
   };
 
   const handleDeleteChapter = async (subjectId, chapterId, chapterTitle) => {
@@ -194,7 +194,7 @@ const AdminContentStudio = () => {
     setChapters((prev) => ({ ...prev, [subjectId]: (prev[subjectId] || []).filter((c) => c._id !== chapterId) }));
     let undone = false;
     showToast(`Deleted chapter "${chapterTitle}"`, () => { undone = true; setChapters((prev) => ({ ...prev, [subjectId]: snapshot })); dismissToast(); });
-    setTimeout(async () => { if (!undone) try { await adminApi.deleteChapter(chapterId); } catch { } }, 5100);
+    setTimeout(async () => { if (!undone) try { await adminApi.deleteChapter(chapterId); } catch {} }, 5100);
     if (id === chapterId) {
       navigate('/admin-portal/content');
     }
@@ -251,7 +251,7 @@ const AdminContentStudio = () => {
   const handleRemoveTag = (tagToRemove) => {
     setChapter(c => ({ ...c, tags: c.tags.filter(t => t !== tagToRemove) }));
   };
-
+  
   const handleCoverUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -284,7 +284,7 @@ const AdminContentStudio = () => {
             </button>
           )}
         </div>
-
+        
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
           {loading ? (
             <div className="p-4 text-sm text-[#8B949E]">Loading...</div>
@@ -301,7 +301,7 @@ const AdminContentStudio = () => {
                     <button onClick={() => handleDeleteSubject(subject._id, subject.name)} className="text-red-400 hover:text-red-300 p-1"><Trash2 size={12} /></button>
                   </div>
                 </div>
-
+                
                 {editingSubjectId === subject._id && (
                   <div className="ml-6 mr-2 mb-2">
                     <InlineForm onSave={handleSaveSubjectEdit} onCancel={() => setEditingSubjectId(null)}>
@@ -314,8 +314,8 @@ const AdminContentStudio = () => {
                   <div className="ml-4 pl-2 border-l border-[#2D3342] my-1 flex flex-col gap-0.5">
                     {(chapters[subject._id] || []).map(chap => (
                       <div key={chap._id} className="flex items-center justify-between group">
-                        <Link
-                          to={`/admin-portal/content/chapters/${chap._id}?subject=${subject._id}`}
+                        <Link 
+                          to={`/admin-portal/content/chapters/${chap._id}?subject=${subject._id}`} 
                           className={`block px-2 py-1 text-[11px] rounded transition-colors w-full ${id === chap._id ? 'text-[#4375FF] font-medium bg-[#4375FF]/10' : 'text-[#8B949E] hover:text-white hover:bg-[#1C202B]'}`}
                         >
                           <span className="truncate block max-w-[180px]">{chap.title}</span>
@@ -350,13 +350,13 @@ const AdminContentStudio = () => {
         ) : (
           <>
             <div className="px-8 py-5 border-b border-[#1C202B] flex flex-col gap-2 bg-[#0E1015]">
-              {breadcrumb && (
+               {breadcrumb && (
                 <div className="flex items-center gap-2 text-[13px] font-mono tracking-wide text-[#8B949E]">
                   <span className="text-white">Subjects</span>
                   <ChevronRight size={12} />
                   <span className="text-white font-medium">{breadcrumb.subjectName}</span>
                 </div>
-              )}
+               )}
             </div>
 
             <div className="flex-1 overflow-y-auto px-8 py-10 lg:px-16 pb-32 custom-scrollbar">
@@ -366,7 +366,7 @@ const AdminContentStudio = () => {
                 placeholder="Chapter title"
                 className="w-full text-4xl font-bold mb-6 outline-none bg-transparent placeholder-[#4C5363] text-white"
               />
-
+              
               <div className="mb-6 pb-6 border-b border-[#1C202B]">
                 <BlockEditor
                   editorKey={isEditingChapter ? id : 'new'}
@@ -386,8 +386,8 @@ const AdminContentStudio = () => {
                   <h3 className="text-sm font-bold text-white mb-4">Recently Modified Chapters</h3>
                   <div className="border border-[#1C202B] rounded-xl overflow-hidden bg-[#0E1015]">
                     {chapters[activeSubjectId].map((c, i) => (
-                      <Link
-                        key={c._id}
+                      <Link 
+                        key={c._id} 
                         to={`/admin-portal/content/chapters/${c._id}?subject=${activeSubjectId}`}
                         className={`flex items-center justify-between p-4 hover:bg-[#161B22] transition-colors ${i !== chapters[activeSubjectId].length - 1 ? 'border-b border-[#1C202B]' : ''}`}
                       >
@@ -407,29 +407,29 @@ const AdminContentStudio = () => {
       {id && chapterLoaded && (
         <aside className="w-[300px] flex-shrink-0 border-l border-[#1C202B] bg-[#0E1015] flex flex-col h-full overflow-y-auto custom-scrollbar z-10">
           <div className="p-6 flex flex-col gap-8">
-
+            
             {/* Status & Actions */}
             <div>
               <h3 className="text-[11px] font-bold text-[#8B949E] uppercase tracking-wider mb-4">Status & Visibility</h3>
-
+              
               <div className="flex items-center justify-between p-3 border border-[#2D3342] rounded-xl bg-[#111113] mb-4">
                 <span className="text-sm text-white font-medium">Free Preview</span>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={chapter.isFreePreview} onChange={() => setChapter(c => ({ ...c, isFreePreview: !c.isFreePreview }))} />
+                  <input type="checkbox" className="sr-only peer" checked={chapter.isFreePreview} onChange={() => setChapter(c => ({...c, isFreePreview: !c.isFreePreview}))} />
                   <div className="w-9 h-5 bg-[#2D3342] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#4375FF]"></div>
                 </label>
               </div>
               <p className="text-[11px] text-[#8B949E] mb-6">Allow non-enrolled users to read this chapter.</p>
 
               <div className="flex gap-3">
-                <button
+                <button 
                   onClick={handleSaveChapter}
                   disabled={savingChapter}
                   className="flex-1 py-2.5 rounded-xl border border-[#2D3342] text-sm font-medium hover:bg-[#161B22] text-white transition-colors"
                 >
                   Save Draft
                 </button>
-                <button
+                <button 
                   onClick={handleSaveChapter}
                   disabled={savingChapter}
                   className="flex-1 py-2.5 rounded-xl bg-[#4375FF] text-white text-sm font-medium hover:bg-[#3460E0] transition-colors"
@@ -444,15 +444,15 @@ const AdminContentStudio = () => {
             {/* Metadata */}
             <div>
               <h3 className="text-[11px] font-bold text-[#8B949E] uppercase tracking-wider mb-4">Metadata</h3>
-
+              
               <div className="mb-4">
                 <label className="text-xs text-[#8B949E] block mb-1.5">Estimated Read Time</label>
                 <div className="relative">
                   <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B949E]" />
-                  <input
-                    type="number"
-                    value={chapter.estimatedMinutes}
-                    onChange={e => setChapter(c => ({ ...c, estimatedMinutes: Number(e.target.value) }))}
+                  <input 
+                    type="number" 
+                    value={chapter.estimatedMinutes} 
+                    onChange={e => setChapter(c => ({...c, estimatedMinutes: Number(e.target.value)}))}
                     className="w-full bg-[#111113] border border-[#2D3342] rounded-lg py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-[#4375FF]"
                   />
                 </div>
@@ -464,7 +464,7 @@ const AdminContentStudio = () => {
             {/* Tags */}
             <div>
               <h3 className="text-[11px] font-bold text-[#8B949E] uppercase tracking-wider mb-4">Tags</h3>
-
+              
               <div className="flex flex-wrap gap-2 mb-3">
                 {chapter.tags.map(tag => (
                   <span key={tag} className="flex items-center gap-1 bg-[#1C202B] text-xs text-[#C9D1D9] px-2 py-1 rounded-md font-mono">
@@ -473,11 +473,11 @@ const AdminContentStudio = () => {
                   </span>
                 ))}
               </div>
-
+              
               <div className="relative">
                 <Plus size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B949E]" />
-                <input
-                  type="text"
+                <input 
+                  type="text" 
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={handleAddTag}
@@ -495,7 +495,7 @@ const AdminContentStudio = () => {
               {chapter.coverImage ? (
                 <div className="relative rounded-xl overflow-hidden h-32 border border-[#2D3342]">
                   <img src={chapter.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                  <button onClick={() => setChapter(c => ({ ...c, coverImage: '' }))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white hover:bg-black/70">
+                  <button onClick={() => setChapter(c => ({...c, coverImage: ''}))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white hover:bg-black/70">
                     <X size={14} />
                   </button>
                 </div>

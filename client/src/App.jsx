@@ -8,7 +8,8 @@ const ReadingLayout = lazy(() => import('./modules/core/layout/ReadingLayout'));
 // chapters never downloads the rich-text editor bundle (BlockNote +
 // Mantine) that only the admin pages actually need, and vice versa.
 const Home = lazy(() => import('./modules/core/pages/Home'));
-const SubjectPage = lazy(() => import('./modules/learn/pages/SubjectPage'));
+const LearnHome = lazy(() => import('./modules/learn/pages/LearnHome'));
+const DocsPage = lazy(() => import('./modules/docs/pages/DocsPage'));
 const TopicPage = lazy(() => import('./modules/learn/pages/TopicPage'));
 const BlogList = lazy(() => import('./modules/blog/pages/BlogList'));
 const BlogDetail = lazy(() => import('./modules/blog/pages/BlogDetail'));
@@ -18,16 +19,15 @@ const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 
 // Forum
 const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
+const CreateTopicPage = lazy(() => import('./modules/forum/pages/CreateTopicPage'));
 const CategoryPage = lazy(() => import('./modules/forum/pages/CategoryPage'));
 const TopicDetail = lazy(() => import('./modules/forum/pages/TopicDetail'));
 const AdminGuard = lazy(() => import('./modules/admin/components/AdminGuard'));
 const AdminLayout = lazy(() => import('./modules/admin/components/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
-const AdminBlogList = lazy(() => import('./modules/admin/pages/AdminBlogList'));
-const BlogEditor = lazy(() => import('./modules/admin/pages/BlogEditor'));
+const AdminBlogStudio = lazy(() => import('./modules/blog/pages/AdminBlogStudio'));
 const AdminSeriesList = lazy(() => import('./modules/admin/pages/AdminSeriesList'));
-const ContentTreeManager = lazy(() => import('./modules/admin/pages/ContentTreeManager'));
-const ChapterEditor = lazy(() => import('./modules/admin/pages/ChapterEditor'));
+const AdminContentStudio = lazy(() => import('./modules/admin/pages/AdminContentStudio'));
 const MigrationTool = lazy(() => import('./modules/admin/pages/MigrationTool'));
 const Subscribers = lazy(() => import('./modules/admin/pages/Subscribers'));
 const ContactSubmissions = lazy(() => import('./modules/admin/pages/ContactSubmissions'));
@@ -47,18 +47,20 @@ function App() {
         {/* Public site — with global header + footer */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/learn/:subjectSlug" element={<SubjectPage />} />
+          <Route path="/learn" element={<LearnHome />} />
+          <Route path="/docs/:slug?" element={<DocsPage />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
           <Route path="/forum" element={<ForumHome />} />
-          <Route path="/forum/:categorySlug" element={<CategoryPage />} />
+          <Route path="/forum/create" element={<CreateTopicPage />} />
+          <Route path="/forum/:categorySlug" element={<ForumHome />} />
           <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
         </Route>
 
         {/* Topic reading — no header/footer (immersive reading layout) */}
         <Route element={<ReadingLayout />}>
-          <Route path="/learn/:subjectSlug/:topicSlug" element={<TopicPage />} />
+          <Route path="/learn/:subjectSlug" element={<TopicPage />} />
         </Route>
 
         {/* Blog reading — no header/footer, only center pane scrolls */}
@@ -70,11 +72,11 @@ function App() {
         <Route path="/admin-portal" element={<AdminGuard />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="blogs" element={<AdminBlogList />} />
-            <Route path="blogs/:id" element={<BlogEditor />} />
+            <Route path="blogs" element={<AdminBlogStudio />} />
+            <Route path="blogs/:id" element={<AdminBlogStudio />} />
             <Route path="series" element={<AdminSeriesList />} />
-            <Route path="content" element={<ContentTreeManager />} />
-            <Route path="content/chapters/:id" element={<ChapterEditor />} />
+            <Route path="content" element={<AdminContentStudio />} />
+            <Route path="content/chapters/:id" element={<AdminContentStudio />} />
             <Route path="migration" element={<MigrationTool />} />
             <Route path="subscribers" element={<Subscribers />} />
             <Route path="contact" element={<ContactSubmissions />} />

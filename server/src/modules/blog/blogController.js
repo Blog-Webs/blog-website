@@ -1,5 +1,6 @@
 const slugify = require('slugify');
 const { Blog, Comment, Newsletter } = require('../../models');
+const UserNotification = require('../admin/UserNotification');
 const cloudinary = require('../../config/cloudinary');
 const cache = require('../../utils/cache');
 const { sendBulkMail } = require('../../utils/mailer');
@@ -277,6 +278,12 @@ const createBlog = async (req, res) => {
 
   if (blog.status === 'published') {
     notifySubscribersOfNewPost(blog);
+    UserNotification.create({
+      type: 'BLOG_PUBLISHED',
+      title: 'Admin published a new blog',
+      message: `Admin published a new blog: '${blog.title}'`,
+      link: `/blog/${blog.slug}`
+    }).catch(err => console.error('Failed to create user notification:', err));
   }
 };
 
@@ -322,6 +329,12 @@ const updateBlog = async (req, res) => {
   const justPublished = !wasPublished && blog.status === 'published';
   if (justPublished) {
     notifySubscribersOfNewPost(blog);
+    UserNotification.create({
+      type: 'BLOG_PUBLISHED',
+      title: 'Admin published a new blog',
+      message: `Admin published a new blog: '${blog.title}'`,
+      link: `/blog/${blog.slug}`
+    }).catch(err => console.error('Failed to create user notification:', err));
   }
 };
 

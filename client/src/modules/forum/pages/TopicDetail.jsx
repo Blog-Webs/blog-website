@@ -18,6 +18,7 @@ const TopicDetail = () => {
   
   const [replyContent, setReplyContent] = useState('');
   const [isReplying, setIsReplying] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
 
   useEffect(() => {
     const fetchTopic = async () => {
@@ -57,6 +58,7 @@ const TopicDetail = () => {
       const res = await forumApi.createReply(topic._id, replyContent);
       setReplies([...replies, res.data]);
       setReplyContent('');
+      setEditorKey(prev => prev + 1);
     } catch (err) {
       console.error('Failed to post reply:', err);
     } finally {
@@ -105,6 +107,7 @@ const TopicDetail = () => {
                   key={reply._id} 
                   reply={reply} 
                   isOp={reply.author?._id === topic.author?._id}
+                  onDelete={handleDeleteReply}
                 />
               ))
             ) : (
@@ -137,7 +140,7 @@ const TopicDetail = () => {
             </h3>
             
             <div className="rounded-xl overflow-hidden mb-4 shadow-inner" style={{ backgroundColor: 'var(--bg)' }}>
-              <BlockEditor onChange={({ plainText }) => setReplyContent(plainText)} minHeight="200px" />
+              <BlockEditor editorKey={editorKey} onChange={({ plainText }) => setReplyContent(plainText)} minHeight="200px" />
             </div>
             
             <div className="flex justify-end">

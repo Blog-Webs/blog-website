@@ -603,3 +603,5 @@ If your AI is currently returning errors or saying it's unavailable, it's usuall
 **StudentOS AI says it's unavailable / returns errors** → Add `GEMINI_API_KEY` to your backend's environment variables (see [Quick fix](#upgrading-studentos-ai-to-a-real-rag-agent)) and restart the server.
 
 
+---
+*Built by Tanish Dewase.*

@@ -23,6 +23,7 @@ const adminRoutes = require('./modules/blog/adminRoutes');
 const noteRoutes = require('./modules/workspace/noteRoutes');
 const studentOSRoutes = require('./modules/studentos/routes/index');
 const forumRoutes = require('./modules/forum/forumRoutes');
+const notificationRoutes = require('./modules/admin/notificationRoutes');
 
 // Load EventBus listeners
 require('./events');
@@ -102,6 +103,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/studentos', studentOSRoutes);
 app.use('/api/forum', forumRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 app.use('/api', (req, res) => {
