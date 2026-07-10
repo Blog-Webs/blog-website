@@ -1,16 +1,15 @@
-const { User, Blog, Newsletter, Chapter, Topic, Subject } = require('../../models');
+const { User, Blog, Newsletter, Chapter, Subject } = require('../../models');
 const AdminNotification = require('../admin/AdminNotification');
 
 // GET /api/admin/stats  -- admin only
 const getStats = async (req, res) => {
-  const [totalUsers, totalBlogs, publishedBlogs, totalSubscribers, totalChapters, totalTopics, totalSubjects] =
+  const [totalUsers, totalBlogs, publishedBlogs, totalSubscribers, totalChapters, totalSubjects] =
     await Promise.all([
       User.countDocuments(),
       Blog.countDocuments(),
       Blog.countDocuments({ status: 'published' }),
       Newsletter.countDocuments({ isActive: true }),
       Chapter.countDocuments(),
-      Topic.countDocuments(),
       Subject.countDocuments(),
     ]);
 
@@ -21,7 +20,7 @@ const getStats = async (req, res) => {
     draftBlogs: totalBlogs - publishedBlogs,
     totalSubscribers,
     totalChapters,
-    totalTopics,
+    totalTopics: 0, // Topics no longer exist in flattened schema
     totalSubjects,
   });
 };

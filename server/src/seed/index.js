@@ -2,7 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const connectDB = require('../config/db');
 const { mkSlug } = require('./helpers');
-const { Subject, Topic, Track, Chapter, Blog, User } = require('../models');
+const { Subject, Chapter, Blog, User } = require('../models');
 
 const dsa = require('./content/dsa');
 const java = require('./content/java');
@@ -20,59 +20,39 @@ const seedSubjectTree = async (subjectData) => {
   );
   console.log(`  Subject: ${subject.name}`);
 
+  // Clear existing chapters first to prevent duplicate numbers or indexes
+  await Chapter.deleteMany({ subject: subject._id });
+
+  let chapterNumber = 1;
   for (const topicData of subjectData.topics) {
-    const topicSlug = mkSlug(topicData.name);
-    const topic = await Topic.findOneAndUpdate(
-      { subject: subject._id, slug: topicSlug },
-      {
-        subject: subject._id,
-        slug: topicSlug,
-        name: topicData.name,
-        description: topicData.description,
-        order: topicData.order,
-        difficulty: topicData.difficulty,
-        estimatedMinutes: topicData.estimatedMinutes,
-        hasVisualizer: topicData.hasVisualizer || false,
-        visualizerType: topicData.visualizerType || 'none',
-      },
-      { upsert: true, new: true }
-    );
-    console.log(`    Topic: ${topic.name}`);
+    console.log(`    Processing Topic: ${topicData.name}`);
 
     for (let trackIdx = 0; trackIdx < topicData.tracks.length; trackIdx++) {
       const trackData = topicData.tracks[trackIdx];
-      const trackSlug = mkSlug(trackData.name);
-      const track = await Track.findOneAndUpdate(
-        { topic: topic._id, slug: trackSlug },
-        { topic: topic._id, slug: trackSlug, name: trackData.name, order: trackIdx },
-        { upsert: true, new: true }
-      );
-      console.log(`      Track: ${track.name}`);
+      console.log(`      Processing Track: ${trackData.name} (${trackData.chapters.length} chapters)`);
 
       for (let chapIdx = 0; chapIdx < trackData.chapters.length; chapIdx++) {
         const chapData = trackData.chapters[chapIdx];
-        const chapterNumber = chapIdx + 1;
         const chapSlug = mkSlug(chapData.title);
-        await Chapter.findOneAndUpdate(
-          { track: track._id, chapterNumber },
-          {
-            track: track._id,
-            chapterNumber,
-            title: chapData.title,
-            slug: chapSlug,
-            content: chapData.content,
-            codeSnippets: chapData.codeSnippets || [],
-            isFreePreview: !!chapData.isFreePreview,
-            estimatedMinutes: chapData.estimatedMinutes || 10,
-            order: chapIdx,
-            externalLinks: chapData.externalLinks || [],
-          },
-          { upsert: true, new: true }
-        );
+        
+        await Chapter.create({
+          subject: subject._id,
+          chapterNumber,
+          title: chapData.title,
+          slug: chapSlug,
+          content: chapData.content,
+          codeSnippets: chapData.codeSnippets || [],
+          isFreePreview: !!chapData.isFreePreview,
+          estimatedMinutes: chapData.estimatedMinutes || 10,
+          order: chapterNumber - 1,
+          externalLinks: chapData.externalLinks || [],
+        });
+        
+        chapterNumber++;
       }
-      console.log(`        ${trackData.chapters.length} chapters`);
     }
   }
+  console.log(`  Successfully seeded ${chapterNumber - 1} chapters for Subject: ${subject.name}`);
 };
 
 const seedSampleBlog = async () => {

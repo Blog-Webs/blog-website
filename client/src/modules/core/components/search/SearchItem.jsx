@@ -73,7 +73,7 @@ export const SearchItem = ({ item, type, highlight, isActive, onClick }) => {
       case 'topic':
         return item.subject ? `in ${item.subject.name}` : '';
       case 'chapter':
-        return item.track ? `in ${item.track.name}` : '';
+        return item.subject ? `in ${item.subject.name}` : (item.track ? `in ${item.track.name}` : '');
       case 'blog':
         return item.category ? `Category: ${item.category}` : '';
       default:

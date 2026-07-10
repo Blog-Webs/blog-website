@@ -1,4 +1,4 @@
-const { Progress, Chapter, Track, Topic } = require('../../models');
+const { Progress, Chapter } = require('../../models');
 
 // POST /api/progress/:chapterId  -- toggle studied state
 const toggleStudied = async (req, res) => {
@@ -21,8 +21,7 @@ const toggleStudied = async (req, res) => {
 const getProgressSummary = async (req, res) => {
   const progress = await Progress.find({ user: req.user._id }).populate({
     path: 'chapter',
-    select: 'track',
-    populate: { path: 'track', select: 'topic', populate: { path: 'topic', select: 'subject name' } },
+    select: 'subject',
   });
 
   const totalChapters = await Chapter.countDocuments();
@@ -30,7 +29,7 @@ const getProgressSummary = async (req, res) => {
 
   const bySubject = {};
   progress.forEach((p) => {
-    const subjectId = p.chapter?.track?.topic?.subject?.toString();
+    const subjectId = p.chapter?.subject?.toString();
     if (!subjectId) return;
     bySubject[subjectId] = (bySubject[subjectId] || 0) + 1;
   });

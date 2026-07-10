@@ -58,11 +58,10 @@ export const SearchModal = ({ isOpen, onClose }) => {
     
     let path = '';
     if (type === 'topic') {
-      path = `/learn/${item.subject?.slug ?? ''}/${item.slug}`;
+      path = `/learn/${item.slug}`;
     } else if (type === 'chapter') {
-      const subjectSlug = item.track?.topic?.subject?.slug;
-      const topicSlug = item.track?.topic?.slug;
-      path = `/learn/${subjectSlug ?? ''}/${topicSlug ?? ''}`;
+      const subjectSlug = item.subject?.slug || item.track?.topic?.subject?.slug;
+      path = `/learn/${subjectSlug ?? ''}`;
     } else if (type === 'blog') {
       path = `/blog/${item.slug}`;
     }
