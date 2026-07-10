@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
 import SearchModal from '../components/search/SearchModal';
-import { Bell, FileText, BookOpen, Megaphone } from 'lucide-react';
+import GoogleSignInButton from '../components/ui/GoogleSignInButton';
+import { Bell, FileText, BookOpen, Megaphone, Sun, Moon, LayoutDashboard, LogOut } from 'lucide-react';
 import { notificationApi } from '../../workspace/api/userFeatures';
 
 const navLinkClass = ({ isActive }) =>
@@ -14,6 +15,7 @@ const navLinkClass = ({ isActive }) =>
 
 const Header = () => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const liveUsers = useLiveUserCount();
 
@@ -122,31 +124,39 @@ const Header = () => {
               {mobileOpen ? 'close' : 'menu'}
             </span>
           </button>
-          <Link to="/" className="flex items-center">
-            <h1 className="font-display text-xl font-bold tracking-tight text-white">HTTPTechNex</h1>
+
+          {/* Logo — < httpTechNex /> with blue brackets */}
+          <Link to="/" className="flex items-center gap-0.5">
+            <span className="font-display text-xl font-bold" style={{ color: '#3B82F6' }}>&lt;</span>
+            <span className="font-display text-xl font-bold text-white">&nbsp;httpTechNex&nbsp;</span>
+            <span className="font-display text-xl font-bold" style={{ color: '#3B82F6' }}>/&gt;</span>
           </Link>
         </div>
         
         {/* Center: Navigation */}
         <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           <NavLink to="/learn" className={navLinkClass}>Learn</NavLink>
-          <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
+          {/* "Blog" label — previously "Blog", now clearly labelled "Blogs" */}
+          <NavLink to="/blog" className={navLinkClass}>Blogs</NavLink>
           <NavLink to="/todos" className={navLinkClass}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
         </nav>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          {/* Live users */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             <span className="text-[11px] font-bold text-green-400">{liveUsers} Online</span>
           </div>
-          {/* Notification Button & Inline Dropdown */}
+
+          {/* Notification Bell */}
           <div className="relative flex items-center" ref={notifRef}>
             <button 
               onClick={() => setNotifOpen(!notifOpen)}
               className="text-gray-400 hover:text-white transition-colors relative flex items-center justify-center p-1 rounded-full hover:bg-white/5"
+              aria-label="Notifications"
             >
               <Bell size={18} />
               {notifications.some(n => !n.isRead) && (
@@ -210,17 +220,28 @@ const Header = () => {
               </div>
             )}
           </div>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            <span className="material-symbols-outlined text-[18px]">settings</span>
+
+          {/* Dark / Light mode toggle — replaces the settings ⚙️ icon */}
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="text-gray-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
+          {/* Auth — Google Sign In or user avatar */}
           {user ? (
             <div className="relative" ref={profileRef}>
               <button 
                 className="h-8 w-8 rounded-full bg-[#6366F1] flex items-center justify-center text-white text-[12px] font-bold tracking-wider hover:opacity-90 transition-opacity"
                 onClick={() => setProfileOpen(!profileOpen)}
               >
-                {getInitials(user.name)}
+                {user.avatar
+                  ? <img src={user.avatar} alt={user.name} referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" />
+                  : getInitials(user.name)
+                }
               </button>
               
               {profileOpen && (
@@ -238,22 +259,21 @@ const Header = () => {
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 text-white transition-colors"
                     >
-                      <span className="material-symbols-outlined text-sm">dashboard</span> Admin
+                      <LayoutDashboard size={15} /> Admin
                     </Link>
                   )}
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-white/5 transition-colors text-red-400"
                   >
-                    <span className="material-symbols-outlined text-sm">logout</span> Sign out
+                    <LogOut size={15} /> Sign out
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <button className="bg-[#abc4ff] text-[#0a0a0a] px-5 py-1.5 rounded-full font-bold text-[12px] uppercase tracking-wider hover:bg-[#b9cdff] transition-colors">
-              Sign In
-            </button>
+            /* Active Google Sign-In button — header */
+            <GoogleSignInButton />
           )}
         </div>
       </div>
@@ -262,15 +282,13 @@ const Header = () => {
       {mobileOpen && (
         <div className="md:hidden border-t border-white/5 px-4 py-3 flex flex-col gap-2 bg-[#0e0e10]">
           <NavLink to="/learn" className={navLinkClass} onClick={() => setMobileOpen(false)}>Learn</NavLink>
-          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blog</NavLink>
+          <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blogs</NavLink>
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
           {!user && (
             <div className="pt-2">
-              <button className="w-full bg-[#abc4ff] text-[#0a0a0a] px-5 py-2.5 rounded-lg font-bold text-[12px] uppercase tracking-wider">
-                Sign In
-              </button>
+              <GoogleSignInButton />
             </div>
           )}
         </div>

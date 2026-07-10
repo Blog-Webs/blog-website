@@ -88,7 +88,7 @@ const Home = () => {
   const [ctaErrorMessage, setCtaErrorMessage] = useState('');
 
   useEffect(() => {
-    blogApi.getBlogs({ limit: 3 })
+    blogApi.getBlogs({ limit: 4 })
       .then(({ data }) => {
         setFeaturedBlogs(data.blogs || []);
       })
@@ -978,6 +978,106 @@ const Home = () => {
                 Explore Path <span className="material-symbols-outlined">chevron_right</span>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Latest Blogs 2×2 grid ─────────────────────────────────────────── */}
+      <section className="py-20 relative z-10">
+        <div className="max-w-[1200px] mx-auto px-6">
+          {/* Section header */}
+          <div className="flex items-end justify-between mb-10 fade-up">
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-[#3B82F6] font-bold mb-2">From the Blog</p>
+              <h3 className="text-3xl md:text-4xl font-bold text-white">Latest <span style={{ color: '#3B82F6' }}>Blogs</span></h3>
+            </div>
+            <Link
+              to="/blog"
+              className="hidden sm:flex items-center gap-2 text-[12px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors border border-white/10 px-4 py-2 rounded-full hover:border-white/30"
+            >
+              View all Blogs
+              <span className="text-[#3B82F6]">→</span>
+            </Link>
+          </div>
+
+          {/* 2×2 grid */}
+          {blogsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-[#121212] border border-[#222] rounded-2xl p-6 animate-pulse">
+                  <div className="h-4 bg-white/5 rounded mb-4 w-1/3" />
+                  <div className="h-6 bg-white/5 rounded mb-3" />
+                  <div className="h-4 bg-white/5 rounded w-3/4" />
+                </div>
+              ))}
+            </div>
+          ) : featuredBlogs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {featuredBlogs.map((blog, idx) => (
+                <Link
+                  key={blog._id || idx}
+                  to={`/blog/${blog.slug}`}
+                  className="group bg-[#121212] border border-[#222] hover:border-[#3B82F6]/50 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#3B82F6]/10 fade-up flex flex-col"
+                  style={{ transitionDelay: `${idx * 80}ms` }}
+                >
+                  {/* Cover image */}
+                  {blog.coverImage ? (
+                    <div className="w-full h-44 overflow-hidden">
+                      <img
+                        src={blog.coverImage}
+                        alt={blog.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-44 bg-gradient-to-br from-[#3B82F6]/10 to-[#6366F1]/10 flex items-center justify-center">
+                      <span className="text-4xl opacity-30">✍️</span>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="p-6 flex flex-col flex-grow">
+                    {/* Tags / category */}
+                    {(blog.tags?.length > 0 || blog.category) && (
+                      <p className="text-[10px] uppercase tracking-widest text-[#3B82F6] font-bold mb-2">
+                        {blog.tags?.[0] || blog.category}
+                      </p>
+                    )}
+
+                    <h4 className="text-[15px] font-bold text-white leading-snug mb-2 group-hover:text-[#3B82F6] transition-colors line-clamp-2">
+                      {blog.title}
+                    </h4>
+
+                    {blog.subtitle && (
+                      <p className="text-[13px] text-gray-500 leading-relaxed line-clamp-2 mb-4 flex-grow">
+                        {blog.subtitle}
+                      </p>
+                    )}
+
+                    {/* Meta footer */}
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                      <span className="text-[11px] text-gray-600">
+                        {blog.author?.name || 'httpTechNex'}
+                      </span>
+                      <span className="text-[11px] text-gray-600">
+                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-gray-600 text-sm">
+              No blog posts yet. Check back soon!
+            </div>
+          )}
+
+          {/* Mobile view-all link */}
+          <div className="mt-8 text-center sm:hidden">
+            <Link to="/blog" className="text-[12px] font-bold text-[#3B82F6] uppercase tracking-widest">
+              View all Blogs →
+            </Link>
           </div>
         </div>
       </section>
