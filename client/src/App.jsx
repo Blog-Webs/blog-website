@@ -16,6 +16,8 @@ const BlogDetail = lazy(() => import('./modules/blog/pages/BlogDetail'));
 const SeriesDetail = lazy(() => import('./modules/blog/pages/SeriesDetail'));
 const TodoPage = lazy(() => import('./modules/workspace/pages/TodoPage'));
 const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
+const PrivacyPolicy = lazy(() => import('./modules/core/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./modules/core/pages/TermsOfService'));
 
 // Forum
 const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
@@ -56,6 +58,8 @@ function App() {
           <Route path="/forum/create" element={<CreateTopicPage />} />
           <Route path="/forum/:categorySlug" element={<ForumHome />} />
           <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
         </Route>
 
         {/* Topic reading — no header/footer (immersive reading layout) */}

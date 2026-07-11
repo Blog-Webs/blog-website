@@ -111,13 +111,13 @@ const Footer = () => {
               </h4>
               <ul className="space-y-3">
                 <li>
-                  <Link to="/" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
+                  <Link to="/privacy-policy" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
                     <span className="w-1 h-1 rounded-full bg-gray-700 group-hover:bg-[#5EEAD4] transition-colors" />
                     Privacy
                   </Link>
                 </li>
                 <li>
-                  <Link to="/" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
+                  <Link to="/terms-of-service" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
                     <span className="w-1 h-1 rounded-full bg-gray-700 group-hover:bg-[#5EEAD4] transition-colors" />
                     Terms
                   </Link>
