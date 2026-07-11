@@ -56,97 +56,6 @@ const LearnHome = () => {
       });
   }, []);
 
-  const tracks = [
-    {
-      id: 'java',
-      title: 'Java Ecosystem',
-      description: 'Master the foundation of enterprise computing. From JVM internals and Concurrency to the...',
-      icon: 'local_cafe',
-      iconColor: 'text-[#E07A5F]',
-      iconBg: 'bg-[#E07A5F]/10',
-      courses: '45 Courses',
-      articles: '120 Articles',
-      link: '/learn/java'
-    },
-    {
-      id: 'spring',
-      title: 'Spring Boot',
-      description: 'Build production-ready microservices with Spring Framework. Security, Data, Cloud,...',
-      icon: 'bolt',
-      iconColor: 'text-[#4ADE80]',
-      iconBg: 'bg-[#4ADE80]/10',
-      courses: '38 Courses',
-      articles: '85 Articles',
-      link: '/learn/spring-boot'
-    },
-    {
-      id: 'ai',
-      title: 'AI & Machine Learning',
-      description: 'Explore the frontier of LLMs, Neural Networks, and Predictive Analytics. Dive into Python,...',
-      icon: 'psychology',
-      iconColor: 'text-[#D946EF]',
-      iconBg: 'bg-[#D946EF]/10',
-      courses: '25 Courses',
-      articles: '80 Articles',
-      link: '/learn/ai'
-    },
-    {
-      id: 'system-design',
-      title: 'System Design',
-      description: 'Learn to architect scalable, resilient distributed systems. High availability, database sharding, an...',
-      icon: 'account_tree',
-      iconColor: 'text-[#60A5FA]',
-      iconBg: 'bg-[#60A5FA]/10',
-      courses: '20 Courses',
-      articles: '40 Articles',
-      link: '/learn/system-design'
-    },
-    {
-      id: 'dsa',
-      title: 'DSA Mastery',
-      description: 'Ace your technical interviews. Comprehensive coverage of algorithms, advanced data...',
-      icon: 'code_blocks',
-      iconColor: 'text-[#F43F5E]',
-      iconBg: 'bg-[#F43F5E]/10',
-      courses: '30 Courses',
-      articles: '150 Articles',
-      link: '/learn/dsa'
-    },
-    {
-      id: 'react',
-      title: 'Modern React',
-      description: 'Build dynamic user interfaces with React, Next.js, and TypeScript. State management, hooks, and...',
-      icon: 'javascript',
-      iconColor: 'text-[#38BDF8]',
-      iconBg: 'bg-[#38BDF8]/10',
-      courses: '35 Courses',
-      articles: '90 Articles',
-      link: '/learn/react'
-    },
-    {
-      id: 'cloud',
-      title: 'Cloud Infrastructure',
-      description: 'Expertise in AWS, GCP, and Azure. Serverless computing, VPCs, and global content delivery networks.',
-      icon: 'cloud',
-      iconColor: 'text-[#38BDF8]',
-      iconBg: 'bg-[#38BDF8]/10',
-      courses: '28 Courses',
-      articles: '75 Articles',
-      link: '/learn/cloud'
-    },
-    {
-      id: 'devops',
-      title: 'DevOps & SRE',
-      description: 'Automate everything. CI/CD pipelines, Kubernetes orchestration, Docker, and...',
-      icon: 'settings',
-      iconColor: 'text-[#FBBF24]',
-      iconBg: 'bg-[#FBBF24]/10',
-      courses: '22 Courses',
-      articles: '55 Articles',
-      link: '/learn/devops'
-    }
-  ];
-
   return (
     <div className="w-full bg-[#0E1015] min-h-screen">
       <div className="pt-20 pb-32 px-6 max-w-[1280px] mx-auto w-full">
@@ -170,45 +79,63 @@ const LearnHome = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-24 w-full">
-        {(subjects.length > 0 ? subjects : tracks).map((track) => {
-          const isDbSubject = !track.id;
-          const linkPath = isDbSubject ? `/learn/${track.slug}` : track.link;
-          const title = isDbSubject ? track.name : track.title;
-          const desc = track.description;
-          const accentColor = track.color || '#3B82F6';
-          const IconComponent = ICONS[track.icon] || BookOpen;
+        {loading ? (
+          // Display loading skeletons while database is loading
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse bg-[#161B22] border border-[#2D3342] rounded-2xl p-6 h-[220px] flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 bg-white/5 rounded-xl mb-6" />
+                <div className="h-4 bg-white/5 rounded w-2/3 mb-3" />
+                <div className="h-3 bg-white/5 rounded w-full mb-2" />
+                <div className="h-3 bg-white/5 rounded w-4/5" />
+              </div>
+              <div className="h-3 bg-white/5 rounded w-full pt-5 border-t border-[#2D3342]" />
+            </div>
+          ))
+        ) : subjects.length > 0 ? (
+          subjects.map((subject) => {
+            const linkPath = `/learn/${subject.slug}`;
+            const title = subject.name;
+            const desc = subject.description;
+            const accentColor = subject.color || '#3B82F6';
+            const IconComponent = ICONS[subject.icon] || BookOpen;
 
-          return (
-            <Link 
-              key={track._id || track.id} 
-              to={linkPath}
-              className="flex flex-col bg-[#161B22] border border-[#2D3342] rounded-2xl p-6 hover:-translate-y-1 transition-all duration-300 group text-left"
-              style={{ borderColor: '#2D3342' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = accentColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2D3342'; }}
-            >
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                style={{ backgroundColor: `${accentColor}1A` }}
+            return (
+              <Link 
+                key={subject._id} 
+                to={linkPath}
+                className="flex flex-col bg-[#161B22] border border-[#2D3342] rounded-2xl p-6 hover:-translate-y-1 transition-all duration-300 group text-left"
+                style={{ borderColor: '#2D3342' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = accentColor; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2D3342'; }}
               >
-                <IconComponent size={24} style={{ color: accentColor }} />
-              </div>
-              
-              <h3 className="text-lg font-semibold text-white mb-3">
-                {title}
-              </h3>
-              
-              <p className="text-[#8B949E] text-[13px] leading-[1.6] mb-8 flex-grow">
-                {desc}
-              </p>
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+                  style={{ backgroundColor: `${accentColor}1A` }}
+                >
+                  <IconComponent size={24} style={{ color: accentColor }} />
+                </div>
+                
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  {title}
+                </h3>
+                
+                <p className="text-[#8B949E] text-[13px] leading-[1.6] mb-8 flex-grow">
+                  {desc}
+                </p>
 
-              <div className="flex items-center justify-between mt-auto pt-5 text-[11px] text-[#8B949E] border-t border-[#2D3342]">
-                <span>{isDbSubject ? 'Full Roadmap' : track.courses}</span>
-                <span>{isDbSubject ? 'Interactive Chapters' : track.articles}</span>
-              </div>
-            </Link>
-          );
-        })}
+                <div className="flex items-center justify-between mt-auto pt-5 text-[11px] text-[#8B949E] border-t border-[#2D3342]">
+                  <span>Full Roadmap</span>
+                  <span>Interactive Chapters</span>
+                </div>
+              </Link>
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-12 text-[#8B949E]">
+            No subjects found. Please seed the database.
+          </div>
+        )}
       </div>
 
       {/* Bottom CTA */}
