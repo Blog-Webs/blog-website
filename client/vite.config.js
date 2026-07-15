@@ -22,4 +22,39 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        /**
+         * Split heavy vendor code so public-site visitors never download
+         * the admin/editor bundle (BlockNote + Mantine) on their critical path.
+         *
+         *  react-vendor  → React + React-DOM + React-Router (small, stable, cached)
+         *  editor        → BlockNote + Mantine (large, admin-only, lazy-loaded)
+         *  ui-vendor     → Lucide icons + misc UI libs
+         */
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (
+              id.includes('react/') ||
+              id.includes('react-dom') ||
+              id.includes('react-router')
+            ) {
+              return 'react-vendor';
+            }
+            if (
+              id.includes('@blocknote') ||
+              id.includes('@mantine')
+            ) {
+              return 'editor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+          }
+        },
+      },
+    },
+  },
 })
+

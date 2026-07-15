@@ -5,18 +5,35 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HttpTechNex - Learn DSA, Java & Aptitude</title>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet" />
+  <title>HttpTechNex - Learn DSA, Java &amp; Aptitude</title>
 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7256262591330365"
-    crossorigin="anonymous"></script>
+  <!-- 1. Preconnect to font origins so DNS+TCP+TLS happen in parallel with HTML parse -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
+  <!-- 2. Material Symbols with display=swap → text stays visible while font loads (prevents FOIT) -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- 3. AdSense is deferred via JS below — NOT here — so it can't block LCP -->
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+
+  <!-- 4. Load AdSense only after the page 'load' event fires (after LCP) -->
+  <script>
+    window.addEventListener('load', function () {
+      var s = document.createElement('script');
+      s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7256262591330365';
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      document.body.appendChild(s);
+    });
+  </script>
 </body>
 
 </html>

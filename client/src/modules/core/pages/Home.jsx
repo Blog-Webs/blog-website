@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Send, BookOpen, Star, Loader2 } from 'lucide-react';
 import GlobalSearch from '../components/search/GlobalSearch';
 import { blogApi, newsletterApi } from '../../blog/api/blog';
+import { optimizeImage } from '../../../utils/image';
+
 
 const docsData = {
   'user-guide': {
@@ -878,8 +880,9 @@ const Home = () => {
                   {blog.coverImage ? (
                     <div className="w-full h-44 overflow-hidden">
                       <img
-                        src={blog.coverImage}
+                        src={optimizeImage(blog.coverImage, 800)}
                         alt={blog.title}
+                        loading={idx === 0 ? 'eager' : 'lazy'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
@@ -888,6 +891,7 @@ const Home = () => {
                       <span className="text-4xl opacity-30">✍️</span>
                     </div>
                   )}
+
 
                   {/* Content */}
                   <div className="p-6 flex flex-col flex-grow">

@@ -297,10 +297,11 @@ const BlogDetail = () => {
             {/* Cover Image */}
             {blog.coverImage && (
               <div className="rounded-2xl overflow-hidden mb-12 border border-outline-variant/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] group relative h-[340px] md:h-[480px]">
-                <img 
-                  src={optimizeImage(blog.coverImage)} 
-                  alt={blog.title} 
-                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out brightness-90 group-hover:brightness-100" 
+                <img
+                  src={optimizeImage(blog.coverImage, 1200)}
+                  alt={blog.title}
+                  fetchpriority="high"
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out brightness-90 group-hover:brightness-100"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0E1015] via-transparent to-transparent pointer-events-none transition-opacity duration-500 opacity-60"></div>
                 
@@ -309,6 +310,7 @@ const BlogDetail = () => {
                 <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#abc4ff] rounded-full blur-[100px] opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity duration-1000"></div>
               </div>
             )}
+
 
             {/* Content Body */}
             <div 

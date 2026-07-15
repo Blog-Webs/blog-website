@@ -7,9 +7,10 @@ const BlogCard = ({ blog }) => {
       <Link to={`/blog/${blog.slug}`} className="flex flex-col h-full">
         <div className="relative h-48 overflow-hidden">
           {blog.coverImage ? (
-            <img 
-              src={optimizeImage(blog.coverImage)} 
+          <img 
+              src={optimizeImage(blog.coverImage, 600)} 
               alt={blog.title} 
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
             />
           ) : (
@@ -30,9 +31,10 @@ const BlogCard = ({ blog }) => {
           
           <div className="mt-auto flex items-center gap-3">
             <img 
-              src={blog.author?.avatar || '/default-avatar.png'} 
+              src={optimizeImage(blog.author?.avatar || '/default-avatar.png', 80)} 
               alt={blog.author?.name} 
               referrerPolicy="no-referrer"
+              loading="lazy"
               className="w-8 h-8 rounded-full border border-[var(--color-outline-variant)] object-cover" 
             />
             <div className="text-[12px]">
