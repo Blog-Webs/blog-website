@@ -70,13 +70,17 @@ exports.getFile = async (req, res) => {
   }
 };
 
-// PUT /api/coding/files/:id (Auto-save)
+// PUT /api/coding/files/:id (Auto-save or Rename)
 exports.updateFile = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, name } = req.body;
+    const updateData = { lastSavedAt: Date.now() };
+    if (content !== undefined) updateData.content = content;
+    if (name !== undefined) updateData.name = name;
+
     const file = await CodeFile.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
-      { content, lastSavedAt: Date.now() },
+      updateData,
       { new: true }
     );
     if (!file) return res.status(404).json({ message: 'File not found' });
@@ -100,8 +104,25 @@ exports.updateFile = async (req, res) => {
 // DELETE /api/coding/files/:id
 exports.deleteFile = async (req, res) => {
   try {
-    await CodeFile.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
-    await CodeVersion.deleteMany({ fileId: req.params.id });
+    const file = await CodeFile.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!file) return res.status(404).json({ message: 'File not found' });
+
+    if (file.type === 'folder') {
+      const folderPathPrefix = file.folderPath === '/' ? `/${file.name}` : `${file.folderPath}/${file.name}`;
+      // Find all files inside this folder (and subfolders)
+      const children = await CodeFile.find({ 
+        userId: req.user._id, 
+        projectId: file.projectId,
+        folderPath: new RegExp(`^${folderPathPrefix}(/|$)`)
+      });
+      
+      const childIds = children.map(c => c._id);
+      await CodeFile.deleteMany({ _id: { $in: childIds } });
+      await CodeVersion.deleteMany({ fileId: { $in: childIds } });
+    }
+
+    await CodeFile.findByIdAndDelete(file._id);
+    await CodeVersion.deleteMany({ fileId: file._id });
     res.json({ message: 'File deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });

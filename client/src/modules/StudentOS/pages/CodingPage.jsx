@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Play, FolderOpen, FileCode, Plus, Loader2, RefreshCw, Folder, ChevronRight, ChevronDown, FolderPlus } from 'lucide-react';
+import { Play, FolderOpen, FileCode, Plus, Loader2, RefreshCw, Folder, ChevronRight, ChevronDown, FolderPlus, Edit2, Trash2 } from 'lucide-react';
 import api from '../../core/api/client';
 
-const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, depth = 0 }) => {
+const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, renameItem, deleteItem, depth = 0 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const isFolder = node.type === 'folder';
 
@@ -21,8 +21,10 @@ const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, depth = 
             <span className="truncate">{node.name}</span>
           </div>
           <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'file'); }} className="p-0.5 hover:bg-[#3a3d41] rounded"><Plus size={12}/></button>
-            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'folder'); }} className="p-0.5 hover:bg-[#3a3d41] rounded"><FolderPlus size={12}/></button>
+            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'file'); }} className="p-0.5 hover:bg-[#3a3d41] rounded" title="New File"><Plus size={12}/></button>
+            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'folder'); }} className="p-0.5 hover:bg-[#3a3d41] rounded" title="New Folder"><FolderPlus size={12}/></button>
+            <button onClick={(e) => { e.stopPropagation(); renameItem(node); }} className="p-0.5 hover:bg-[#3a3d41] rounded" title="Rename"><Edit2 size={12}/></button>
+            <button onClick={(e) => { e.stopPropagation(); deleteItem(node); }} className="p-0.5 hover:bg-red-900/30 text-red-400 rounded" title="Delete"><Trash2 size={12}/></button>
           </div>
         </div>
         {isOpen && node.children?.map(child => (
@@ -32,6 +34,8 @@ const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, depth = 
             activeFile={activeFile} 
             selectFile={selectFile} 
             createItemInside={createItemInside}
+            renameItem={renameItem}
+            deleteItem={deleteItem}
             depth={depth + 1} 
           />
         ))}
@@ -43,11 +47,17 @@ const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, depth = 
   return (
     <div 
       onClick={() => selectFile(node)}
-      className={`flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-[#2a2d2e] ${activeFile?._id === node._id ? 'bg-[#37373d] text-white' : ''}`}
+      className={`flex items-center justify-between py-1.5 text-sm cursor-pointer hover:bg-[#2a2d2e] group ${activeFile?._id === node._id ? 'bg-[#37373d] text-white' : ''}`}
       style={{ paddingLeft: `${depth * 12 + 24}px`, paddingRight: '16px' }}
     >
-      <FileCode size={14} className={node.language === 'python' ? 'text-yellow-400' : 'text-blue-400'} />
-      <span className="truncate">{node.name}</span>
+      <div className="flex items-center gap-2 overflow-hidden">
+        <FileCode size={14} className={node.language === 'python' ? 'text-yellow-400' : 'text-blue-400 shrink-0'} />
+        <span className="truncate">{node.name}</span>
+      </div>
+      <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+        <button onClick={(e) => { e.stopPropagation(); renameItem(node); }} className="p-0.5 hover:bg-[#3a3d41] rounded" title="Rename"><Edit2 size={12}/></button>
+        <button onClick={(e) => { e.stopPropagation(); deleteItem(node); }} className="p-0.5 hover:bg-red-900/30 text-red-400 rounded" title="Delete"><Trash2 size={12}/></button>
+      </div>
     </div>
   );
 };
@@ -151,6 +161,43 @@ const CodingPage = () => {
       }
     } catch (err) {
       console.error(`Failed to create ${type}`, err);
+    }
+  };
+
+  const renameItem = async (node) => {
+    const newName = prompt(`Enter new name for ${node.name}:`, node.name);
+    if (!newName || newName === node.name) return;
+
+    try {
+      const { data } = await api.put(`/coding/files/${node._id}`, { name: newName });
+      setFiles(files.map(f => f._id === node._id ? { ...f, name: newName } : f));
+      if (activeFile?._id === node._id) {
+        setActiveFile({ ...activeFile, name: newName });
+      }
+    } catch (err) {
+      console.error('Failed to rename', err);
+    }
+  };
+
+  const deleteItem = async (node) => {
+    if (!window.confirm(`Are you sure you want to delete ${node.name}?`)) return;
+
+    try {
+      await api.delete(`/coding/files/${node._id}`);
+      
+      // If it's a folder, we might need to fetch files again to remove deleted children
+      if (node.type === 'folder') {
+        fetchProjects(); // or just refetch files for the project
+      } else {
+        setFiles(files.filter(f => f._id !== node._id));
+      }
+      
+      if (activeFile?._id === node._id) {
+        setActiveFile(null);
+        setEditorContent('// Create or select a file to start coding\n');
+      }
+    } catch (err) {
+      console.error('Failed to delete', err);
     }
   };
 
@@ -282,6 +329,8 @@ const CodingPage = () => {
                 activeFile={activeFile} 
                 selectFile={selectFile}
                 createItemInside={createItem}
+                renameItem={renameItem}
+                deleteItem={deleteItem}
               />
             ))}
             {tree.length === 0 && (
