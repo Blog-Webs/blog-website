@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const codingController = require('./codingController');
+const { requireAuth } = require('../../middleware/auth');
+
+router.use(requireAuth);
 
 router.get('/projects', codingController.getProjects);
 router.post('/projects', codingController.createProject);

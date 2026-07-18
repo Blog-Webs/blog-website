@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Play, Save, FolderOpen, FileCode, Plus, Loader2, RefreshCw } from 'lucide-react';
-import axios from 'axios';
-
-// Ensure you replace with your actual API endpoint or use a relative path if proxied
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-axios.defaults.withCredentials = true;
+import api from '../../core/api/client';
 
 const CodingPage = () => {
   const [projects, setProjects] = useState([]);
@@ -27,13 +23,13 @@ const CodingPage = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/coding/projects`);
+      const { data } = await api.get('/coding/projects');
       setProjects(data);
       if (data.length > 0) {
         selectProject(data[0]);
       } else {
         // Create default project
-        const res = await axios.post(`${API_URL}/coding/projects`, { name: 'My Workspace' });
+        const res = await api.post('/coding/projects', { name: 'My Workspace' });
         setProjects([res.data]);
         selectProject(res.data);
       }
@@ -45,7 +41,7 @@ const CodingPage = () => {
   const selectProject = async (project) => {
     setActiveProject(project);
     try {
-      const { data } = await axios.get(`${API_URL}/coding/projects/${project._id}/files`);
+      const { data } = await api.get(`/coding/projects/${project._id}/files`);
       setFiles(data);
       if (data.length > 0) {
         selectFile(data[0]);
@@ -81,7 +77,7 @@ const CodingPage = () => {
       : '// Start coding';
 
     try {
-      const { data } = await axios.post(`${API_URL}/coding/files`, {
+      const { data } = await api.post('/coding/files', {
         projectId: activeProject._id,
         name,
         language,
@@ -111,7 +107,7 @@ const CodingPage = () => {
     if (!activeFile) return;
     setIsSaving(true);
     try {
-      await axios.put(`${API_URL}/coding/files/${activeFile._id}`, {
+      await api.put(`/coding/files/${activeFile._id}`, {
         content: contentToSave
       });
     } catch (err) {
@@ -126,7 +122,7 @@ const CodingPage = () => {
     setIsRunning(true);
     setOutput('Running...');
     try {
-      const { data } = await axios.post(`${API_URL}/coding/execute`, {
+      const { data } = await api.post('/coding/execute', {
         language: activeFile.language,
         content: editorContent,
         stdin: ''
