@@ -134,43 +134,45 @@ exports.executeCode = async (req, res) => {
   try {
     const { language, fileName, content, stdin } = req.body;
     
-    // Map languages to piston versions
-    // To be robust, one should fetch runtimes from https://emkc.org/api/v2/piston/runtimes and cache them.
+    // Judge0 CE language IDs
     const languageMap = {
-      'python': { language: 'python', version: '3.10.0' },
-      'java': { language: 'java', version: '15.0.2' },
-      'javascript': { language: 'javascript', version: '18.15.0' },
-      'cpp': { language: 'cpp', version: '10.2.0' },
+      'python': { id: 71 },
+      'java': { id: 62 },
+      'javascript': { id: 63 },
+      'cpp': { id: 54 },
     };
 
     const runConfig = languageMap[language] || languageMap['python'];
 
-    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+    let finalContent = content;
+    if (language === 'java') {
+      // Judge0 saves as Main.java, so any public class must be named Main
+      finalContent = finalContent.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+    }
+
+    const response = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        language: runConfig.language,
-        version: runConfig.version,
-        files: [
-          {
-            name: fileName || `main.${language === 'python' ? 'py' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'js'}`,
-            content: content,
-          }
-        ],
+        language_id: runConfig.id,
+        source_code: finalContent,
         stdin: stdin || '',
       })
     });
 
     const data = await response.json();
     
-    // data.run contains stdout, stderr, code, signal, output
+    // Map Judge0 output back to what the frontend expects
     res.json({
-      run: data.run,
-      compile: data.compile,
-      language: data.language,
-      version: data.version
+      run: {
+        output: data.stdout || '',
+        stderr: data.stderr || ''
+      },
+      compile: {
+        stderr: data.compile_output || ''
+      }
     });
   } catch (err) {
     console.error('Execution error:', err);
