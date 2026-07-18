@@ -42,12 +42,14 @@ exports.getFiles = async (req, res) => {
 // POST /api/coding/files
 exports.createFile = async (req, res) => {
   try {
-    const { projectId, name, language, content } = req.body;
+    const { projectId, name, language, content, type, folderPath } = req.body;
     const file = new CodeFile({
       projectId,
       userId: req.user._id,
       name,
-      language: language || 'java',
+      type: type || 'file',
+      folderPath: folderPath || '/',
+      language: language || (type === 'folder' ? 'none' : 'java'),
       content: content || '',
     });
     await file.save();
@@ -109,7 +111,7 @@ exports.deleteFile = async (req, res) => {
 // POST /api/coding/execute
 exports.executeCode = async (req, res) => {
   try {
-    const { language, content, stdin } = req.body;
+    const { language, fileName, content, stdin } = req.body;
     
     // Map languages to piston versions
     // To be robust, one should fetch runtimes from https://emkc.org/api/v2/piston/runtimes and cache them.
@@ -132,7 +134,7 @@ exports.executeCode = async (req, res) => {
         version: runConfig.version,
         files: [
           {
-            name: `main.${language === 'python' ? 'py' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'js'}`,
+            name: fileName || `main.${language === 'python' ? 'py' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'js'}`,
             content: content,
           }
         ],

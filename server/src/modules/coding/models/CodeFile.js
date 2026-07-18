@@ -17,6 +17,11 @@ const codeFileSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    type: {
+      type: String,
+      enum: ['file', 'folder'],
+      default: 'file',
+    },
     language: {
       type: String,
       required: true,

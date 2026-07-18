@@ -1,7 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Play, Save, FolderOpen, FileCode, Plus, Loader2, RefreshCw } from 'lucide-react';
+import { Play, FolderOpen, FileCode, Plus, Loader2, RefreshCw, Folder, ChevronRight, ChevronDown, FolderPlus } from 'lucide-react';
 import api from '../../core/api/client';
+
+const FileTreeNode = ({ node, activeFile, selectFile, createItemInside, depth = 0 }) => {
+  const [isOpen, setIsOpen] = useState(true);
+  const isFolder = node.type === 'folder';
+
+  if (isFolder) {
+    return (
+      <div className="w-full">
+        <div 
+          className="flex items-center justify-between px-2 py-1.5 text-sm cursor-pointer hover:bg-[#2a2d2e] group"
+          style={{ paddingLeft: `${depth * 12 + 16}px`, paddingRight: '16px' }}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            {isOpen ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
+            <Folder size={14} className="text-blue-400 shrink-0" />
+            <span className="truncate">{node.name}</span>
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'file'); }} className="p-0.5 hover:bg-[#3a3d41] rounded"><Plus size={12}/></button>
+            <button onClick={(e) => { e.stopPropagation(); createItemInside(node, 'folder'); }} className="p-0.5 hover:bg-[#3a3d41] rounded"><FolderPlus size={12}/></button>
+          </div>
+        </div>
+        {isOpen && node.children?.map(child => (
+          <FileTreeNode 
+            key={child._id} 
+            node={child} 
+            activeFile={activeFile} 
+            selectFile={selectFile} 
+            createItemInside={createItemInside}
+            depth={depth + 1} 
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // File
+  return (
+    <div 
+      onClick={() => selectFile(node)}
+      className={`flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-[#2a2d2e] ${activeFile?._id === node._id ? 'bg-[#37373d] text-white' : ''}`}
+      style={{ paddingLeft: `${depth * 12 + 24}px`, paddingRight: '16px' }}
+    >
+      <FileCode size={14} className={node.language === 'python' ? 'text-yellow-400' : 'text-blue-400'} />
+      <span className="truncate">{node.name}</span>
+    </div>
+  );
+};
 
 const CodingPage = () => {
   const [projects, setProjects] = useState([]);
@@ -16,7 +65,6 @@ const CodingPage = () => {
 
   const autoSaveTimerRef = useRef(null);
 
-  // Fetch projects on load
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -28,7 +76,6 @@ const CodingPage = () => {
       if (data.length > 0) {
         selectProject(data[0]);
       } else {
-        // Create default project
         const res = await api.post('/coding/projects', { name: 'My Workspace' });
         setProjects([res.data]);
         selectProject(res.data);
@@ -44,7 +91,8 @@ const CodingPage = () => {
       const { data } = await api.get(`/coding/projects/${project._id}/files`);
       setFiles(data);
       if (data.length > 0) {
-        selectFile(data[0]);
+        const firstFile = data.find(f => f.type !== 'folder');
+        if (firstFile) selectFile(firstFile);
       } else {
         setActiveFile(null);
         setEditorContent('// Create a new file to start coding\n');
@@ -60,37 +108,52 @@ const CodingPage = () => {
     setOutput('');
   };
 
-  const createNewFile = async () => {
+  const createItem = async (parentFolder, type) => {
     if (!activeProject) return;
-    const name = prompt('Enter file name (e.g., Main.java, script.py):');
+    const name = prompt(`Enter ${type} name:` + (type === 'file' ? ' (e.g., Main.java)' : ''));
     if (!name) return;
     
-    let language = 'java';
-    if (name.endsWith('.py')) language = 'python';
-    if (name.endsWith('.js')) language = 'javascript';
-    if (name.endsWith('.cpp')) language = 'cpp';
+    let language = 'none';
+    let defaultContent = '';
 
-    const defaultContent = language === 'java' 
-      ? 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello World");\n  }\n}'
-      : language === 'python'
-      ? 'print("Hello World")'
-      : '// Start coding';
+    if (type === 'file') {
+      language = 'java';
+      if (name.endsWith('.py')) language = 'python';
+      if (name.endsWith('.js')) language = 'javascript';
+      if (name.endsWith('.cpp')) language = 'cpp';
+
+      defaultContent = language === 'java' 
+        ? 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello World");\n  }\n}'
+        : language === 'python'
+        ? 'print("Hello World")'
+        : '// Start coding';
+    }
+
+    let folderPath = '/';
+    if (parentFolder) {
+      folderPath = parentFolder.folderPath === '/' 
+        ? `/${parentFolder.name}` 
+        : `${parentFolder.folderPath}/${parentFolder.name}`;
+    }
 
     try {
       const { data } = await api.post('/coding/files', {
         projectId: activeProject._id,
         name,
+        type,
         language,
-        content: defaultContent
+        content: defaultContent,
+        folderPath
       });
       setFiles([...files, data]);
-      selectFile(data);
+      if (type === 'file') {
+        selectFile(data);
+      }
     } catch (err) {
-      console.error('Failed to create file', err);
+      console.error(`Failed to create ${type}`, err);
     }
   };
 
-  // Debounced Auto Save
   const handleEditorChange = (value) => {
     setEditorContent(value);
     
@@ -100,7 +163,7 @@ const CodingPage = () => {
 
     autoSaveTimerRef.current = setTimeout(() => {
       saveFile(value);
-    }, 2500); // Save after 2.5s of inactivity
+    }, 2500);
   };
 
   const saveFile = async (contentToSave) => {
@@ -122,8 +185,10 @@ const CodingPage = () => {
     setIsRunning(true);
     setOutput('Running...');
     try {
+      // We pass activeFile.name as fileName so piston runs exactly this file, e.g. "tanish.java"
       const { data } = await api.post('/coding/execute', {
         language: activeFile.language,
+        fileName: activeFile.name,
         content: editorContent,
         stdin: ''
       });
@@ -147,9 +212,35 @@ const CodingPage = () => {
     }
   };
 
+  // Build Tree
+  const buildTree = () => {
+    const root = { children: [] };
+    const map = { '/': root };
+
+    files.filter(f => f.type === 'folder').forEach(folder => {
+      const path = folder.folderPath === '/' ? `/${folder.name}` : `${folder.folderPath}/${folder.name}`;
+      map[path] = { ...folder, children: [] };
+    });
+
+    files.forEach(f => {
+      let parentPath = f.folderPath || '/';
+      if (!map[parentPath]) parentPath = '/';
+      
+      if (f.type === 'folder') {
+        const path = f.folderPath === '/' ? `/${f.name}` : `${f.folderPath}/${f.name}`;
+        map[parentPath].children.push(map[path]);
+      } else {
+        map[parentPath].children.push(f);
+      }
+    });
+
+    return root.children;
+  };
+
+  const tree = buildTree();
+
   return (
     <div className="h-full flex flex-col bg-[#1e1e1e] text-[#d4d4d4] font-sans">
-      {/* Top Header */}
       <div className="h-14 border-b border-[#333] flex items-center justify-between px-4 bg-[#252526]">
         <div className="flex items-center gap-2 font-semibold">
           <FolderOpen size={18} className="text-blue-400" />
@@ -171,34 +262,35 @@ const CodingPage = () => {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
         <div className="w-64 border-r border-[#333] bg-[#252526] flex flex-col">
-          <div className="p-3 border-b border-[#333] flex items-center justify-between">
+          <div className="p-3 border-b border-[#333] flex items-center justify-between group">
             <span className="text-xs font-bold tracking-wider text-gray-400 uppercase">Explorer</span>
-            <button onClick={createNewFile} className="p-1 hover:bg-[#3a3d41] rounded" title="New File">
-              <Plus size={14} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => createItem(null, 'file')} className="p-1 hover:bg-[#3a3d41] rounded text-gray-400 hover:text-white" title="New File">
+                <Plus size={14} />
+              </button>
+              <button onClick={() => createItem(null, 'folder')} className="p-1 hover:bg-[#3a3d41] rounded text-gray-400 hover:text-white" title="New Folder">
+                <FolderPlus size={14} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
-            {files.map(f => (
-              <div 
-                key={f._id}
-                onClick={() => selectFile(f)}
-                className={`flex items-center gap-2 px-4 py-1.5 text-sm cursor-pointer hover:bg-[#2a2d2e] ${activeFile?._id === f._id ? 'bg-[#37373d] text-white' : ''}`}
-              >
-                <FileCode size={14} className={f.language === 'python' ? 'text-yellow-400' : 'text-blue-400'} />
-                {f.name}
-              </div>
+            {tree.map(node => (
+              <FileTreeNode 
+                key={node._id} 
+                node={node} 
+                activeFile={activeFile} 
+                selectFile={selectFile}
+                createItemInside={createItem}
+              />
             ))}
-            {files.length === 0 && (
+            {tree.length === 0 && (
               <div className="px-4 py-4 text-sm text-gray-500">No files found.</div>
             )}
           </div>
         </div>
 
-        {/* Main Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Editor */}
           <div className="flex-1 relative">
             {activeFile ? (
               <Editor
@@ -207,12 +299,7 @@ const CodingPage = () => {
                 theme="vs-dark"
                 value={editorContent}
                 onChange={handleEditorChange}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  wordWrap: 'on',
-                  automaticLayout: true,
-                }}
+                options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: 'on', automaticLayout: true }}
               />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
@@ -221,7 +308,6 @@ const CodingPage = () => {
             )}
           </div>
 
-          {/* Console */}
           <div className="h-48 border-t border-[#333] bg-[#1e1e1e] flex flex-col">
             <div className="h-8 border-b border-[#333] flex items-center px-4">
               <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Terminal Output</span>
