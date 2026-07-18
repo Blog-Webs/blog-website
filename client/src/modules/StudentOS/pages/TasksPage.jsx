@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
-import { CheckSquare, Plus, Trash2, Check, Calendar, ChevronDown, ListTodo } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Plus, Trash2, Check, Calendar, ChevronDown, ListTodo, CheckSquare } from 'lucide-react';
 import { studentOSApi } from '../api';
 
-const PRIORITY_COLOR = { high: '#F87171', medium: '#FFB454', low: '#5EEAD4' };
-
 const Skeleton = () => (
-  <div className="space-y-2">{[...Array(5)].map((_, i) => (
-    <div key={i} className="h-14 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />
+  <div className="space-y-4">{[...Array(5)].map((_, i) => (
+    <div key={i} className="h-16 rounded-2xl animate-pulse bg-[#161b22] border border-[#30363d]" />
   ))}</div>
 );
 
@@ -16,10 +14,10 @@ const TasksPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedList, setSelectedList] = useState('@default');
   const [listDropOpen, setListDropOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDue, setNewDue] = useState('');
   const [saving, setSaving] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     studentOSApi.getTaskLists()
@@ -34,6 +32,17 @@ const TasksPage = () => {
       .finally(() => setLoading(false));
   }, [selectedList]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setListDropOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
     setSaving(true);
@@ -45,7 +54,6 @@ const TasksPage = () => {
       setTasks((prev) => [data.task, ...prev]);
       setNewTitle('');
       setNewDue('');
-      setAdding(false);
     } finally {
       setSaving(false);
     }
@@ -66,34 +74,37 @@ const TasksPage = () => {
   const done = tasks.filter((t) => t.status === 'completed');
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div>
-        <p className="text-xs font-mono-display" style={{ color: 'var(--accent)' }}>// google.tasks</p>
-        <h1 className="text-2xl font-bold">Tasks</h1>
-        <p style={{ color: 'var(--text-muted)' }}>{pending.length} pending · {done.length} completed</p>
+    <div className="min-h-full p-10 max-w-4xl mx-auto space-y-8 bg-[#0d1117] text-white font-sans transition-all duration-500">
+      {/* Header */}
+      <div className="space-y-1">
+        <p className="text-sm font-mono text-gray-500">// google.tasks</p>
+        <h1 className="text-4xl font-bold tracking-tight text-white pb-1">Tasks</h1>
+        <p className="text-sm font-medium">
+          <span className="text-[#34d399]">{pending.length} pending</span>
+          <span className="text-gray-500 mx-2">·</span>
+          <span className="text-gray-500">{done.length} completed</span>
+        </p>
       </div>
 
       {/* List selector */}
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setListDropOpen(!listDropOpen)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm btn-press"
-          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}>
-          <ListTodo size={14} />
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#30363d] bg-[#161b22] text-sm font-semibold text-gray-200 hover:bg-[#21262d] transition-colors shadow-sm">
+          <ListTodo size={16} className="text-gray-400" />
           {selectedList === '@default' ? 'My Tasks' : listName}
-          <ChevronDown size={14} className={`transition-transform ${listDropOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className={`text-gray-500 transition-transform ${listDropOpen ? 'rotate-180' : ''}`} />
         </button>
         {listDropOpen && (
-          <div className="absolute top-full left-0 mt-1 w-60 rounded-xl border shadow-xl z-20 overflow-hidden"
-            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-[#30363d] bg-[#161b22] shadow-xl z-20 overflow-hidden py-1">
             <button
-              className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] transition-colors"
+              className="w-full text-left px-5 py-3 text-sm font-medium text-gray-300 hover:bg-[#21262d] hover:text-white transition-colors"
               onClick={() => { setSelectedList('@default'); setListDropOpen(false); }}>
               My Tasks (default)
             </button>
             {lists.filter((l) => l.id !== '@default').map((l) => (
               <button key={l.id}
-                className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] transition-colors"
+                className="w-full text-left px-5 py-3 text-sm font-medium text-gray-300 hover:bg-[#21262d] hover:text-white transition-colors"
                 onClick={() => { setSelectedList(l.id); setListDropOpen(false); }}>
                 {l.title}
               </button>
@@ -102,95 +113,92 @@ const TasksPage = () => {
         )}
       </div>
 
-      {/* Add task */}
-      {adding ? (
-        <div className="p-4 rounded-2xl border space-y-3" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--accent)' }}>
-          <input
-            autoFocus
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            placeholder="Task title..."
-            className="w-full bg-transparent outline-none text-sm"
-            style={{ color: 'var(--text)' }}
-          />
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 flex-1">
-              <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
-              <input type="datetime-local" value={newDue} onChange={(e) => setNewDue(e.target.value)}
-                className="bg-transparent text-xs outline-none" style={{ color: 'var(--text-muted)' }} />
-            </div>
-            <button onClick={handleCreate} disabled={saving || !newTitle.trim()}
-              className="px-4 py-1.5 rounded-lg text-xs font-medium btn-press"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}>
-              {saving ? '...' : 'Add'}
-            </button>
-            <button onClick={() => { setAdding(false); setNewTitle(''); setNewDue(''); }}
-              className="px-3 py-1.5 rounded-lg text-xs border btn-press"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-              Cancel
-            </button>
-          </div>
+      {/* Add task Input */}
+      <div className="relative group">
+        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+          {saving ? <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /> : <Plus size={20} className="text-gray-500 group-focus-within:text-blue-500 transition-colors" />}
         </div>
-      ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-2 px-4 py-3 rounded-2xl border w-full text-sm btn-press transition-colors hover:border-[var(--accent)]"
-          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-muted)' }}>
-          <Plus size={16} /> Add a task...
-        </button>
-      )}
+        <input
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+          placeholder="Add a task..."
+          className="w-full pl-14 pr-5 py-5 rounded-2xl border border-[#30363d] bg-[#161b22] text-base text-gray-200 outline-none transition-all duration-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-500 shadow-sm"
+          disabled={saving}
+        />
+        {newTitle.trim() && (
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-[#0d1117] border border-[#30363d] px-3 py-1.5 rounded-lg">
+              <Calendar size={14} className="text-gray-500" />
+              <input type="datetime-local" value={newDue} onChange={(e) => setNewDue(e.target.value)}
+                className="bg-transparent text-xs outline-none text-gray-400" />
+            </div>
+            <p className="text-xs font-bold text-gray-500 mr-2">Press Enter ↵</p>
+          </div>
+        )}
+      </div>
 
       {loading ? <Skeleton /> : (
-        <div className="space-y-6">
-          {/* Pending */}
-          <div className="space-y-2">
+        <div className="space-y-10 mt-4">
+          {/* Pending Tasks */}
+          <div className="space-y-3">
             {pending.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 p-3.5 rounded-xl group"
-                style={{ backgroundColor: 'var(--surface)' }}>
+              <div key={t.id} className="flex items-center gap-4 px-5 py-4 rounded-2xl border border-[#30363d] bg-[#161b22] group hover:border-gray-500 transition-colors shadow-sm">
                 <button
                   onClick={() => handleComplete(t.id)}
-                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all hover:border-[var(--accent)]"
-                  style={{ borderColor: 'var(--border)' }}>
+                  className="w-5 h-5 rounded flex items-center justify-center shrink-0 border border-gray-500 hover:border-blue-500 hover:bg-blue-500/10 transition-colors">
                 </button>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm">{t.title}</p>
+                  <p className="text-base font-medium text-gray-200">{t.title}</p>
                   {t.due && (
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                      <Calendar size={10} className="inline mr-1" />
-                      {new Date(t.due).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    <p className="text-xs mt-1.5 font-medium text-gray-500 flex items-center gap-1.5">
+                      <Calendar size={12} />
+                      {new Date(t.due).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDelete(t.id)}
-                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity btn-press"
-                  style={{ color: 'var(--danger)' }}>
-                  <Trash2 size={13} />
+                  className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:bg-[#21262d] hover:text-[#ef4444]">
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}
+            
             {pending.length === 0 && (
-              <p className="py-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                All caught up! No pending tasks.
-              </p>
+              <div className="flex flex-col items-center justify-center py-20 opacity-70">
+                <div className="w-16 h-16 rounded-full bg-[#161b22] border border-[#30363d] flex items-center justify-center mb-6 shadow-sm">
+                  <Check size={28} className="text-gray-500" />
+                </div>
+                <p className="text-lg italic text-gray-500">All caught up! No pending tasks.</p>
+              </div>
             )}
           </div>
 
-          {/* Completed */}
+          {/* Completed Tasks */}
           {done.length > 0 && (
-            <div>
-              <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
-                Completed ({done.length})
-              </p>
-              <div className="space-y-1.5">
+            <div className="pt-4">
+              <div className="flex items-center gap-4 mb-6">
+                <p className="text-[11px] font-bold tracking-[0.2em] text-gray-500 uppercase shrink-0">
+                  Completed ({done.length})
+                </p>
+                <div className="h-px bg-[#30363d] flex-1" />
+              </div>
+              
+              <div className="space-y-4 px-2">
                 {done.map((t) => (
-                  <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl opacity-60">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: 'var(--accent)' }}>
-                      <Check size={11} color="var(--bg)" />
+                  <div key={t.id} className="flex items-center gap-4 group">
+                    <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]">
+                      <Check size={12} className="text-white" strokeWidth={3} />
                     </div>
-                    <p className="text-sm line-through" style={{ color: 'var(--text-muted)' }}>{t.title}</p>
+                    <div className="flex-1 min-w-0 flex justify-between items-center">
+                      <p className="text-base line-through text-gray-500">{t.title}</p>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-[#ef4444]">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
