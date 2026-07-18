@@ -14,8 +14,15 @@ const BlogList = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [subError, setSubError] = useState('');
+  const [categories, setCategories] = useState([]);
 
-  const filters = ['All Posts', 'Engineering', 'Product', 'Design', 'Culture'];
+  const filters = ['All Posts', ...categories];
+
+  useEffect(() => {
+    blogApi.getTagsAndCategories()
+      .then(({ data }) => setCategories(data.categories || []))
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -24,7 +31,7 @@ const BlogList = () => {
       limit: 7, // 1 featured + 6 latest
     };
     if (activeFilter !== 'All Posts') {
-      params.category = activeFilter.toLowerCase();
+      params.category = activeFilter;
     }
     blogApi.getBlogs(params)
       .then(({ data }) => {
