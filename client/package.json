@@ -13,6 +13,7 @@
     "@blocknote/core": "^0.51.4",
     "@blocknote/mantine": "^0.51.4",
     "@blocknote/react": "^0.51.4",
+    "@monaco-editor/react": "^4.7.0",
     "axios": "^1.18.1",
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",

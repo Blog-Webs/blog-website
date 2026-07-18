@@ -11,6 +11,7 @@ const CalendarPage = lazy(() => import('../pages/CalendarPage'));
 const TasksPage = lazy(() => import('../pages/TasksPage'));
 const AiAssistantPage = lazy(() => import('../pages/AiAssistantPage'));
 const FocusModePage = lazy(() => import('../pages/FocusModePage'));
+const CodingPage = lazy(() => import('../pages/CodingPage'));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-full min-h-[300px]"
@@ -36,6 +37,7 @@ const StudentOSRoutes = () => (
           <Route path="tasks" element={<TasksPage />} />
           <Route path="ai" element={<AiAssistantPage />} />
           <Route path="focus" element={<FocusModePage />} />
+          <Route path="coding" element={<CodingPage />} />
         </Route>
       </Routes>
     </Suspense>

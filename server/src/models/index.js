@@ -17,4 +17,7 @@ module.exports = {
   ForumCategory: require('../modules/forum/Category'),
   ForumTopic: require('../modules/forum/Topic'),
   ForumReply: require('../modules/forum/Reply'),
+  Project: require('../modules/coding/models/Project'),
+  CodeFile: require('../modules/coding/models/CodeFile'),
+  CodeVersion: require('../modules/coding/models/CodeVersion'),
 };

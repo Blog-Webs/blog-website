@@ -2,27 +2,32 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
-  Sparkles, Focus, Menu, X, Plug, Unplug, ChevronRight, Zap
+  Sparkles, Focus, Menu, X, Plug, Unplug, ChevronLeft, GraduationCap,
+  MessageSquare, Code
 } from 'lucide-react';
 import { useStudentOS } from '../context/StudentOSContext';
 import { useAuth } from '../../core/context/AuthContext';
 
-const NAV_ITEMS = [
+const MAIN_NAV = [
   { to: '/student-os', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/student-os/classroom', label: 'Classroom', icon: BookOpen },
   { to: '/student-os/drive', label: 'Drive', icon: FolderOpen },
   { to: '/student-os/gmail', label: 'Gmail', icon: Mail },
   { to: '/student-os/calendar', label: 'Calendar', icon: Calendar },
   { to: '/student-os/tasks', label: 'Tasks', icon: CheckSquare },
-  { to: '/student-os/ai', label: 'AI Assistant', icon: Sparkles },
+  { to: '/student-os/coding', label: 'Coding Practice', icon: Code },
+];
+
+const INTELLIGENCE_NAV = [
+  { to: '/student-os/ai', label: 'AI Assistant', icon: Sparkles, badge: 'Ai' },
   { to: '/student-os/focus', label: 'Focus Mode', icon: Focus },
 ];
 
 const navCls = ({ isActive }) =>
-  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
     isActive
-      ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-      : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]'
+      ? 'sos-nav-active'
+      : 'sos-nav-item'
   }`;
 
 const StudentOSLayout = () => {
@@ -31,97 +36,56 @@ const StudentOSLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
-
-      {/* Mobile sidebar overlay */}
+    <div className="sos-shell">
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 flex flex-col border-r transition-transform duration-300 ${
+        className={`sos-sidebar fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
-        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         {/* Logo */}
-        <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
-          <div className="flex items-center justify-between">
+        <div className="sos-sidebar-logo">
+          <div className="flex items-center gap-2.5">
+            <div className="sos-logo-icon">
+              <GraduationCap size={16} color="white" />
+            </div>
             <div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #5EEAD4 100%)' }}
-                >
-                  <Zap size={15} color="white" />
-                </div>
-                <div>
-                  <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>StudentOS</p>
-                  <p className="text-[10px] font-mono-display" style={{ color: 'var(--accent)' }}>AI Academic Hub</p>
-                </div>
-              </div>
+              <p className="sos-logo-name">StudentOS</p>
+              <p className="sos-logo-sub">AI ACADEMIC HUB</p>
             </div>
-            <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-              <X size={18} />
-            </button>
           </div>
-
-          {/* User info */}
-          {user && (
-            <div className="mt-3 flex items-center gap-2">
-              <img src={user.avatar} alt="" referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover" />
-              <div className="min-w-0">
-                <p className="text-xs font-medium truncate">{user.name}</p>
-                <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
-              </div>
-            </div>
-          )}
+          <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)}>
+            <X size={16} style={{ color: 'var(--sos-text-muted)' }} />
+          </button>
         </div>
 
-        {/* Connection status */}
-        <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-          {connected ? (
-            <div
-              className="flex items-center justify-between px-3 py-2 rounded-xl"
-              style={{ backgroundColor: 'rgba(94, 234, 212, 0.1)', border: '1px solid rgba(94, 234, 212, 0.3)' }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                </span>
-                <div>
-                  <p className="text-xs font-medium" style={{ color: '#5EEAD4' }}>Connected</p>
-                  <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{googleEmail}</p>
-                </div>
-              </div>
-              <button
-                onClick={disconnect}
-                title="Disconnect Google Workspace"
-                className="p-1 rounded btn-press"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <Unplug size={13} />
-              </button>
+        {/* User Profile Card */}
+        {user && (
+          <div className="sos-user-card">
+            <div className="sos-user-avatar">
+              {user.avatar
+                ? <img src={user.avatar} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover rounded" />
+                : <span className="text-xs font-bold text-white">{user.name?.[0]}</span>
+              }
             </div>
-          ) : (
-            <button
-              onClick={connect}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium btn-press"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--bg)' }}
-            >
-              <Plug size={13} /> Connect Google Workspace
-            </button>
-          )}
-        </div>
+            <div className="min-w-0 flex-1">
+              <p className="sos-user-name truncate">{user.name}</p>
+              <p className="sos-user-email truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => (
+        {/* Main Navigation */}
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          {MAIN_NAV.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -129,50 +93,67 @@ const StudentOSLayout = () => {
               className={navCls}
               onClick={() => setSidebarOpen(false)}
             >
-              <item.icon size={16} />
-              {item.label}
-              {item.label === 'AI Assistant' && (
-                <span
-                  className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ background: 'linear-gradient(90deg, var(--accent), #5EEAD4)', color: 'white' }}
-                >
-                  AI
-                </span>
+              <item.icon size={16} className="sos-nav-icon shrink-0" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+
+          {/* Intelligence section */}
+          <div className="sos-section-label">INTELLIGENCE</div>
+
+          {INTELLIGENCE_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={navCls}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={16} className="sos-nav-icon shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {item.badge && (
+                <span className="sos-ai-badge">{item.badge}</span>
               )}
             </NavLink>
           ))}
         </nav>
 
         {/* Back to site */}
-        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
+        <div className="sos-sidebar-footer">
           <NavLink
             to="/"
-            className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl btn-press"
-            style={{ color: 'var(--text-muted)' }}
+            className="sos-back-link"
           >
-            <ChevronRight size={13} className="rotate-180" />
+            <ChevronLeft size={14} />
             Back to httpTechNex
           </NavLink>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── Main Content ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile topbar */}
-        <div
-          className="lg:hidden flex items-center gap-3 px-4 py-3 border-b"
-          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface)' }}
-        >
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg btn-press">
-            <Menu size={18} />
+        <div className="sos-mobile-bar lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg">
+            <Menu size={18} style={{ color: 'var(--sos-text-muted)' }} />
           </button>
           <div className="flex items-center gap-2">
-            <Zap size={15} style={{ color: 'var(--accent)' }} />
-            <span className="font-bold text-sm">StudentOS</span>
+            <div className="sos-logo-icon" style={{ width: 24, height: 24 }}>
+              <GraduationCap size={12} color="white" />
+            </div>
+            <span className="font-bold text-sm" style={{ color: 'var(--sos-text)' }}>StudentOS</span>
           </div>
         </div>
 
-        {/* Page content — scrollable */}
+        {/* Floating chat button */}
+        <NavLink
+          to="/student-os/ai"
+          className="sos-chat-fab"
+          title="AI Assistant"
+        >
+          <MessageSquare size={20} color="white" />
+        </NavLink>
+
+        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
