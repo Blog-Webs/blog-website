@@ -8,7 +8,6 @@ import {
 import { useStudentOS } from '../context/StudentOSContext';
 import { useAuth } from '../../core/context/AuthContext';
 import { RoadmapProvider } from '../context/RoadmapContext';
-import '../styles/studentos.css';
 
 const MAIN_NAV = [
   { to: '/student-os', label: 'Dashboard', icon: LayoutDashboard, end: true },
