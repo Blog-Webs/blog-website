@@ -17,12 +17,17 @@ const dailyPlanController = {
    * Returns the daily plan for a specific date (defaults to today).
    */
   async getDailyPlan(req, res) {
-    const { date } = req.query;
-    const planDate = date ? new Date(date) : new Date();
-    planDate.setHours(0, 0, 0, 0);
+    try {
+      const { date } = req.query;
+      const planDate = date ? new Date(date) : new Date();
+      planDate.setHours(0, 0, 0, 0);
 
-    const plan = await DailyPlan.findOne({ user: req.user._id, date: planDate }).lean();
-    res.json({ plan: plan || null, date: planDate });
+      const plan = await DailyPlan.findOne({ user: req.user._id, date: planDate }).lean();
+      res.json({ plan: plan || null, date: planDate });
+    } catch (err) {
+      console.error('[DailyPlanController] getDailyPlan error:', err.message);
+      res.status(500).json({ message: 'Error retrieving daily plan.' });
+    }
   },
 
   /**
@@ -31,38 +36,43 @@ const dailyPlanController = {
    * Body: { date? }
    */
   async generateDailyPlan(req, res) {
-    if (!DailyPlannerEngine.isAvailable()) {
-      return res.status(503).json({ message: 'AI planner not available. GEMINI_API_KEY is not configured.' });
-    }
-
-    const profile = req.academicProfile;
-    const { date } = req.body;
-    const planDate = date ? new Date(date) : new Date();
-    planDate.setHours(0, 0, 0, 0);
-
-    const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
-    if (!roadmap) {
-      return res.status(404).json({ message: 'No active roadmap found. Please generate your roadmap first.' });
-    }
-
-    const recentSessions = await StudySession.find({ user: req.user._id })
-      .sort({ date: -1 }).limit(7).lean();
-
-    const plan = await DailyPlannerEngine.generate(profile, roadmap, recentSessions, planDate);
-
-    // Push to Google Calendar if StudentOS is connected
-    setImmediate(async () => {
-      try {
-        const sosToken = await StudentOSToken.findOne({ user: req.user._id, isActive: true });
-        if (sosToken) {
-          await this._pushToGoogleCalendar(req.user._id, plan);
-        }
-      } catch (err) {
-        console.error('[DailyPlan] Calendar push failed:', err.message);
+    try {
+      const profile = req.academicProfile;
+      if (!profile) {
+        return res.status(400).json({ message: 'Please complete onboarding first.' });
       }
-    });
 
-    res.json({ success: true, plan });
+      const { date } = req.body;
+      const planDate = date ? new Date(date) : new Date();
+      planDate.setHours(0, 0, 0, 0);
+
+      const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
+      if (!roadmap) {
+        return res.status(404).json({ message: 'No active roadmap found. Please generate your roadmap first.' });
+      }
+
+      const recentSessions = await StudySession.find({ user: req.user._id })
+        .sort({ date: -1 }).limit(7).lean();
+
+      const plan = await DailyPlannerEngine.generate(profile, roadmap, recentSessions, planDate);
+
+      // Push to Google Calendar asynchronously if connected
+      setImmediate(async () => {
+        try {
+          const sosToken = await StudentOSToken.findOne({ user: req.user._id, isActive: true });
+          if (sosToken) {
+            await dailyPlanController._pushToGoogleCalendar(req.user._id, plan);
+          }
+        } catch (err) {
+          console.error('[DailyPlan] Calendar push failed:', err.message);
+        }
+      });
+
+      return res.json({ success: true, plan });
+    } catch (err) {
+      console.error('[DailyPlanController] generateDailyPlan error:', err.message);
+      return res.status(500).json({ message: 'Failed to generate daily plan. Please try again.', error: err.message });
+    }
   },
 
   /**
@@ -70,80 +80,90 @@ const dailyPlanController = {
    * Mark a task as done. Body: { feedback?, rating? }
    */
   async completeTask(req, res) {
-    const { planId, taskId } = req.params;
-    const { feedback, rating } = req.body;
+    try {
+      const { planId, taskId } = req.params;
+      const { feedback, rating } = req.body;
 
-    const plan = await DailyPlan.findOne({ _id: planId, user: req.user._id });
-    if (!plan) return res.status(404).json({ message: 'Plan not found.' });
+      const plan = await DailyPlan.findOne({ _id: planId, user: req.user._id });
+      if (!plan) return res.status(404).json({ message: 'Plan not found.' });
 
-    const task = plan.tasks.find((t) => t.taskId === taskId);
-    if (!task) return res.status(404).json({ message: 'Task not found.' });
+      const task = plan.tasks.find((t) => t.taskId === taskId);
+      if (!task) return res.status(404).json({ message: 'Task not found.' });
 
-    task.isCompleted = true;
-    task.completedAt = new Date();
-    if (feedback) task.feedback = feedback;
-    if (rating) task.rating = Math.min(5, Math.max(1, parseInt(rating)));
+      task.isCompleted = true;
+      task.completedAt = new Date();
+      if (feedback) task.feedback = feedback;
+      if (rating) task.rating = Math.min(5, Math.max(1, parseInt(rating)));
 
-    // Update plan stats
-    const completedMins = plan.tasks.filter((t) => t.isCompleted && t.type !== 'break')
-      .reduce((s, t) => s + (t.durationMins || 0), 0);
-    plan.completedMins = completedMins;
+      // Update plan stats
+      const completedMins = plan.tasks.filter((t) => t.isCompleted && t.type !== 'break')
+        .reduce((s, t) => s + (t.durationMins || 0), 0);
+      plan.completedMins = completedMins;
 
-    await plan.save();
+      await plan.save();
 
-    // Check if all tasks done → log auto study session
-    const studyTasks = plan.tasks.filter((t) => t.type !== 'break');
-    const allDone = studyTasks.every((t) => t.isCompleted);
-    if (allDone) {
-      setImmediate(async () => {
-        try {
-          await StudySession.create({
-            user: req.user._id,
-            roadmap: plan.roadmap,
-            dailyPlan: plan._id,
-            date: plan.date,
-            durationMins: completedMins,
-            topicsStudied: [...new Set(plan.tasks.filter((t) => t.topic).map((t) => t.topic))],
-            isPlanned: true,
-          });
-          await PersonalizationEngine.analyzeAfterSession(req.user._id);
-        } catch (err) {
-          console.error('[DailyPlan] Auto session logging failed:', err.message);
-        }
-      });
+      // Check if all tasks done → log auto study session
+      const studyTasks = plan.tasks.filter((t) => t.type !== 'break');
+      const allDone = studyTasks.every((t) => t.isCompleted);
+      if (allDone) {
+        setImmediate(async () => {
+          try {
+            await StudySession.create({
+              user: req.user._id,
+              roadmap: plan.roadmap,
+              dailyPlan: plan._id,
+              date: plan.date,
+              durationMins: completedMins,
+              topicsStudied: [...new Set(plan.tasks.filter((t) => t.topic).map((t) => t.topic))],
+              isPlanned: true,
+            });
+            await PersonalizationEngine.analyzeAfterSession(req.user._id);
+          } catch (err) {
+            console.error('[DailyPlan] Auto session logging failed:', err.message);
+          }
+        });
+      }
+
+      res.json({ success: true, completedMins, allTasksDone: allDone });
+    } catch (err) {
+      console.error('[DailyPlanController] completeTask error:', err.message);
+      res.status(500).json({ message: 'Failed to complete task.' });
     }
-
-    res.json({ success: true, completedMins, allTasksDone: allDone });
   },
 
   /**
    * POST /api/roadmap/session — Log a manual study session.
    */
   async logSession(req, res) {
-    const { durationMins, topicsStudied, quizScores, mood, notes, date } = req.body;
-    if (!durationMins || durationMins < 1) {
-      return res.status(400).json({ message: 'durationMins is required (minimum 1).' });
+    try {
+      const { durationMins, topicsStudied, quizScores, mood, notes, date } = req.body;
+      if (!durationMins || durationMins < 1) {
+        return res.status(400).json({ message: 'durationMins is required (minimum 1).' });
+      }
+
+      const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
+      if (!roadmap) return res.status(404).json({ message: 'No active roadmap found.' });
+
+      const session = await StudySession.create({
+        user: req.user._id,
+        roadmap: roadmap._id,
+        date: date ? new Date(date) : new Date(),
+        durationMins: parseInt(durationMins),
+        topicsStudied: topicsStudied || [],
+        quizScores: quizScores || [],
+        mood: mood || 'good',
+        notes: notes || '',
+        isPlanned: false,
+      });
+
+      // Async personalization
+      setImmediate(() => PersonalizationEngine.analyzeAfterSession(req.user._id));
+
+      res.status(201).json({ success: true, session });
+    } catch (err) {
+      console.error('[DailyPlanController] logSession error:', err.message);
+      res.status(500).json({ message: 'Failed to log session.' });
     }
-
-    const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
-    if (!roadmap) return res.status(404).json({ message: 'No active roadmap found.' });
-
-    const session = await StudySession.create({
-      user: req.user._id,
-      roadmap: roadmap._id,
-      date: date ? new Date(date) : new Date(),
-      durationMins: parseInt(durationMins),
-      topicsStudied: topicsStudied || [],
-      quizScores: quizScores || [],
-      mood: mood || 'good',
-      notes: notes || '',
-      isPlanned: false,
-    });
-
-    // Async personalization
-    setImmediate(() => PersonalizationEngine.analyzeAfterSession(req.user._id));
-
-    res.status(201).json({ success: true, session });
   },
 
   /**
@@ -174,7 +194,6 @@ const dailyPlanController = {
         task.calendarEventId = data.id;
       }
 
-      // Update plan with event IDs and sync status
       await DailyPlan.findByIdAndUpdate(plan._id, {
         tasks: plan.tasks,
         calendarSynced: true,

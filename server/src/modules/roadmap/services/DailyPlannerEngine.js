@@ -12,63 +12,51 @@ function getAI() {
 
 /**
  * DailyPlannerEngine — Generates AI-powered daily study schedules.
- *
- * Features:
- * - Respects available study hours
- * - Prioritizes weak areas
- * - Matches resources to learning style
- * - Integrates with Google Calendar (events passed back to controller for push)
+ * Includes a smart fallback planner ensuring plan generation NEVER crashes.
  */
 const DailyPlannerEngine = {
   isAvailable() {
-    return !!process.env.GEMINI_API_KEY;
+    return true; // Always available via AI or smart fallback
   },
 
   /**
    * Generate a daily plan for a user.
-   *
-   * @param {Object} profile   - AcademicProfile
-   * @param {Object} roadmap   - Active Roadmap
-   * @param {Object[]} recentSessions - Last 7 StudySessions (for trend analysis)
-   * @param {Date}   planDate  - Date to generate plan for
-   * @returns {Object} DailyPlan document
    */
   async generate(profile, roadmap, recentSessions, planDate) {
+    let parsed = null;
     const ai = getAI();
-    if (!ai) throw new Error('GEMINI_API_KEY is not configured.');
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
+    if (ai) {
+      try {
+        const model = ai.getGenerativeModel({ model: MODEL_NAME });
+        const currentPhase = roadmap?.phases?.find((p) => p.isUnlocked && !this._isPhaseComplete(p))
+          || roadmap?.phases?.[0];
 
-    // Find current phase topics
-    const currentPhase = roadmap.phases.find((p) => p.isUnlocked && !this._isPhaseComplete(p))
-      || roadmap.phases[0];
+        const pendingTopics = currentPhase
+          ? currentPhase.topics.filter((t) => !t.isCompleted).slice(0, 6).map((t) => ({
+              title: t.title,
+              type: t.type,
+              estimatedHours: t.estimatedHours,
+              difficulty: t.difficulty,
+              resources: t.resources?.slice(0, 2) || [],
+            }))
+          : [];
 
-    const pendingTopics = currentPhase
-      ? currentPhase.topics.filter((t) => !t.isCompleted).slice(0, 6).map((t) => ({
-          title: t.title,
-          type: t.type,
-          estimatedHours: t.estimatedHours,
-          difficulty: t.difficulty,
-          resources: t.resources?.slice(0, 2) || [],
-        }))
-      : [];
+        const weakAreas = roadmap?.weakAreas || [];
+        const studyHours = profile?.studyHoursPerDay || 3;
+        const studyMins = studyHours * 60;
 
-    const weakAreas = roadmap.weakAreas || [];
-    const studyHours = profile.studyHoursPerDay || 3;
-    const studyMins = studyHours * 60;
+        const avgRecentScore = (recentSessions && recentSessions.length > 0)
+          ? recentSessions.reduce((sum, s) => {
+              const scores = s.quizScores || [];
+              if (!scores.length) return sum;
+              return sum + scores.reduce((a, q) => a + (q.score || 0), 0) / scores.length;
+            }, 0) / Math.max(recentSessions.filter((s) => s.quizScores?.length > 0).length, 1)
+          : 50;
 
-    // Session trend: average score in last week
-    const avgRecentScore = recentSessions.length > 0
-      ? recentSessions.reduce((sum, s) => {
-          const scores = s.quizScores || [];
-          if (!scores.length) return sum;
-          return sum + scores.reduce((a, q) => a + (q.score || 0), 0) / scores.length;
-        }, 0) / Math.max(recentSessions.filter((s) => s.quizScores?.length > 0).length, 1)
-      : 50;
+        const missedDays = this._countMissedDays(recentSessions || [], planDate);
 
-    const missedDays = this._countMissedDays(recentSessions, planDate);
-
-    const prompt = `You are an expert study coach and daily planner.
+        const prompt = `You are an expert study coach and daily planner.
 
 STUDENT CONTEXT:
 - Domain: ${profile.domain} (${profile.subDomain || ''})
@@ -118,18 +106,19 @@ Return ONLY valid JSON:
   "focusArea": "Main topic of the day"
 }`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new Error('AI returned invalid daily plan JSON.');
+        const result = await model.generateContent(prompt);
+        let raw = result.response.text().trim();
+        raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+        parsed = JSON.parse(raw);
+      } catch (err) {
+        console.warn('[DailyPlannerEngine] AI generation failed, using smart fallback planner:', err.message);
+      }
     }
 
-    // Add stable IDs and convert scheduled times to Date objects
+    if (!parsed || !parsed.tasks || parsed.tasks.length === 0) {
+      parsed = this._generateFallbackDailyPlan(profile, roadmap, recentSessions, planDate);
+    }
+
     const dayStart = new Date(planDate);
     dayStart.setHours(0, 0, 0, 0);
 
@@ -138,13 +127,12 @@ Return ONLY valid JSON:
       const [sh, sm] = (task.scheduledStart || '09:00').split(':').map(Number);
       const [eh, em] = (task.scheduledEnd || '10:00').split(':').map(Number);
       const start = new Date(dayStart);
-      start.setHours(sh, sm, 0, 0);
+      start.setHours(isNaN(sh) ? 9 : sh, isNaN(sm) ? 0 : sm, 0, 0);
       const end = new Date(dayStart);
-      end.setHours(eh, em, 0, 0);
+      end.setHours(isNaN(eh) ? 10 : eh, isNaN(em) ? 0 : em, 0, 0);
       return { ...task, taskId: id, scheduledStart: start, scheduledEnd: end };
     });
 
-    // Save plan (upsert: one plan per user per date)
     const planDateNormalized = new Date(planDate);
     planDateNormalized.setHours(0, 0, 0, 0);
 
@@ -156,9 +144,9 @@ Return ONLY valid JSON:
         date: planDateNormalized,
         tasks,
         totalStudyMins: parsed.totalStudyMins || tasks.reduce((s, t) => s + (t.durationMins || 0), 0),
-        aiInsight: parsed.aiInsight || '',
-        focusArea: parsed.focusArea || '',
-        generatedBy: MODEL_NAME,
+        aiInsight: parsed.aiInsight || `Focus on ${parsed.focusArea || 'today\'s core topics'}!`,
+        focusArea: parsed.focusArea || profile.subDomain || profile.domain || 'Core Study',
+        generatedBy: ai && parsed ? MODEL_NAME : 'smart-fallback-planner',
         calendarSynced: false,
       },
       { upsert: true, new: true }
@@ -167,8 +155,80 @@ Return ONLY valid JSON:
     return plan;
   },
 
+  _generateFallbackDailyPlan(profile, roadmap, recentSessions, planDate) {
+    const studyHours = profile?.studyHoursPerDay || 3;
+    const studyMins = Math.round(studyHours * 60);
+
+    const currentPhase = roadmap?.phases?.find((p) => p.isUnlocked && !this._isPhaseComplete(p))
+      || roadmap?.phases?.[0];
+
+    const pendingTopics = currentPhase
+      ? currentPhase.topics.filter((t) => !t.isCompleted).slice(0, 3)
+      : [];
+
+    const focusTopicName = pendingTopics[0]?.title || `${profile.domain || 'Domain'} Core Concepts`;
+
+    const tasks = [
+      {
+        taskId: uuidv4(),
+        title: `Deep Study: ${focusTopicName}`,
+        description: `Review fundamental principles and core concepts for ${focusTopicName}.`,
+        type: 'study',
+        topic: focusTopicName,
+        durationMins: 45,
+        priority: 'high',
+        scheduledStart: '09:00',
+        scheduledEnd: '09:45',
+        resources: pendingTopics[0]?.resources || [{ title: `${focusTopicName} Study Guide`, type: 'article', platform: 'Student OS Hub' }]
+      },
+      {
+        taskId: uuidv4(),
+        title: 'Short Refresh Break',
+        description: 'Take a break, hydrate, and stretch.',
+        type: 'break',
+        topic: 'Break',
+        durationMins: 15,
+        priority: 'low',
+        scheduledStart: '09:45',
+        scheduledEnd: '10:00',
+        resources: []
+      },
+      {
+        taskId: uuidv4(),
+        title: `Practice & Problem Solving: ${pendingTopics[1]?.title || focusTopicName}`,
+        description: `Solve exercises and active practice questions for ${pendingTopics[1]?.title || focusTopicName}.`,
+        type: 'practice',
+        topic: pendingTopics[1]?.title || focusTopicName,
+        durationMins: 45,
+        priority: 'high',
+        scheduledStart: '10:00',
+        scheduledEnd: '10:45',
+        resources: [{ title: 'Practice Exercises', type: 'practice', platform: 'Student OS Quiz' }]
+      },
+      {
+        taskId: uuidv4(),
+        title: 'Revision & Recall Review',
+        description: 'Review key terms, active recall questions, and past session summaries.',
+        type: 'revision',
+        topic: 'Revision',
+        durationMins: 30,
+        priority: 'medium',
+        scheduledStart: '10:45',
+        scheduledEnd: '11:15',
+        resources: []
+      }
+    ];
+
+    return {
+      tasks,
+      totalStudyMins: Math.min(studyMins, 135),
+      aiInsight: `Today's focus is ${focusTopicName}. Consistent daily study yields maximum skill mastery!`,
+      focusArea: focusTopicName,
+    };
+  },
+
   _isPhaseComplete(phase) {
-    if (!phase.topics || phase.topics.length === 0) return false;
+    if (!phase || !phase.topics || phase.topics.length === 0) return false;
     return phase.topics.every((t) => t.isCompleted);
   },
 
@@ -179,7 +239,7 @@ Return ONLY valid JSON:
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dayStr = d.toDateString();
-      const found = sessions.some((s) => new Date(s.date).toDateString() === dayStr);
+      const found = (sessions || []).some((s) => new Date(s.date).toDateString() === dayStr);
       if (!found) missed++;
     }
     return missed;
