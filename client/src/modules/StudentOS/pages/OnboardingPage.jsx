@@ -18,6 +18,64 @@ const LEARNING_STYLES = [
   { key: 'mixed', label: 'Mixed', desc: 'Variety of everything', emoji: '🔀' },
 ];
 
+const FALLBACK_DOMAINS = {
+  engineering: [
+    { key: 'engineering.cse', displayName: 'Computer Science Engineering', icon: '💻' },
+    { key: 'engineering.it', displayName: 'Information Technology', icon: '🌐' },
+    { key: 'engineering.ai_ds', displayName: 'AI & Data Science', icon: '🤖' },
+    { key: 'engineering.mechanical', displayName: 'Mechanical Engineering', icon: '⚙️' },
+    { key: 'engineering.civil', displayName: 'Civil Engineering', icon: '🏗️' },
+    { key: 'engineering.electrical', displayName: 'Electrical Engineering', icon: '⚡' },
+  ],
+  medical: [
+    { key: 'medical.mbbs', displayName: 'MBBS (Bachelor of Medicine)', icon: '🩺' },
+    { key: 'medical.bds', displayName: 'BDS (Bachelor of Dental Surgery)', icon: '🦷' },
+    { key: 'medical.nursing', displayName: 'Nursing (BSc/GNM)', icon: '👩‍⚕️' },
+    { key: 'pharmacy', displayName: 'Pharmacy (B.Pharm/D.Pharm)', icon: '💊' },
+  ],
+  law: [
+    { key: 'law.llb', displayName: 'LLB (Bachelor of Laws)', icon: '⚖️' },
+    { key: 'law.llm', displayName: 'LLM (Master of Laws)', icon: '📜' },
+  ],
+  business: [
+    { key: 'mba', displayName: 'MBA (Master of Business Admin)', icon: '📊' },
+    { key: 'bba', displayName: 'BBA (Bachelor of Business Admin)', icon: '🏢' },
+  ],
+  commerce: [
+    { key: 'commerce.ca', displayName: 'Chartered Accountancy (CA)', icon: '📒' },
+  ],
+  government: [
+    { key: 'upsc', displayName: 'UPSC Civil Services', icon: '🇮🇳' },
+    { key: 'govt_exam', displayName: 'Government Exams (SSC/Bank)', icon: '🏛️' },
+  ],
+  arts: [
+    { key: 'arts.general', displayName: 'Arts (BA/MA)', icon: '🎨' },
+  ],
+  science: [
+    { key: 'science.general', displayName: 'Science (BSc/MSc)', icon: '🔬' },
+  ],
+  research: [
+    { key: 'research', displayName: 'Research & PhD', icon: '🔭' },
+  ],
+  agriculture: [
+    { key: 'agriculture', displayName: 'Agriculture (BSc Agri)', icon: '🌾' },
+  ],
+  design: [
+    { key: 'design', displayName: 'Design (B.Des/M.Des)', icon: '✏️' },
+  ],
+  architecture: [
+    { key: 'architecture', displayName: 'Architecture (B.Arch)', icon: '🏛️' },
+  ]
+};
+
+const FALLBACK_GOALS = [
+  { key: 'software_engineer', label: 'Software Engineer', roadmapType: 'placement' },
+  { key: 'data_scientist', label: 'Data Scientist / Analyst', roadmapType: 'skill' },
+  { key: 'higher_studies', label: 'Higher Studies (MS/MTech/PhD)', roadmapType: 'higher_studies' },
+  { key: 'civil_services', label: 'Civil Services / UPSC', roadmapType: 'exam' },
+  { key: 'entrepreneur', label: 'Entrepreneur / Startup', roadmapType: 'entrepreneurship' },
+];
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { refreshProfile, setOnboardingComplete, setRoadmapStatus } = useRoadmap();
@@ -28,8 +86,8 @@ export default function OnboardingPage() {
   // Step 1 state
   const [s1, setS1] = useState({ collegeName: '', degree: '', branch: '', yearOfStudy: 1, semester: 1 });
   // Step 2 state
-  const [domains, setDomains] = useState({});
-  const [selectedParent, setSelectedParent] = useState('');
+  const [domains, setDomains] = useState(FALLBACK_DOMAINS);
+  const [selectedParent, setSelectedParent] = useState('engineering');
   const [selectedDomain, setSelectedDomain] = useState('');
   // Step 3 state
   const [careerGoals, setCareerGoals] = useState([]);
@@ -42,18 +100,31 @@ export default function OnboardingPage() {
   const [studyHours, setStudyHours] = useState(3);
 
   useEffect(() => {
-    roadmapApi.getDomains().then(({ data }) => setDomains(data.domains || {})).catch(() => {});
+    roadmapApi.getDomains().then(({ data }) => {
+      const fetched = data.domains || {};
+      if (Object.keys(fetched).length > 0) {
+        setDomains(fetched);
+        if (!selectedParent || !fetched[selectedParent]) {
+          setSelectedParent(Object.keys(fetched)[0]);
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (selectedDomain) {
-      roadmapApi.getCareerGoals(selectedDomain).then(({ data }) => setCareerGoals(data.goals || [])).catch(() => {});
+      roadmapApi.getCareerGoals(selectedDomain).then(({ data }) => {
+        const goals = data.goals || [];
+        setCareerGoals(goals.length > 0 ? goals : FALLBACK_GOALS);
+      }).catch(() => setCareerGoals(FALLBACK_GOALS));
     }
   }, [selectedDomain]);
 
   useEffect(() => {
     if (selectedDomain) {
-      roadmapApi.getSkills(selectedDomain).then(({ data }) => setSkills(data.skills || [])).catch(() => {});
+      roadmapApi.getSkills(selectedDomain).then(({ data }) => {
+        setSkills(data.skills || []);
+      }).catch(() => setSkills([]));
     }
   }, [selectedDomain]);
 
@@ -66,7 +137,7 @@ export default function OnboardingPage() {
         await roadmapApi.step1(s1);
         setStep(2);
       } else if (step === 2) {
-        if (!selectedDomain) { setError('Please select your domain.'); setSaving(false); return; }
+        if (!selectedDomain) { setError('Please click to select your specialization domain.'); setSaving(false); return; }
         await roadmapApi.step2({ domain: selectedParent, subDomain: selectedDomain });
         setStep(3);
       } else if (step === 3) {
@@ -90,6 +161,9 @@ export default function OnboardingPage() {
   }
 
   const progress = ((step - 1) / STEPS.length) * 100;
+  const parentKeys = Object.keys(domains).length > 0 ? Object.keys(domains) : Object.keys(FALLBACK_DOMAINS);
+  const activeParent = selectedParent || parentKeys[0];
+  const subDomains = domains[activeParent] || FALLBACK_DOMAINS[activeParent] || [];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--sos-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
@@ -110,7 +184,7 @@ export default function OnboardingPage() {
 
         {/* Step Indicators */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-          {STEPS.map((s, i) => (
+          {STEPS.map((s) => (
             <div key={s.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: step < s.id ? 0.4 : 1, transition: 'opacity 0.3s' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: step > s.id ? '#22c55e' : step === s.id ? '#A78BFA' : 'rgba(255,255,255,0.08)', border: step >= s.id ? 'none' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.3s' }}>
                 {step > s.id ? <Check size={14} color="white" /> : <s.icon size={14} color="white" />}
@@ -158,30 +232,33 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div style={{ display: 'grid', gap: 20 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SELECT CATEGORY</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {Object.keys(domains).map((parent) => (
-                    <button key={parent} onClick={() => { setSelectedParent(parent); setSelectedDomain(''); }}
-                      style={{ padding: '8px 16px', borderRadius: 999, border: `1px solid ${selectedParent === parent ? '#A78BFA' : 'var(--sos-border)'}`, background: selectedParent === parent ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: selectedParent === parent ? '#A78BFA' : 'var(--sos-text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
+                  {parentKeys.map((parent) => (
+                    <button type="button" key={parent} onClick={() => { setSelectedParent(parent); setSelectedDomain(''); }}
+                      style={{ padding: '8px 16px', borderRadius: 999, border: `1px solid ${activeParent === parent ? '#A78BFA' : 'var(--sos-border)'}`, background: activeParent === parent ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', color: activeParent === parent ? '#A78BFA' : 'var(--sos-text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
                       {parent}
                     </button>
                   ))}
                 </div>
               </div>
-              {selectedParent && (
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specialization</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
-                    {(domains[selectedParent] || []).map((d) => (
-                      <button key={d.key} onClick={() => setSelectedDomain(d.key)}
-                        style={{ padding: '12px 16px', borderRadius: 14, border: `1px solid ${selectedDomain === d.key ? '#A78BFA' : 'var(--sos-border)'}`, background: selectedDomain === d.key ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: 'var(--sos-text)', fontSize: 13, fontWeight: selectedDomain === d.key ? 600 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-                        <span style={{ fontSize: 20, display: 'block', marginBottom: 4 }}>{d.icon}</span>
-                        {d.displayName}
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SELECT SPECIALIZATION / BRANCH</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                  {subDomains.map((d) => {
+                    const isSelected = selectedDomain === d.key;
+                    return (
+                      <button type="button" key={d.key} onClick={() => setSelectedDomain(d.key)}
+                        style={{ padding: '14px 16px', borderRadius: 14, border: `1px solid ${isSelected ? '#A78BFA' : 'var(--sos-border)'}`, background: isSelected ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: isSelected ? 'white' : 'var(--sos-text)', fontSize: 13, fontWeight: isSelected ? 600 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 24, flexShrink: 0 }}>{d.icon || '🎓'}</span>
+                        <span style={{ flex: 1, lineHeight: 1.3 }}>{d.displayName}</span>
+                        {isSelected && <Check size={16} color="#A78BFA" />}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -189,13 +266,16 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div style={{ display: 'grid', gap: 20 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-                {careerGoals.map((goal) => (
-                  <button key={goal.key} onClick={() => setSelectedGoal(goal)}
-                    style={{ padding: '16px', borderRadius: 14, border: `1px solid ${selectedGoal?.key === goal.key ? '#A78BFA' : 'var(--sos-border)'}`, background: selectedGoal?.key === goal.key ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: 'var(--sos-text)', fontSize: 14, fontWeight: selectedGoal?.key === goal.key ? 600 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-                    <span style={{ display: 'block', marginBottom: 4, fontSize: 13, color: '#A78BFA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{goal.roadmapType?.replace('_', ' ')}</span>
-                    {goal.label}
-                  </button>
-                ))}
+                {careerGoals.map((goal) => {
+                  const isSelected = selectedGoal?.key === goal.key;
+                  return (
+                    <button type="button" key={goal.key} onClick={() => setSelectedGoal(goal)}
+                      style={{ padding: '16px', borderRadius: 14, border: `1px solid ${isSelected ? '#A78BFA' : 'var(--sos-border)'}`, background: isSelected ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: 'var(--sos-text)', fontSize: 14, fontWeight: isSelected ? 600 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+                      <span style={{ display: 'block', marginBottom: 4, fontSize: 11, color: '#A78BFA', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{goal.roadmapType?.replace(/_/g, ' ') || 'Goal'}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>{goal.label}</span>
+                    </button>
+                  );
+                })}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Target Date (optional)</label>
@@ -217,7 +297,7 @@ export default function OnboardingPage() {
                         <span style={{ flex: 1, color: 'var(--sos-text)', fontSize: 14 }}>{skill.label}</span>
                         <div style={{ display: 'flex', gap: 6 }}>
                           {['beginner', 'intermediate', 'advanced'].map((level) => (
-                            <button key={level} onClick={() => setSkillRatings({ ...skillRatings, [skill.key]: level })}
+                            <button type="button" key={level} onClick={() => setSkillRatings({ ...skillRatings, [skill.key]: level })}
                               style={{ padding: '4px 10px', borderRadius: 999, border: `1px solid ${skillRatings[skill.key] === level ? '#A78BFA' : 'var(--sos-border)'}`, background: skillRatings[skill.key] === level ? 'rgba(167,139,250,0.2)' : 'transparent', color: skillRatings[skill.key] === level ? '#A78BFA' : 'var(--sos-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
                               {level}
                             </button>
@@ -232,7 +312,7 @@ export default function OnboardingPage() {
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--sos-text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learning Style</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {LEARNING_STYLES.map((ls) => (
-                    <button key={ls.key} onClick={() => setLearningStyle(ls.key)}
+                    <button type="button" key={ls.key} onClick={() => setLearningStyle(ls.key)}
                       style={{ padding: '14px', borderRadius: 14, border: `1px solid ${learningStyle === ls.key ? '#A78BFA' : 'var(--sos-border)'}`, background: learningStyle === ls.key ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', color: 'var(--sos-text)', fontSize: 13, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
                       <span style={{ fontSize: 22, display: 'block', marginBottom: 4 }}>{ls.emoji}</span>
                       <strong style={{ display: 'block', marginBottom: 2 }}>{ls.label}</strong>
@@ -263,11 +343,11 @@ export default function OnboardingPage() {
 
           {/* Navigation */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28 }}>
-            <button onClick={() => { setError(''); setStep(Math.max(1, step - 1)); }} disabled={step === 1 || saving}
+            <button type="button" onClick={() => { setError(''); setStep(Math.max(1, step - 1)); }} disabled={step === 1 || saving}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 10, border: '1px solid var(--sos-border)', background: 'transparent', color: step === 1 ? 'var(--sos-text-muted)' : 'var(--sos-text)', cursor: step === 1 ? 'default' : 'pointer', fontSize: 14, opacity: step === 1 ? 0.4 : 1 }}>
               <ChevronLeft size={16} /> Back
             </button>
-            <button onClick={goNext} disabled={saving}
+            <button type="button" onClick={goNext} disabled={saving}
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', color: 'white', fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(124,58,237,0.3)' }}>
               {saving ? <Loader2 size={16} className="animate-spin" /> : null}
               {step === 4 ? (saving ? 'Generating...' : '✨ Generate My Roadmap') : (saving ? 'Saving...' : 'Continue')}

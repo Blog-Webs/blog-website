@@ -1,8 +1,9 @@
 const DomainConfig = require('../models/DomainConfig');
+const DEFAULT_DOMAINS = require('../data/defaultDomains');
 
 /**
  * DomainRegistry — In-memory cached domain config loader.
- * Cache TTL: 1 hour. New admin-added domains appear without server restart.
+ * Cache TTL: 1 hour. Auto-seeds default domains if collection is empty.
  */
 let cache = null;
 let cacheExpiry = 0;
@@ -10,11 +11,25 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 const DomainRegistry = {
   /**
-   * Returns all active domain configs (from cache or DB).
+   * Returns all active domain configs (from cache, DB, or default seed).
    */
   async getAll() {
-    if (cache && Date.now() < cacheExpiry) return cache;
-    const domains = await DomainConfig.find({ isActive: true }).sort({ sortOrder: 1 }).lean();
+    if (cache && Date.now() < cacheExpiry && cache.length > 0) return cache;
+    
+    let domains = await DomainConfig.find({ isActive: true }).sort({ sortOrder: 1 }).lean();
+    
+    // Auto-seed if database collection is empty
+    if (!domains || domains.length === 0) {
+      try {
+        console.log('[DomainRegistry] No domains found in DB. Auto-seeding default domains...');
+        const docs = await DomainConfig.insertMany(DEFAULT_DOMAINS);
+        domains = docs.map((d) => d.toObject());
+      } catch (err) {
+        console.error('[DomainRegistry] Auto-seed failed, falling back to static default domains:', err.message);
+        domains = DEFAULT_DOMAINS;
+      }
+    }
+
     cache = domains;
     cacheExpiry = Date.now() + CACHE_TTL_MS;
     return domains;
@@ -33,7 +48,7 @@ const DomainRegistry = {
    */
   async getCareerGoals(domainKey) {
     const domain = await this.findByKey(domainKey);
-    return domain ? domain.careerGoals : [];
+    return domain ? domain.careerGoals || [] : [];
   },
 
   /**
@@ -41,7 +56,7 @@ const DomainRegistry = {
    */
   async getAssessableSkills(domainKey) {
     const domain = await this.findByKey(domainKey);
-    if (!domain) return [];
+    if (!domain || !domain.requiredSkills) return [];
     return domain.requiredSkills.filter((s) => s.assessable);
   },
 
@@ -50,7 +65,7 @@ const DomainRegistry = {
    */
   async getRequiredSkills(domainKey) {
     const domain = await this.findByKey(domainKey);
-    return domain ? domain.requiredSkills : [];
+    return domain ? domain.requiredSkills || [] : [];
   },
 
   /**
@@ -61,7 +76,7 @@ const DomainRegistry = {
     const seen = new Set();
     const parents = [];
     for (const d of all) {
-      if (!seen.has(d.parentDomain)) {
+      if (d.parentDomain && !seen.has(d.parentDomain)) {
         seen.add(d.parentDomain);
         parents.push(d.parentDomain);
       }
