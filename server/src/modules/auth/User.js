@@ -39,6 +39,20 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // ── AI Roadmap Profile (added by onboarding) ──────────────────────────
+    // Optional reference — never breaks existing auth flows.
+    // select:false so it's not included in normal auth queries.
+    academicProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AcademicProfile',
+      default: null,
+      select: false,
+    },
+    // Set to true once the 4-step onboarding wizard is complete.
+    onboardingComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

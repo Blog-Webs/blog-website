@@ -33,6 +33,7 @@ const AdminContentStudio = lazy(() => import('./modules/admin/pages/AdminContent
 const MigrationTool = lazy(() => import('./modules/admin/pages/MigrationTool'));
 const Subscribers = lazy(() => import('./modules/admin/pages/Subscribers'));
 const ContactSubmissions = lazy(() => import('./modules/admin/pages/ContactSubmissions'));
+const AdminDomainsPage = lazy(() => import('./modules/admin/pages/AdminDomainsPage'));
 // StudentOS — completely isolated module
 const StudentOSRoutes = lazy(() => import('./modules/StudentOS/routes/StudentOSRoutes'));
 
@@ -84,6 +85,7 @@ function App() {
             <Route path="migration" element={<MigrationTool />} />
             <Route path="subscribers" element={<Subscribers />} />
             <Route path="contact" element={<ContactSubmissions />} />
+            <Route path="domains" element={<AdminDomainsPage />} />
           </Route>
         </Route>
 

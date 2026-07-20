@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen, FolderOpen, AlertCircle,
   Bell, ExternalLink, CheckCircle2, ArrowRight, MoreVertical,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { studentOSApi } from '../api';
 import { useStudentOS } from '../context/StudentOSContext';
+import { useRoadmap } from '../context/RoadmapContext';
 import ConnectPage from './ConnectPage';
 
 const PRIORITY_STYLE = {
@@ -41,10 +42,18 @@ const Skeleton = () => (
 );
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const { connected, statusLoading } = useStudentOS();
+  const { onboardingComplete, loading: roadmapLoading } = useRoadmap();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!roadmapLoading && onboardingComplete === false) {
+      navigate('/student-os/onboarding');
+    }
+  }, [onboardingComplete, roadmapLoading, navigate]);
 
   useEffect(() => {
     if (!connected) { setLoading(false); return; }

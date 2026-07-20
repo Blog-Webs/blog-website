@@ -106,6 +106,9 @@ app.use('/api/studentos', studentOSRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/coding', codingRoutes);
+// ── AI Roadmap Engine (new, additive) ────────────────────────────────────────
+const roadmapRoutes = require('./modules/roadmap/routes/index');
+app.use('/api/roadmap', roadmapRoutes);
 
 // 404 handler
 app.use('/api', (req, res) => {

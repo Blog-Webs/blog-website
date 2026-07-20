@@ -1,21 +1,31 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
-  Sparkles, Focus, Menu, X, Plug, Unplug, ChevronLeft, GraduationCap,
-  MessageSquare, Code
+  Sparkles, Focus, Menu, X, ChevronLeft, GraduationCap,
+  MessageSquare, Code, Map, ClipboardList, TrendingUp, Brain, AlertTriangle
 } from 'lucide-react';
 import { useStudentOS } from '../context/StudentOSContext';
 import { useAuth } from '../../core/context/AuthContext';
+import { RoadmapProvider } from '../context/RoadmapContext';
+import '../styles/studentos.css';
 
 const MAIN_NAV = [
   { to: '/student-os', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/student-os/classroom', label: 'Classroom', icon: BookOpen },
-  { to: '/student-os/drive', label: 'Drive', icon: FolderOpen },
-  { to: '/student-os/gmail', label: 'Gmail', icon: Mail },
+  { to: '/student-os/classroom', label: 'Google Classroom', icon: BookOpen },
+  { to: '/student-os/drive', label: 'Google Drive', icon: FolderOpen },
+  { to: '/student-os/gmail', label: 'Gmail Hub', icon: Mail },
   { to: '/student-os/calendar', label: 'Calendar', icon: Calendar },
   { to: '/student-os/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/student-os/coding', label: 'Coding Practice', icon: Code },
+];
+
+const CAREER_NAV = [
+  { to: '/student-os/roadmap', label: 'My Roadmap', icon: Map },
+  { to: '/student-os/planner', label: 'Daily Planner', icon: ClipboardList },
+  { to: '/student-os/career', label: 'Career Hub', icon: TrendingUp },
+  { to: '/student-os/assessment', label: 'Skill Assessment', icon: Brain },
+  { to: '/student-os/weak-areas', label: 'Weak Areas', icon: AlertTriangle },
 ];
 
 const INTELLIGENCE_NAV = [
@@ -23,51 +33,47 @@ const INTELLIGENCE_NAV = [
   { to: '/student-os/focus', label: 'Focus Mode', icon: Focus },
 ];
 
-const navCls = ({ isActive }) =>
-  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
-    isActive
-      ? 'sos-nav-active'
-      : 'sos-nav-item'
-  }`;
-
-const StudentOSLayout = () => {
-  const { connected, googleEmail, connect, disconnect } = useStudentOS();
+const StudentOSLayoutContent = () => {
+  const { isConnected, disconnect } = useStudentOS();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const navCls = ({ isActive }) =>
+    `sos-nav-item ${isActive ? 'active' : ''}`;
+
   return (
-    <div className="sos-shell">
-      {/* Mobile overlay */}
+    <div className="sos-layout">
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* ── Sidebar ── */}
-      <aside
-        className={`sos-sidebar fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        {/* Logo */}
-        <div className="sos-sidebar-logo">
+      <aside className={`sos-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        {/* Brand Header */}
+        <div className="sos-sidebar-header">
           <div className="flex items-center gap-2.5">
             <div className="sos-logo-icon">
               <GraduationCap size={16} color="white" />
             </div>
             <div>
-              <p className="sos-logo-name">StudentOS</p>
-              <p className="sos-logo-sub">AI ACADEMIC HUB</p>
+              <span className="sos-brand-title">StudentOS</span>
+              <span className="sos-brand-sub">Academic Operating System</span>
             </div>
           </div>
-          <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)}>
-            <X size={16} style={{ color: 'var(--sos-text-muted)' }} />
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 rounded hover:bg-white/5"
+            style={{ color: 'var(--sos-text-muted)' }}
+          >
+            <X size={18} />
           </button>
         </div>
 
-        {/* User Profile Card */}
+        {/* User Card */}
         {user && (
           <div className="sos-user-card">
             <div className="sos-user-avatar">
@@ -94,13 +100,26 @@ const StudentOSLayout = () => {
               onClick={() => setSidebarOpen(false)}
             >
               <item.icon size={16} className="sos-nav-icon shrink-0" />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+            </NavLink>
+          ))}
+
+          {/* AI Career & Roadmap Navigation */}
+          <div className="sos-section-label">CAREER & ROADMAP AI</div>
+          {CAREER_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={navCls}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={16} className="sos-nav-icon shrink-0" />
+              <span className="flex-1">{item.label}</span>
             </NavLink>
           ))}
 
           {/* Intelligence section */}
           <div className="sos-section-label">INTELLIGENCE</div>
-
           {INTELLIGENCE_NAV.map((item) => (
             <NavLink
               key={item.to}
@@ -162,4 +181,10 @@ const StudentOSLayout = () => {
   );
 };
 
-export default StudentOSLayout;
+export default function StudentOSLayout() {
+  return (
+    <RoadmapProvider>
+      <StudentOSLayoutContent />
+    </RoadmapProvider>
+  );
+}

@@ -13,6 +13,14 @@ const AiAssistantPage = lazy(() => import('../pages/AiAssistantPage'));
 const FocusModePage = lazy(() => import('../pages/FocusModePage'));
 const CodingPage = lazy(() => import('../pages/CodingPage'));
 
+// AI Roadmap & Career pages
+const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
+const RoadmapPage = lazy(() => import('../pages/RoadmapPage'));
+const AssessmentPage = lazy(() => import('../pages/AssessmentPage'));
+const DailyPlannerPage = lazy(() => import('../pages/DailyPlannerPage'));
+const CareerDashboard = lazy(() => import('../pages/CareerDashboard'));
+const WeakAreasPage = lazy(() => import('../pages/WeakAreasPage'));
+
 const Fallback = () => (
   <div className="flex items-center justify-center h-full min-h-[300px]"
     style={{ color: 'var(--text-muted)' }}>
@@ -38,6 +46,14 @@ const StudentOSRoutes = () => (
           <Route path="ai" element={<AiAssistantPage />} />
           <Route path="focus" element={<FocusModePage />} />
           <Route path="coding" element={<CodingPage />} />
+
+          {/* AI Roadmap Routes */}
+          <Route path="onboarding" element={<OnboardingPage />} />
+          <Route path="roadmap" element={<RoadmapPage />} />
+          <Route path="assessment" element={<AssessmentPage />} />
+          <Route path="planner" element={<DailyPlannerPage />} />
+          <Route path="career" element={<CareerDashboard />} />
+          <Route path="weak-areas" element={<WeakAreasPage />} />
         </Route>
       </Routes>
     </Suspense>

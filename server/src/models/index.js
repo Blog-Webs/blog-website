@@ -1,4 +1,5 @@
 module.exports = {
+  // ── Existing models (unchanged) ──────────────────────────────────────────
   User: require('../modules/auth/User'),
   Subject: require('../modules/content/Subject'),
   Chapter: require('../modules/content/Chapter'),
@@ -20,4 +21,12 @@ module.exports = {
   Project: require('../modules/coding/models/Project'),
   CodeFile: require('../modules/coding/models/CodeFile'),
   CodeVersion: require('../modules/coding/models/CodeVersion'),
+  // ── AI Roadmap Engine models (new, additive) ─────────────────────────────
+  AcademicProfile: require('../modules/roadmap/models/AcademicProfile'),
+  DomainConfig: require('../modules/roadmap/models/DomainConfig'),
+  Roadmap: require('../modules/roadmap/models/Roadmap'),
+  Assessment: require('../modules/roadmap/models/Assessment'),
+  DailyPlan: require('../modules/roadmap/models/DailyPlan'),
+  StudySession: require('../modules/roadmap/models/StudySession'),
+  LearningResource: require('../modules/roadmap/models/LearningResource'),
 };
