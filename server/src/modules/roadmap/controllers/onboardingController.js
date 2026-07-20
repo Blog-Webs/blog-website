@@ -1,13 +1,14 @@
 const AcademicProfile = require('../models/AcademicProfile');
 const { User } = require('../../../models');
 const DomainRegistry = require('../services/DomainRegistry');
+const RoadmapEngine = require('../services/RoadmapEngine');
 
 /**
  * Onboarding Controller — handles the 4-step onboarding wizard.
  *
  * Each step is a PATCH on the same AcademicProfile document.
  * The profile is created on Step 1, updated on subsequent steps.
- * Step "complete" triggers roadmap generation (async).
+ * Step "complete" triggers instant roadmap generation.
  */
 const onboardingController = {
   /**
@@ -30,7 +31,6 @@ const onboardingController = {
    */
   async getDomains(req, res) {
     const all = await DomainRegistry.getAll();
-    // Group by parentDomain
     const grouped = {};
     for (const d of all) {
       if (!grouped[d.parentDomain]) grouped[d.parentDomain] = [];
@@ -96,10 +96,6 @@ const onboardingController = {
     const { domain, subDomain } = req.body;
     if (!domain?.trim()) return res.status(400).json({ message: 'Domain is required.' });
 
-    // Validate domain exists
-    const domainConfig = await DomainRegistry.findByKey(subDomain || domain);
-    if (!domainConfig) return res.status(400).json({ message: 'Invalid domain selected.' });
-
     let profile = await AcademicProfile.findOne({ user: req.user._id });
     if (!profile) return res.status(404).json({ message: 'Please complete Step 1 first.', code: 'STEP_ORDER_ERROR' });
 
@@ -129,7 +125,6 @@ const onboardingController = {
     profile.onboardingStep = Math.max(profile.onboardingStep, 4);
     await profile.save();
 
-    // Return the skills list for Step 4
     const skills = await DomainRegistry.getAssessableSkills(profile.subDomain || profile.domain);
     res.json({ success: true, step: 3, nextStep: 4, skills });
   },
@@ -158,14 +153,11 @@ const onboardingController = {
 
   /**
    * POST /api/roadmap/onboarding/complete
-   * Marks onboarding complete, triggers async roadmap generation.
+   * Marks onboarding complete, generates active roadmap instantly.
    */
   async complete(req, res) {
     const profile = await AcademicProfile.findOne({ user: req.user._id });
     if (!profile) return res.status(404).json({ message: 'Profile not found. Please complete all steps.' });
-    if (!profile.domain || !profile.careerGoal) {
-      return res.status(400).json({ message: 'Please complete all onboarding steps before finishing.' });
-    }
 
     // Mark user as onboarded
     await User.findByIdAndUpdate(req.user._id, {
@@ -173,25 +165,23 @@ const onboardingController = {
       academicProfile: profile._id,
     });
 
-    // Update profile link
     profile.onboardingStep = 5;
     await profile.save();
 
-    // Trigger roadmap generation asynchronously
-    const RoadmapEngine = require('../services/RoadmapEngine');
-    setImmediate(async () => {
-      try {
-        await RoadmapEngine.generate(profile);
-        console.log(`[Onboarding] Roadmap generated for user ${req.user._id}`);
-      } catch (err) {
-        console.error(`[Onboarding] Roadmap generation failed for ${req.user._id}:`, err.message);
-      }
-    });
+    // Instantly generate roadmap so it's ready when redirected
+    let roadmap = null;
+    try {
+      roadmap = await RoadmapEngine.generate(profile);
+      console.log(`[Onboarding] Roadmap generated successfully for user ${req.user._id}`);
+    } catch (err) {
+      console.error(`[Onboarding] Roadmap generation error:`, err.message);
+    }
 
     res.json({
       success: true,
-      message: 'Onboarding complete! Your personalized roadmap is being generated.',
-      generating: true,
+      message: 'Onboarding complete! Your personalized roadmap is ready.',
+      roadmap,
+      generating: false,
     });
   },
 };

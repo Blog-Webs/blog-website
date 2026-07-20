@@ -8,47 +8,45 @@ const PersonalizationEngine = require('../services/PersonalizationEngine');
 const roadmapController = {
   /**
    * GET /api/roadmap/roadmap
-   * Returns the user's active roadmap (or generating status).
+   * Returns the user's active roadmap.
    */
   async getRoadmap(req, res) {
-    const roadmap = await Roadmap.findOne({
+    let roadmap = await Roadmap.findOne({
       user: req.user._id,
       status: { $in: ['active', 'generating', 'paused'] },
     }).lean();
 
-    if (!roadmap) {
-      return res.json({ roadmap: null, generating: false });
+    // Auto-generate if profile exists but no active roadmap was found yet
+    if (!roadmap && req.academicProfile && req.academicProfile.domain) {
+      try {
+        console.log(`[RoadmapController] Auto-generating roadmap for user ${req.user._id}...`);
+        const created = await RoadmapEngine.generate(req.academicProfile);
+        roadmap = created ? created.toObject() : null;
+      } catch (err) {
+        console.error('[RoadmapController] Auto-generation failed:', err.message);
+      }
     }
 
-    res.json({ roadmap });
+    res.json({ roadmap: roadmap || null, generating: false });
   },
 
   /**
    * POST /api/roadmap/roadmap/generate
-   * Force-regenerate the roadmap. Archives the current one.
+   * Force-regenerate the roadmap instantly.
    */
   async generateRoadmap(req, res) {
     const profile = req.academicProfile;
+    if (!profile) return res.status(400).json({ message: 'Please complete onboarding first.' });
 
-    if (!RoadmapEngine.isAvailable()) {
-      return res.status(503).json({ message: 'AI service not configured. Please add GEMINI_API_KEY.' });
-    }
-
-    // Check if already generating
     const existing = await Roadmap.findOne({ user: req.user._id, status: 'active' });
 
-    // Respond immediately — generation is async
-    res.json({ success: true, message: 'Roadmap generation started.', generating: true });
-
-    // Generate in background
-    setImmediate(async () => {
-      try {
-        await RoadmapEngine.regenerate(profile, existing?._id);
-        console.log(`[Roadmap] Generated for user ${req.user._id}`);
-      } catch (err) {
-        console.error(`[Roadmap] Generation failed for ${req.user._id}:`, err.message);
-      }
-    });
+    try {
+      const roadmap = await RoadmapEngine.regenerate(profile, existing?._id);
+      res.json({ success: true, message: 'Roadmap generated successfully.', roadmap, generating: false });
+    } catch (err) {
+      console.error('[RoadmapController] Generation failed:', err.message);
+      res.status(500).json({ message: 'Failed to generate roadmap. Please try again.' });
+    }
   },
 
   /**
@@ -86,10 +84,9 @@ const roadmapController = {
 
   /**
    * GET /api/roadmap/roadmap/status
-   * Lightweight poll endpoint to check if generation is done.
    */
   async getStatus(req, res) {
-    const roadmap = await Roadmap.findOne({ user: req.user._id }).select('status completionPercent title').lean();
+    const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' }).select('status completionPercent title').lean();
     res.json({
       status: roadmap?.status || 'none',
       completionPercent: roadmap?.completionPercent || 0,

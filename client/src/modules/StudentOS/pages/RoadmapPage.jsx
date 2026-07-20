@@ -87,13 +87,26 @@ function PhaseBlock({ phase, roadmapId, onTopicComplete }) {
 }
 
 export default function RoadmapPage() {
-  const { roadmap, roadmapStatus, setRoadmap } = useRoadmap();
+  const { roadmap, roadmapStatus, setRoadmap, setRoadmapStatus, refreshRoadmap } = useRoadmap();
   const navigate = useNavigate();
   const [generating, setGenerating] = useState(false);
 
   const handleGenerate = async () => {
     setGenerating(true);
-    try { await roadmapApi.generateRoadmap(); } finally { setGenerating(false); }
+    try {
+      const { data } = await roadmapApi.generateRoadmap();
+      if (data?.roadmap) {
+        setRoadmap(data.roadmap);
+        setRoadmapStatus('active');
+      } else {
+        await refreshRoadmap();
+      }
+    } catch (err) {
+      console.error(err);
+      await refreshRoadmap();
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleTopicComplete = (topicId) => {
