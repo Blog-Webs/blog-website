@@ -33,15 +33,14 @@ const INTELLIGENCE_NAV = [
 ];
 
 const StudentOSLayoutContent = () => {
-  const { isConnected, disconnect } = useStudentOS();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navCls = ({ isActive }) =>
-    `sos-nav-item ${isActive ? 'active' : ''}`;
+    `sos-nav-item ${isActive ? 'sos-nav-active' : ''}`;
 
   return (
-    <div className="sos-layout">
+    <div className="sos-shell">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -53,20 +52,19 @@ const StudentOSLayoutContent = () => {
       {/* ── Sidebar ── */}
       <aside className={`sos-sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Brand Header */}
-        <div className="sos-sidebar-header">
+        <div className="sos-sidebar-logo">
           <div className="flex items-center gap-2.5">
             <div className="sos-logo-icon">
               <GraduationCap size={16} color="white" />
             </div>
             <div>
-              <span className="sos-brand-title">StudentOS</span>
-              <span className="sos-brand-sub">Academic Operating System</span>
+              <div className="sos-logo-name">StudentOS</div>
+              <div className="sos-logo-sub">Academic Operating System</div>
             </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 rounded hover:bg-white/5"
-            style={{ color: 'var(--sos-text-muted)' }}
+            className="lg:hidden p-1 rounded hover:bg-white/5 text-gray-400"
           >
             <X size={18} />
           </button>
@@ -89,7 +87,7 @@ const StudentOSLayoutContent = () => {
         )}
 
         {/* Main Navigation */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
           {MAIN_NAV.map((item) => (
             <NavLink
               key={item.to}
@@ -99,7 +97,7 @@ const StudentOSLayoutContent = () => {
               onClick={() => setSidebarOpen(false)}
             >
               <item.icon size={16} className="sos-nav-icon shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 truncate">{item.label}</span>
             </NavLink>
           ))}
 
@@ -113,7 +111,7 @@ const StudentOSLayoutContent = () => {
               onClick={() => setSidebarOpen(false)}
             >
               <item.icon size={16} className="sos-nav-icon shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 truncate">{item.label}</span>
             </NavLink>
           ))}
 
@@ -127,7 +125,7 @@ const StudentOSLayoutContent = () => {
               onClick={() => setSidebarOpen(false)}
             >
               <item.icon size={16} className="sos-nav-icon shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 truncate">{item.label}</span>
               {item.badge && (
                 <span className="sos-ai-badge">{item.badge}</span>
               )}
@@ -148,17 +146,17 @@ const StudentOSLayoutContent = () => {
       </aside>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Mobile topbar */}
         <div className="sos-mobile-bar lg:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg">
-            <Menu size={18} style={{ color: 'var(--sos-text-muted)' }} />
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg text-gray-400 hover:text-white">
+            <Menu size={18} />
           </button>
           <div className="flex items-center gap-2">
             <div className="sos-logo-icon" style={{ width: 24, height: 24 }}>
               <GraduationCap size={12} color="white" />
             </div>
-            <span className="font-bold text-sm" style={{ color: 'var(--sos-text)' }}>StudentOS</span>
+            <span className="font-bold text-sm text-white">StudentOS</span>
           </div>
         </div>
 
@@ -172,7 +170,7 @@ const StudentOSLayoutContent = () => {
         </NavLink>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-[#0d1117]">
           <Outlet />
         </main>
       </div>

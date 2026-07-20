@@ -854,7 +854,7 @@ a {
   --sos-accent-purple: #7c6dfa;
   --sos-accent-teal: #5EEAD4;
   --sos-accent-blue: #3e7ec6;
-  --sos-sidebar-width: 200px;
+  --sos-sidebar-width: 220px;
   --sos-active-bg: rgba(124, 109, 250, 0.15);
   --sos-active-color: #a78bfa;
 }
@@ -863,10 +863,12 @@ a {
 .sos-shell {
   display: flex;
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
   background-color: var(--sos-bg);
   color: var(--sos-text);
   font-family: 'Inter', sans-serif;
+  position: relative;
 }
 
 /* Sidebar */
@@ -877,11 +879,27 @@ a {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: transform 0.25s ease;
+}
+
+@media (max-width: 1023px) {
+  .sos-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+  }
+  .sos-sidebar.open {
+    transform: translateX(0);
+  }
 }
 
 /* Logo area */
 .sos-sidebar-logo {
-  padding: 16px 16px 12px;
+  padding: 16px 16px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -889,8 +907,8 @@ a {
 }
 
 .sos-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   background: linear-gradient(135deg, #7c6dfa 0%, #5EEAD4 100%);
   display: flex;
@@ -900,7 +918,7 @@ a {
 }
 
 .sos-logo-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--sos-text);
   line-height: 1.2;
@@ -908,30 +926,30 @@ a {
 }
 
 .sos-logo-sub {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--sos-accent-purple);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   line-height: 1;
   margin-top: 2px;
 }
 
 /* User card */
 .sos-user-card {
-  margin: 12px 10px;
+  margin: 12px 10px 6px;
   padding: 10px 12px;
   border-radius: 12px;
   background-color: var(--sos-surface-raised);
   border: 1px solid var(--sos-border);
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
 .sos-user-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #7c6dfa, #5EEAD4);
   display: flex;
   align-items: center;
@@ -948,28 +966,45 @@ a {
 }
 
 .sos-user-email {
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--sos-text-muted);
   line-height: 1.3;
 }
 
 /* Nav items */
 .sos-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--sos-text-subtle);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
 }
+
 .sos-nav-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--sos-text);
 }
+
 .sos-nav-icon {
   opacity: 0.7;
+  flex-shrink: 0;
 }
-.sos-nav-active {
+
+.sos-nav-active, .sos-nav-item.active {
   background-color: var(--sos-active-bg);
   color: var(--sos-active-color);
+  font-weight: 600;
 }
-.sos-nav-active .sos-nav-icon {
+
+.sos-nav-active .sos-nav-icon, .sos-nav-item.active .sos-nav-icon {
   opacity: 1;
+  color: var(--sos-active-color);
 }
 
 /* Section label */
