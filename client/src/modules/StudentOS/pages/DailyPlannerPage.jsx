@@ -56,15 +56,27 @@ export default function DailyPlannerPage() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
   const displayDate = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
   const load = async () => {
     setLoading(true);
+    setError('');
     try {
       const { data } = await roadmapApi.getDailyPlan(today);
-      setPlan(data.plan);
+      if (data.plan) {
+        setPlan(data.plan);
+      } else {
+        // Auto generate plan if none exists for today yet
+        const genRes = await roadmapApi.generateDailyPlan(today);
+        if (genRes.data?.plan) {
+          setPlan(genRes.data.plan);
+        }
+      }
+    } catch (err) {
+      console.error(err);
     } finally { setLoading(false); }
   };
 
@@ -72,11 +84,18 @@ export default function DailyPlannerPage() {
 
   const generate = async () => {
     setGenerating(true);
+    setError('');
     try {
       const { data } = await roadmapApi.generateDailyPlan(today);
-      setPlan(data.plan);
-    } catch { alert('Could not generate plan. Please ensure your roadmap is active.'); }
-    setGenerating(false);
+      if (data.plan) {
+        setPlan(data.plan);
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Could not generate plan. Please try again.';
+      setError(msg);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleTaskComplete = (taskId) => {
@@ -95,8 +114,9 @@ export default function DailyPlannerPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+      <div style={{ padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: 12 }}>
         <Loader2 size={32} color="#A78BFA" style={{ animation: 'spin 1s linear infinite' }} />
+        <span style={{ color: 'var(--sos-text-muted)', fontSize: 14 }}>Loading today's study plan...</span>
       </div>
     );
   }
@@ -119,9 +139,15 @@ export default function DailyPlannerPage() {
         </div>
         <button onClick={generate} disabled={generating} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 10, border: '1px solid rgba(167,139,250,0.3)', background: 'rgba(167,139,250,0.08)', color: '#A78BFA', cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600 }}>
           {generating ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={14} />}
-          {generating ? 'Generating...' : plan ? 'Regenerate' : 'Generate Plan'}
+          {generating ? 'Generating...' : plan ? 'Regenerate Plan' : 'Generate Plan'}
         </button>
       </div>
+
+      {error && (
+        <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 12, padding: '12px 16px', color: '#F87171', fontSize: 13, marginBottom: 20 }}>
+          {error}
+        </div>
+      )}
 
       {!plan ? (
         <div style={{ textAlign: 'center', padding: '60px 32px', background: 'var(--sos-card)', border: '1px solid var(--sos-border)', borderRadius: 20 }}>
@@ -130,7 +156,7 @@ export default function DailyPlannerPage() {
           <p style={{ color: 'var(--sos-text-muted)', marginBottom: 24 }}>Generate your AI-powered personalized study plan for today. Tasks will sync to Google Calendar if connected.</p>
           <button onClick={generate} disabled={generating} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', color: 'white', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
             {generating ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} />}
-            {generating ? 'Generating...' : 'Generate My Plan'}
+            {generating ? 'Generating Plan...' : 'Generate My Plan'}
           </button>
         </div>
       ) : (

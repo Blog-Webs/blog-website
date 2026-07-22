@@ -1,6 +1,7 @@
 const DailyPlan = require('../models/DailyPlan');
 const StudySession = require('../models/StudySession');
 const Roadmap = require('../models/Roadmap');
+const RoadmapEngine = require('../services/RoadmapEngine');
 const DailyPlannerEngine = require('../services/DailyPlannerEngine');
 const PersonalizationEngine = require('../services/PersonalizationEngine');
 const GoogleApiService = require('../../studentos/services/GoogleApiService');
@@ -22,7 +23,8 @@ const dailyPlanController = {
       const planDate = date ? new Date(date) : new Date();
       planDate.setHours(0, 0, 0, 0);
 
-      const plan = await DailyPlan.findOne({ user: req.user._id, date: planDate }).lean();
+      let plan = await DailyPlan.findOne({ user: req.user._id, date: planDate }).lean();
+      
       res.json({ plan: plan || null, date: planDate });
     } catch (err) {
       console.error('[DailyPlanController] getDailyPlan error:', err.message);
@@ -38,17 +40,26 @@ const dailyPlanController = {
   async generateDailyPlan(req, res) {
     try {
       const profile = req.academicProfile;
-      if (!profile) {
-        return res.status(400).json({ message: 'Please complete onboarding first.' });
-      }
 
       const { date } = req.body;
       const planDate = date ? new Date(date) : new Date();
       planDate.setHours(0, 0, 0, 0);
 
-      const roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
+      // Find active roadmap or auto-generate one
+      let roadmap = await Roadmap.findOne({ user: req.user._id, status: 'active' });
       if (!roadmap) {
-        return res.status(404).json({ message: 'No active roadmap found. Please generate your roadmap first.' });
+        roadmap = await Roadmap.findOne({ user: req.user._id }).sort({ createdAt: -1 });
+        if (roadmap) {
+          roadmap.status = 'active';
+          await roadmap.save();
+        } else if (profile) {
+          console.log(`[DailyPlanController] Auto-generating roadmap for user ${req.user._id}...`);
+          roadmap = await RoadmapEngine.generate(profile);
+        }
+      }
+
+      if (!roadmap) {
+        return res.status(400).json({ message: 'Please complete onboarding first.' });
       }
 
       const recentSessions = await StudySession.find({ user: req.user._id })
