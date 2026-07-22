@@ -85,6 +85,17 @@ app.get('/', (req, res) => {
   res.json({ service: 'HttpTechNex API', status: 'ok' });
 });
 
+// Google AdSense ads.txt & crawler routes
+app.get('/ads.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('google.com, pub-7256262591330365, DIRECT, f08c47fec0942fa0\n');
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nAllow: /\n\nSitemap: https://httptechnex.online/sitemap.xml\n');
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', liveUsers: getLiveCount() });
 });

@@ -17,23 +17,13 @@
     rel="stylesheet"
   />
 
-  <!-- 3. AdSense is deferred via JS below — NOT here — so it can't block LCP -->
+  <!-- 3. Google AdSense script tag for Site Review verification and Auto-Ads -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7256262591330365" crossorigin="anonymous"></script>
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
-
-  <!-- 4. Load AdSense only after the page 'load' event fires (after LCP) -->
-  <script>
-    window.addEventListener('load', function () {
-      var s = document.createElement('script');
-      s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7256262591330365';
-      s.async = true;
-      s.crossOrigin = 'anonymous';
-      document.body.appendChild(s);
-    });
-  </script>
 </body>
 
 </html>
