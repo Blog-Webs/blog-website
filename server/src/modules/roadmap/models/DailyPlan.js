@@ -9,13 +9,9 @@ const planTaskSchema = new mongoose.Schema({
   taskId:       { type: String, required: true }, // stable ID for completion tracking
   title:        { type: String, required: true },
   description:  { type: String, default: '' },
-  type: {
-    type: String,
-    enum: ['study', 'practice', 'revision', 'assessment', 'project', 'break', 'mock_test'],
-    default: 'study',
-  },
+  type:         { type: String, default: 'study' },
   durationMins: { type: Number, default: 30 },
-  priority:     { type: String, enum: ['high', 'medium', 'low'], default: 'medium' },
+  priority:     { type: String, default: 'medium' },
   topic:        { type: String, default: '' },
   roadmapPhase: { type: Number, default: 1 },
   resources: [{
@@ -33,7 +29,7 @@ const planTaskSchema = new mongoose.Schema({
   isCompleted:  { type: Boolean, default: false },
   completedAt:  { type: Date, default: null },
   feedback:     { type: String, default: '' }, // student notes after completion
-  rating:       { type: Number, min: 1, max: 5, default: null }, // how helpful was this?
+  rating:       { type: Number, min: 1, max: 5, default: null },
 }, { _id: false });
 
 const dailyPlanSchema = new mongoose.Schema(
@@ -50,7 +46,6 @@ const dailyPlanSchema = new mongoose.Schema(
 
     // AI-generated motivational/strategic insight for the day
     aiInsight:   { type: String, default: '' },
-    // e.g. "Focus on Anatomy today — your score improved 18% last week"
     focusArea:   { type: String, default: '' },
 
     generatedBy: { type: String, default: 'gemini-2.5-flash' },

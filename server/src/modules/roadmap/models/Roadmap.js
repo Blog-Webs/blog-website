@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
  * Auto-deleted after 90 days of inactivity (lastActivityAt TTL index).
  */
 const resourceSchema = new mongoose.Schema({
-  type:     { type: String, enum: ['video', 'article', 'book', 'course', 'practice', 'mock_test', 'tool', 'other'], default: 'article' },
+  type:     { type: String, default: 'article' },
   title:    { type: String, required: true },
   url:      { type: String, default: '' },
   platform: { type: String, default: '' },
@@ -16,17 +16,12 @@ const topicSchema = new mongoose.Schema({
   topicId:        { type: String, required: true }, // stable ID for completion tracking
   title:          { type: String, required: true },
   description:    { type: String, default: '' },
-  type: {
-    type: String,
-    enum: ['concept', 'skill', 'project', 'assessment', 'revision', 'practice', 'mock_test'],
-    default: 'concept',
-  },
-  resources:        [resourceSchema],
-  estimatedHours:   { type: Number, default: 2 },
-  isCompleted:      { type: Boolean, default: false },
-  completedAt:      { type: Date, default: null },
-  // For adaptive difficulty — AI adjusts this
-  difficulty:       { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+  type:           { type: String, default: 'concept' },
+  resources:      [resourceSchema],
+  estimatedHours: { type: Number, default: 2 },
+  isCompleted:    { type: Boolean, default: false },
+  completedAt:    { type: Date, default: null },
+  difficulty:     { type: String, default: 'beginner' },
 }, { _id: false });
 
 const phaseSchema = new mongoose.Schema({
@@ -50,17 +45,12 @@ const roadmapSchema = new mongoose.Schema(
     profile: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicProfile', required: true },
 
     title:       { type: String, required: true },
-    type: {
-      type: String,
-      enum: ['placement', 'exam', 'research', 'certification', 'skill', 'higher_studies', 'entrepreneurship'],
-      required: true,
-    },
+    type:        { type: String, default: 'placement' },
     domain:      { type: String, required: true },
     careerGoal:  { type: String, required: true },
 
     status: {
       type: String,
-      enum: ['generating', 'active', 'completed', 'paused', 'archived'],
       default: 'generating',
       index: true,
     },
@@ -98,8 +88,8 @@ roadmapSchema.index({ lastActivityAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 
 roadmapSchema.pre('save', function (next) {
   let total = 0;
   let done = 0;
-  for (const phase of this.phases) {
-    for (const topic of phase.topics) {
+  for (const phase of this.phases || []) {
+    for (const topic of phase.topics || []) {
       total++;
       if (topic.isCompleted) done++;
     }
