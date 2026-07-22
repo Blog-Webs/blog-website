@@ -17,10 +17,17 @@ const multer = require('multer');
 const os = require('os');
 const upload = multer({ dest: os.tmpdir() });
 
+function cacheControl(seconds = 15) {
+  return (req, res, next) => {
+    res.setHeader('Cache-Control', `private, max-age=${seconds}, stale-while-revalidate=60`);
+    next();
+  };
+}
+
 // ── Auth (no StudentOS token required, just httpTechNex login) ──
 router.get('/auth/url', requireAuth, authCtrl.getAuthUrl);
 router.get('/auth/callback', authCtrl.handleCallback); // Google redirects here (no auth header)
-router.get('/auth/status', requireAuth, authCtrl.getStatus);
+router.get('/auth/status', requireAuth, cacheControl(15), authCtrl.getStatus);
 router.delete('/auth/disconnect', requireAuth, authCtrl.disconnect);
 
 // ── All routes below require both httpTechNex login AND Google Workspace connected ──

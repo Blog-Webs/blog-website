@@ -1,14 +1,29 @@
 const AcademicProfile = require('../models/AcademicProfile');
-const { User } = require('../../../models');
+
+// 30-second in-memory cache for academic profiles per user to avoid database overhead on parallel requests
+const profileCache = new Map();
+const PROFILE_CACHE_TTL_MS = 30 * 1000;
+
+function invalidateProfileCache(userId) {
+  if (userId) profileCache.delete(userId.toString());
+}
 
 /**
  * requireProfile middleware — ensures the student has completed onboarding.
  * Must run AFTER requireAuth.
- * Routes that need a profile to function should use this.
  */
 const requireProfile = async (req, res, next) => {
   try {
-    const profile = await AcademicProfile.findOne({ user: req.user._id });
+    const userIdStr = req.user._id.toString();
+    const cached = profileCache.get(userIdStr);
+    const now = Date.now();
+
+    if (cached && now < cached.expiresAt) {
+      req.academicProfile = cached.profile;
+      return next();
+    }
+
+    const profile = await AcademicProfile.findOne({ user: req.user._id }).lean();
     if (!profile) {
       return res.status(403).json({
         message: 'Academic profile not found. Please complete onboarding first.',
@@ -16,6 +31,12 @@ const requireProfile = async (req, res, next) => {
         redirectTo: '/student-os/onboarding',
       });
     }
+
+    profileCache.set(userIdStr, {
+      profile,
+      expiresAt: now + PROFILE_CACHE_TTL_MS,
+    });
+
     req.academicProfile = profile;
     next();
   } catch (err) {
@@ -24,3 +45,4 @@ const requireProfile = async (req, res, next) => {
 };
 
 module.exports = requireProfile;
+module.exports.invalidateProfileCache = invalidateProfileCache;

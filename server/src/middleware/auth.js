@@ -1,17 +1,18 @@
 const { verifyToken } = require('../utils/jwt');
 const { User } = require('../models');
 
-// Reads the JWT from the Authorization header ("Bearer <token>"), attaches
-// req.user if valid. Does NOT block the request if absent — use
-// `requireAuth` for that.
-//
-// We use a header instead of a cookie because the frontend (Vercel) and
-// backend (Render) live on different top-level domains. Cross-site cookies
-// are increasingly blocked by browsers by default (Safari ITP, Chrome's
-// third-party cookie phase-out, Brave, etc.) even with secure+SameSite=None
-// set correctly, which makes them unreliable for this exact deployment
-// shape. A Bearer token has no such restriction — the browser doesn't
-// apply any of that policy to a normal Authorization header.
+// Short-TTL in-memory cache for user objects (30s) to prevent redundant DB lookups on rapid parallel requests
+const userCache = new Map();
+const USER_CACHE_TTL_MS = 30 * 1000;
+
+function invalidateUserCache(userId) {
+  if (userId) userCache.delete(userId.toString());
+}
+
+/**
+ * Reads the JWT from the Authorization header ("Bearer <token>"), attaches
+ * req.user if valid.
+ */
 const attachUser = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || '';
@@ -22,8 +23,30 @@ const attachUser = async (req, res, next) => {
       return next();
     }
     const decoded = verifyToken(token);
-    const user = await User.findById(decoded.id).select('-__v');
+    if (!decoded || !decoded.id) {
+      req.user = null;
+      return next();
+    }
+
+    const userIdStr = decoded.id.toString();
+    const cached = userCache.get(userIdStr);
+    const now = Date.now();
+
+    if (cached && now < cached.expiresAt) {
+      req.user = cached.user;
+      return next();
+    }
+
+    const user = await User.findById(decoded.id).select('-__v').lean();
     req.user = user || null;
+
+    if (user) {
+      userCache.set(userIdStr, {
+        user,
+        expiresAt: now + USER_CACHE_TTL_MS,
+      });
+    }
+
     next();
   } catch (err) {
     req.user = null;
@@ -39,9 +62,7 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// Server-side admin gate. Checks BOTH the user's stored role AND the
-// live ADMIN_EMAILS env list, so revoking admin access only requires
-// an env change + role sync, never trusts the client.
+// Server-side admin gate.
 const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(404).json({ message: 'Not found.' });
@@ -54,11 +75,9 @@ const requireAdmin = (req, res, next) => {
   const isAdmin = req.user.role === 'admin' && adminEmails.includes(req.user.email.toLowerCase());
 
   if (!isAdmin) {
-    // Deliberately a generic 404, not 403 — never confirm the admin route exists
-    // to a non-admin caller.
     return res.status(404).json({ message: 'Not found.' });
   }
   next();
 };
 
-module.exports = { attachUser, requireAuth, requireAdmin };
+module.exports = { attachUser, requireAuth, requireAdmin, invalidateUserCache };
