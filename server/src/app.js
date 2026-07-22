@@ -138,4 +138,14 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || 'Something went wrong on our end.' });
 });
 
+// ── Render Free-Tier Keep-Alive Warmup ──────────────────────────────────────
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+  const https = require('https');
+  setInterval(() => {
+    https.get('https://httptechnex.onrender.com/api/health', (res) => {
+      res.on('data', () => {});
+    }).on('error', () => {});
+  }, 10 * 60 * 1000); // Self-ping every 10 minutes to stay awake
+}
+
 module.exports = app;

@@ -23,16 +23,10 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2020',
+    sourcemap: false,
     rollupOptions: {
       output: {
-        /**
-         * Split heavy vendor code so public-site visitors never download
-         * the admin/editor bundle (BlockNote + Mantine) on their critical path.
-         *
-         *  react-vendor  → React + React-DOM + React-Router (small, stable, cached)
-         *  editor        → BlockNote + Mantine (large, admin-only, lazy-loaded)
-         *  ui-vendor     → Lucide icons + misc UI libs
-         */
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (
@@ -51,10 +45,12 @@ export default defineConfig({
             if (id.includes('lucide-react')) {
               return 'ui-vendor';
             }
+            if (id.includes('axios')) {
+              return 'client-utils';
+            }
           }
         },
       },
     },
   },
 })
-
