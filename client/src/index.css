@@ -837,27 +837,1417 @@ a {
 }
 
 /* ============================================================
-   StudentOS Design System
-   Dark navy/charcoal dashboard matching the reference UI
+   StudentOS Design System — httpTechNex Edition
+   Premium glassmorphism dashboard aligned with the parent site's
+   blue-primary palette, Geist typography, glow shadows, shimmer
+   animations, blob-drift micro-interactions, and card-hover lifts.
    ============================================================ */
 
+/* ── Token Layer ── */
 :root {
-  --sos-bg: #0d1117;
-  --sos-sidebar-bg: #10141a;
-  --sos-surface: #161b22;
-  --sos-surface-raised: #1c2230;
-  --sos-border: rgba(255, 255, 255, 0.07);
-  --sos-border-hover: rgba(255, 255, 255, 0.14);
-  --sos-text: #e2e8f0;
-  --sos-text-muted: #64748b;
-  --sos-text-subtle: #94a3b8;
-  --sos-accent-purple: #7c6dfa;
-  --sos-accent-teal: #5EEAD4;
-  --sos-accent-blue: #3e7ec6;
-  --sos-sidebar-width: 220px;
-  --sos-active-bg: rgba(124, 109, 250, 0.15);
-  --sos-active-color: #a78bfa;
+  /* Backgrounds */
+  --sos-bg:              #0b0d12;
+  --sos-sidebar-bg:      rgba(11, 13, 20, 0.85);
+  --sos-surface:         rgba(20, 24, 36, 0.75);
+  --sos-surface-raised:  rgba(28, 34, 52, 0.80);
+  --sos-surface-glass:   rgba(15, 20, 35, 0.60);
+
+  /* Borders */
+  --sos-border:          rgba(77, 142, 255, 0.10);
+  --sos-border-hover:    rgba(77, 142, 255, 0.28);
+  --sos-border-active:   rgba(77, 142, 255, 0.45);
+
+  /* Text */
+  --sos-text:            #e2e8f4;
+  --sos-text-muted:      #56647a;
+  --sos-text-subtle:     #8a9bbf;
+
+  /* Accents — httpTechNex primary blue family */
+  --sos-accent-blue:     #4d8eff;          /* vivid primary */
+  --sos-accent-blue-dim: #adc6ff;          /* soft / on-dark */
+  --sos-accent-teal:     #5EEAD4;          /* secondary */
+  --sos-accent-purple:   #a78bfa;          /* AI / intelligence */
+
+  /* Glow colours */
+  --sos-glow-blue:       rgba(77, 142, 255, 0.35);
+  --sos-glow-teal:       rgba(94, 234, 212, 0.30);
+  --sos-glow-purple:     rgba(167, 139, 250, 0.30);
+
+  /* Gradients */
+  --sos-gradient-primary: linear-gradient(135deg, #4d8eff 0%, #5EEAD4 100%);
+  --sos-gradient-ai:      linear-gradient(135deg, #7c6dfa 0%, #4d8eff 50%, #5EEAD4 100%);
+  --sos-gradient-subtle:  linear-gradient(135deg, rgba(77,142,255,0.15) 0%, rgba(94,234,212,0.08) 100%);
+
+  /* Layout */
+  --sos-sidebar-width:   224px;
+
+  /* Nav active state */
+  --sos-active-bg:       rgba(77, 142, 255, 0.12);
+  --sos-active-color:    #adc6ff;
 }
+
+/* ── Shell ── */
+.sos-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  /* Grid-dot background matching the httpTechNex main site body */
+  background-color: var(--sos-bg);
+  background-image:
+    linear-gradient(rgba(77, 142, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 142, 255, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  color: var(--sos-text);
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+
+/* ── Sidebar ── */
+.sos-sidebar {
+  width: var(--sos-sidebar-width);
+  /* Glassmorphism — matches glass-card utility in the main site */
+  background: var(--sos-sidebar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--sos-border);
+  box-shadow: inset -1px 0 0 rgba(77, 142, 255, 0.06),
+              4px 0 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 1023px) {
+  .sos-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+  }
+  .sos-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* ── Logo area ── */
+.sos-sidebar-logo {
+  padding: 16px 16px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Gradient border-bottom — httpTechNex header style */
+  border-bottom: 1px solid transparent;
+  background-image: linear-gradient(var(--sos-sidebar-bg), var(--sos-sidebar-bg)),
+                    linear-gradient(90deg, rgba(77,142,255,0.4), rgba(94,234,212,0.3), rgba(77,142,255,0.1));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Logo icon — animated ambient blob, blue→teal gradient */
+.sos-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--sos-gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px var(--sos-glow-blue),
+              0 0 4px rgba(77, 142, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  /* Reuse blob-drift defined in the main sheet */
+  animation: blob-drift 10s ease-in-out infinite alternate;
+}
+
+/* Shimmer sweep over the logo icon */
+.sos-logo-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 4s ease-in-out infinite;
+  border-radius: inherit;
+}
+
+/* Logo name — Geist display font, gradient text */
+.sos-logo-name {
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--sos-text) 0%, var(--sos-accent-blue-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sos-logo-sub {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--sos-accent-blue);
+  letter-spacing: 0.07em;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.75;
+}
+
+/* ── User card ── */
+.sos-user-card {
+  margin: 12px 10px 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sos-surface-raised);
+  border: 1px solid var(--sos-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.sos-user-card:hover {
+  border-color: var(--sos-border-hover);
+  box-shadow: 0 0 18px -4px var(--sos-glow-blue);
+}
+
+.sos-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--sos-gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px var(--sos-glow-blue);
+}
+
+.sos-user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sos-text);
+  line-height: 1.3;
+  font-family: 'Geist', sans-serif;
+}
+
+.sos-user-email {
+  font-size: 10.5px;
+  color: var(--sos-text-muted);
+  line-height: 1.3;
+}
+
+/* ── Nav items ── */
+.sos-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--sos-text-subtle);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  margin-bottom: 1px;
+  position: relative;
+}
+
+.sos-nav-item:hover {
+  background-color: rgba(77, 142, 255, 0.07);
+  color: var(--sos-text);
+}
+.sos-nav-item:hover .sos-nav-icon {
+  color: var(--sos-accent-blue-dim);
+  opacity: 1;
+}
+
+.sos-nav-icon {
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+/* Active state — blue left-stripe + soft glow bg */
+.sos-nav-active,
+.sos-nav-item.active {
+  background-color: var(--sos-active-bg);
+  color: var(--sos-active-color);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--sos-accent-blue);
+}
+
+.sos-nav-active .sos-nav-icon,
+.sos-nav-item.active .sos-nav-icon {
+  opacity: 1;
+  color: var(--sos-accent-blue);
+}
+
+/* ── Section labels ── */
+.sos-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--sos-text-muted);
+  padding: 14px 12px 5px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── AI badge — blue→teal gradient matching httpTechNex primary ── */
+.sos-ai-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--sos-gradient-primary);
+  color: #0b0d12;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 8px var(--sos-glow-blue);
+}
+
+/* ── Sidebar footer ── */
+.sos-sidebar-footer {
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--sos-border);
+}
+
+.sos-back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--sos-text-muted);
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  text-decoration: none;
+}
+.sos-back-link:hover {
+  color: var(--sos-accent-blue-dim);
+  background-color: rgba(77, 142, 255, 0.07);
+}
+
+/* ── Mobile bar ── */
+.sos-mobile-bar {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--sos-border);
+  background: var(--sos-sidebar-bg);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Floating chat FAB — blue glow ── */
+.sos-chat-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--sos-gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px var(--sos-glow-blue),
+              0 0 0 1px rgba(77, 142, 255, 0.3);
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1),
+              box-shadow 0.2s ease;
+}
+.sos-chat-fab:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 10px 36px var(--sos-glow-blue),
+              0 0 0 1px rgba(77, 142, 255, 0.5);
+}
+
+/* ================================================================
+   Dashboard Layout
+   ================================================================ */
+
+.sos-dashboard {
+  padding: 22px 26px 36px;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 100%;
+}
+
+/* ── Stat Row ── */
+.sos-stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 14px;
+}
+
+.sos-stat-card {
+  background: var(--sos-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--sos-border);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer sweep top-border line (reuses shimmer-sweep keyframe) */
+.sos-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent,
+    var(--sos-stat-shine, rgba(77,142,255,0.5)), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 3s ease-in-out infinite;
+}
+
+/* Ambient glow orb in bottom-right corner */
+.sos-stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -20px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sos-stat-glow, rgba(77,142,255,0.12)) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(16px);
+}
+
+.sos-stat-card:hover {
+  border-color: var(--sos-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px -8px var(--sos-stat-shadow, var(--sos-glow-blue)),
+              0 4px 12px -4px rgba(0,0,0,0.5);
+}
+
+/* Per-card colour tokens */
+.sos-stat-blue   {
+  --sos-stat-glow:   rgba(77,142,255,0.14);
+  --sos-stat-shine:  rgba(77,142,255,0.55);
+  --sos-stat-shadow: rgba(77,142,255,0.30);
+}
+.sos-stat-purple {
+  --sos-stat-glow:   rgba(167,139,250,0.14);
+  --sos-stat-shine:  rgba(167,139,250,0.55);
+  --sos-stat-shadow: rgba(167,139,250,0.30);
+}
+.sos-stat-teal {
+  --sos-stat-glow:   rgba(94,234,212,0.14);
+  --sos-stat-shine:  rgba(94,234,212,0.55);
+  --sos-stat-shadow: rgba(94,234,212,0.30);
+}
+.sos-stat-red {
+  --sos-stat-glow:   rgba(248,113,113,0.14);
+  --sos-stat-shine:  rgba(248,113,113,0.55);
+  --sos-stat-shadow: rgba(248,113,113,0.30);
+}
+
+.sos-stat-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+}
+
+/* Stat numbers use Geist + gradient text — httpTechNex display style */
+.sos-stat-num {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  font-family: 'Geist', sans-serif;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--sos-text) 0%, var(--sos-accent-blue-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* Glow matching .glow-title in the main sheet */
+  filter: drop-shadow(0 0 12px rgba(77,142,255,0.25));
+}
+
+.sos-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  color: var(--sos-text-muted);
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Main Grid ── */
+.sos-main-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 18px;
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .sos-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Card base — glassmorphism ── */
+.sos-card {
+  background: var(--sos-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--sos-border);
+  border-radius: 18px;
+  padding: 20px;
+  /* Inset top highlight matching glass-card in main site */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.sos-card:hover {
+  border-color: var(--sos-border-hover);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+              0 8px 28px -8px var(--sos-glow-blue);
+  transform: translateY(-1px);
+}
+
+.sos-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+/* Card titles use Geist for visual hierarchy */
+.sos-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sos-text);
+  letter-spacing: -0.01em;
+  font-family: 'Geist', sans-serif;
+}
+
+.sos-card-title-icon {
+  color: var(--sos-accent-blue);
+}
+
+.sos-card-title-icon-warn {
+  color: #FFB454;
+}
+
+/* ── View All link ── */
+.sos-view-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--sos-accent-blue);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.sos-view-all:hover { opacity: 0.75; }
+
+/* ── Empty states ── */
+.sos-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 10px;
+}
+
+.sos-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--sos-surface-raised);
+  border: 1px solid var(--sos-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sos-empty-text {
+  font-size: 13px;
+  color: var(--sos-text-subtle);
+  font-weight: 500;
+}
+
+.sos-empty-sub {
+  font-size: 11px;
+  color: var(--sos-text-muted);
+}
+
+/* ── Timeline ── */
+.sos-timeline-card {
+  height: fit-content;
+}
+
+.sos-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sos-timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* Blue glowing dot — matches httpTechNex accent */
+.sos-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--sos-accent-blue);
+  margin-top: 5px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px var(--sos-glow-blue), 0 0 2px var(--sos-accent-blue);
+}
+
+.sos-timeline-content {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--sos-surface-raised);
+  border: 1px solid var(--sos-border);
+  transition: border-color 0.15s;
+}
+.sos-timeline-content:hover {
+  border-color: var(--sos-border-hover);
+}
+
+.sos-timeline-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sos-text);
+}
+
+.sos-timeline-time {
+  font-size: 11px;
+  color: var(--sos-text-muted);
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sos-meet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--sos-accent-teal);
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.sos-meet-link:hover { opacity: 1; }
+
+/* ── Right column ── */
+.sos-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Action Required ── */
+.sos-action-card {}
+
+.sos-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sos-action-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--sos-surface-raised);
+  border: 1px solid var(--sos-border);
+  transition: border-color 0.18s, background-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+.sos-action-item:hover {
+  border-color: var(--sos-border-hover);
+  background: rgba(77,142,255,0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -6px var(--sos-glow-blue);
+}
+
+.sos-action-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.sos-action-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sos-text);
+}
+
+.sos-action-meta {
+  font-size: 11px;
+  color: var(--sos-text-muted);
+  margin-top: 2px;
+}
+
+.sos-action-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--sos-border);
+  color: var(--sos-text-muted);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.sos-action-link:hover {
+  background-color: rgba(77,142,255,0.10);
+  color: var(--sos-accent-blue-dim);
+  border-color: var(--sos-border-hover);
+}
+
+/* ── Bottom row ── */
+.sos-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 640px) {
+  .sos-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Bulletins ── */
+.sos-bulletin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sos-bulletin-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--sos-surface-raised);
+  border: 1px solid var(--sos-border);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sos-bulletin-item:hover {
+  border-color: var(--sos-border-hover);
+  box-shadow: 0 4px 16px -6px var(--sos-glow-blue);
+}
+
+.sos-bulletin-text {
+  font-size: 12px;
+  color: var(--sos-text-subtle);
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sos-bulletin-date {
+  font-size: 10px;
+  color: var(--sos-text-muted);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Drive Files ── */
+.sos-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.sos-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background-color 0.15s, transform 0.15s;
+}
+.sos-file-item:hover {
+  background: rgba(77,142,255,0.06);
+  transform: translateX(2px);
+}
+
+.sos-file-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sos-file-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--sos-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.sos-file-item:hover .sos-file-name {
+  color: var(--sos-text);
+}
+
+.sos-file-more {
+  color: var(--sos-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.sos-file-more:hover {
+  background: rgba(77,142,255,0.1);
+  color: var(--sos-accent-blue-dim);
+}
+
+/* ================================================================
+   ClassroomPage — httpTechNex edition
+   ================================================================ */
+
+/* Page wrapper */
+.cls-page {
+  padding: 26px 28px 44px;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.cls-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cls-breadcrumb {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--sos-text-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+.cls-title {
+  font-size: 26px;
+  font-weight: 800;
+  font-family: 'Geist', sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  /* Gradient heading matching httpTechNex gradient-heading-accent */
+  background: linear-gradient(135deg, var(--sos-text) 0%, var(--sos-accent-blue-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 16px rgba(77,142,255,0.2));
+}
+
+.cls-subtitle {
+  font-size: 12px;
+  color: var(--sos-text-muted);
+  margin-top: 3px;
+}
+
+.cls-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Course filter dropdown */
+.cls-dropdown-wrap {
+  position: relative;
+}
+
+.cls-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--sos-border);
+  background: var(--sos-surface-raised);
+  color: var(--sos-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.cls-filter-btn:hover {
+  border-color: var(--sos-border-hover);
+  background: rgba(77,142,255,0.07);
+  box-shadow: 0 0 14px -4px var(--sos-glow-blue);
+}
+
+.cls-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: var(--sos-surface-raised);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--sos-border);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 30;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(77,142,255,0.1);
+}
+
+.cls-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--sos-text-subtle);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.cls-dropdown-item:hover {
+  background: rgba(77,142,255,0.07);
+  color: var(--sos-text);
+}
+
+/* Icon buttons */
+.cls-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--sos-border);
+  background: var(--sos-surface-raised);
+  color: var(--sos-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.cls-icon-btn:hover {
+  background: rgba(77,142,255,0.10);
+  color: var(--sos-accent-blue-dim);
+  border-color: var(--sos-border-hover);
+  box-shadow: 0 0 12px -4px var(--sos-glow-blue);
+}
+
+/* Tabs */
+.cls-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--sos-surface);
+  border: 1px solid var(--sos-border);
+  border-radius: 12px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.cls-tab {
+  padding: 8px 20px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sos-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.18s, color 0.18s;
+}
+.cls-tab:hover {
+  color: var(--sos-text);
+}
+.cls-tab-active {
+  background: var(--sos-surface-raised);
+  color: var(--sos-text) !important;
+  border: 1px solid var(--sos-border-hover);
+  box-shadow: inset 0 1px 0 rgba(77,142,255,0.12);
+}
+
+/* List container */
+.cls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cls-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--sos-text-muted);
+  font-size: 13px;
+}
+
+/* Assignment card */
+.cls-assignment-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--sos-surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--sos-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.cls-assignment-card:hover {
+  border-color: var(--sos-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px -8px var(--sos-glow-blue);
+}
+
+.cls-announcement-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--sos-surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--sos-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cls-announcement-card:hover {
+  border-color: var(--sos-border-hover);
+  box-shadow: 0 6px 20px -6px var(--sos-glow-blue);
+}
+
+/* Left coloured stripe */
+.cls-card-stripe {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+/* Card body */
+.cls-card-body {
+  flex: 1;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Priority badge */
+.cls-priority-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 2px;
+}
+
+/* Card title */
+.cls-card-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--sos-text);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-family: 'Geist', sans-serif;
+}
+
+/* Card meta */
+.cls-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--sos-text-muted);
+}
+
+.cls-meta-dot {
+  opacity: 0.5;
+}
+
+/* Description */
+.cls-card-desc {
+  font-size: 12.5px;
+  color: var(--sos-text-subtle);
+  line-height: 1.6;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Open link button */
+.cls-card-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  color: var(--sos-text-muted);
+  transition: color 0.15s, background-color 0.15s;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.cls-card-link-btn:hover {
+  color: var(--sos-accent-blue-dim);
+  background: rgba(77,142,255,0.07);
+}
+
+/* Announcement */
+.cls-ann-course {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--sos-accent-teal);
+  margin-bottom: 4px;
+}
+
+.cls-material-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: rgba(94,234,212,0.10);
+  color: var(--sos-accent-teal);
+  border: 1px solid rgba(94,234,212,0.15);
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.cls-material-link:hover {
+  background: rgba(94,234,212,0.18);
+  border-color: rgba(94,234,212,0.30);
+}
+
+/* Courses grid */
+.cls-course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.cls-course-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--sos-surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--sos-border);
+  border-radius: 14px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.cls-course-card:hover {
+  border-color: var(--sos-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px var(--sos-glow-blue);
+}
+
+.cls-course-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(77,142,255,0.12);
+  color: var(--sos-accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(77,142,255,0.15);
+}
+
+.cls-course-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sos-text);
+  line-height: 1.4;
+  font-family: 'Geist', sans-serif;
+}
+
+.cls-course-section {
+  font-size: 11px;
+  color: var(--sos-text-muted);
+  margin-top: 2px;
+}
+
+.cls-course-open {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sos-accent-blue);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.cls-course-open:hover {
+  opacity: 0.8;
+  filter: drop-shadow(0 0 4px var(--sos-glow-blue));
+}
+
+/* Bottom row */
+.cls-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+@media (max-width: 700px) {
+  .cls-bottom-row { grid-template-columns: 1fr; }
+}
+
+/* ── AI Summary card — premium gradient with sparkle feel ── */
+.cls-ai-card {
+  /* Multi-stop gradient matching httpTechNex cls-ai-card style but blue-first */
+  background: linear-gradient(135deg,
+    rgba(13, 17, 33, 0.95) 0%,
+    rgba(16, 22, 44, 0.90) 50%,
+    rgba(13, 24, 38, 0.95) 100%
+  );
+  border: 1px solid rgba(77, 142, 255, 0.25);
+  border-radius: 18px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Glowing border glow */
+  box-shadow: 0 0 40px -12px var(--sos-glow-blue),
+              inset 0 1px 0 rgba(77,142,255,0.15);
+}
+
+/* Shimmer sweep across the AI card top */
+.cls-ai-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(77,142,255,0.6), rgba(94,234,212,0.5), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 3s ease-in-out infinite;
+}
+
+/* Ambient orbs in corners */
+.cls-ai-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: -20px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,142,255,0.12) 0%, transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.cls-ai-bg-icon {
+  position: absolute;
+  bottom: -20px;
+  right: -10px;
+  color: rgba(77,142,255,0.06);
+  pointer-events: none;
+  line-height: 0;
+}
+
+.cls-ai-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sos-text);
+  letter-spacing: -0.01em;
+  font-family: 'Geist', sans-serif;
+}
+
+.cls-ai-text {
+  font-size: 12.5px;
+  color: var(--sos-text-subtle);
+  line-height: 1.7;
+  flex: 1;
+}
+
+/* AI button — blue→teal gradient with glow, matches httpTechNex cls-ai-btn */
+.cls-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  background: var(--sos-gradient-primary);
+  color: #07090f;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 4px;
+  transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 4px 20px var(--sos-glow-blue), 0 2px 8px rgba(0,0,0,0.3);
+  font-family: 'Geist', sans-serif;
+}
+.cls-ai-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px var(--sos-glow-blue), 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Course progress card */
+.cls-progress-card {
+  background: var(--sos-surface);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--sos-border);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.cls-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cls-progress-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sos-text);
+  letter-spacing: -0.01em;
+  font-family: 'Geist', sans-serif;
+}
+
+.cls-progress-title svg {
+  color: var(--sos-accent-blue);
+}
+
+.cls-progress-pct {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--sos-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cls-course-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cls-progress-bar-wrap {
+  margin-bottom: 6px;
+}
+
+.cls-progress-bar-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(77,142,255,0.08);
+  overflow: hidden;
+}
+
+/* Progress bar — blue→teal gradient matching main site progress-bar-fill */
+.cls-progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--sos-gradient-primary);
+  box-shadow: 0 0 8px var(--sos-glow-blue);
+  transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.cls-progress-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cls-progress-course-name {
+  font-size: 11.5px;
+  color: var(--sos-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.cls-progress-count {
+  font-size: 11px;
+  color: var(--sos-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
 
 /* Shell */
 .sos-shell {
