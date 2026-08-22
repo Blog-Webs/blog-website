@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Image as ImageIcon, X, Save, Send, Eye, CloudUpload, Settings, Plus, LayoutList, Calendar, Link as LinkIcon, Image, Code, List, ListOrdered, Quote, Bot, Edit2, Trash2, ArrowRight } from 'lucide-react';
 import { blogApi } from '../api/blog';
 import { seriesApi } from '../api/series';
+import { adminApi } from '../../admin/api/admin';
 import BlockEditor from '../../core/components/ui/BlockEditor';
 
 const emptyPost = {
@@ -159,6 +160,16 @@ const AdminBlogStudio = () => {
       navigate('/admin-portal/blogs');
     }
     loadBlogs();
+  };
+
+  const handleSendMail = async (blogId, blogTitle) => {
+    if (!window.confirm(`Dispatch email notification for "${blogTitle}" to all active newsletter subscribers?`)) return;
+    try {
+      const { data } = await adminApi.triggerBlogNotification(blogId);
+      alert(data.message || 'Email notifications dispatched successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to dispatch email notifications.');
+    }
   };
 
   if (!loaded) return <p className="text-on-surface-variant p-10">Loading editor...</p>;
@@ -444,12 +455,13 @@ const AdminBlogStudio = () => {
                   <td className="px-6 py-4 text-xs font-mono text-on-surface-variant flex items-center gap-3 h-[72px]">
                     <span className="flex items-center gap-1" title="Views"><Eye size={12} /> {b.views || 0}</span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <button onClick={() => navigate(`/admin-portal/blogs/${b._id}`)} className="p-1.5 text-on-surface-variant hover:text-white hover:bg-[#1C202B] rounded"><Edit2 size={14} /></button>
-                       <button onClick={() => handleDelete(b._id)} className="p-1.5 text-on-surface-variant hover:text-red-400 hover:bg-[#1C202B] rounded"><Trash2 size={14} /></button>
-                    </div>
-                  </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleSendMail(b._id, b.title)} className="p-1.5 text-on-surface-variant hover:text-[#38bdf8] hover:bg-[#1C202B] rounded" title="Send Email Notification to Subscribers"><Send size={14} /></button>
+                        <button onClick={() => navigate(`/admin-portal/blogs/${b._id}`)} className="p-1.5 text-on-surface-variant hover:text-white hover:bg-[#1C202B] rounded" title="Edit Post"><Edit2 size={14} /></button>
+                        <button onClick={() => handleDelete(b._id)} className="p-1.5 text-on-surface-variant hover:text-red-400 hover:bg-[#1C202B] rounded" title="Delete Post"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
                 </tr>
               ))}
             </tbody>

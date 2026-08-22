@@ -8,35 +8,50 @@ const { sendBulkMail } = require('../../utils/mailer');
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Emails every active subscriber that a new post is live. Fire-and-forget
-// from the caller's perspective — failures are logged, never thrown, so a
-// flaky SMTP provider can't block the publish action itself.
+// from the caller's perspective — failures are logged, never thrown.
 const notifySubscribersOfNewPost = async (blog) => {
   try {
     const subscribers = await Newsletter.find({ isActive: true }).select('email');
-    if (subscribers.length === 0) return;
+    if (!subscribers || subscribers.length === 0) {
+      console.log('[notifySubscribersOfNewPost] No active subscribers found to notify.');
+      return { sentCount: 0, failedCount: 0 };
+    }
+
+    const recipientEmails = subscribers.map((s) => s.email);
+    console.log(`[notifySubscribersOfNewPost] Dispatching notification for "${blog.title}" to ${recipientEmails.length} subscriber(s)...`);
 
     const postUrl = `${CLIENT_URL}/blog/${blog.slug}`;
     const html = `
-      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
-        <p style="color:#5EEAD4; font-size:12px; letter-spacing:0.05em; text-transform:uppercase;">New on HttpTechNex</p>
-        <h2 style="margin:8px 0;">${blog.title}</h2>
-        ${blog.subtitle ? `<p style="color:#666; font-size:15px;">${blog.subtitle}</p>` : ''}
-        <p style="color:#444; font-size:14px; line-height:1.6;">${blog.excerpt || ''}</p>
-        <a href="${postUrl}" style="display:inline-block; margin-top:16px; padding:10px 20px; background:#0D9488; color:#fff; border-radius:8px; text-decoration:none; font-size:14px;">Read the full post</a>
-        <p style="color:#999; font-size:12px; margin-top:32px;">
-          You're receiving this because you subscribed to the HttpTechNex newsletter.
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #0E1015; padding: 36px; border-radius: 16px; border: 1px solid rgba(67, 117, 255, 0.3); color: #E2E8F0;">
+        <div style="margin-bottom: 24px;">
+          <span style="background: rgba(67, 117, 255, 0.15); color: #4375FF; border: 1px solid rgba(67, 117, 255, 0.3); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 50px;">
+            New Blog Publication
+          </span>
+        </div>
+        <h1 style="margin: 0 0 12px; color: #FFFFFF; font-size: 22px; line-height: 1.3;">${blog.title}</h1>
+        ${blog.subtitle ? `<p style="color: #8B949E; font-size: 14px; margin-bottom: 18px; line-height: 1.5;">${blog.subtitle}</p>` : ''}
+        <p style="color: #C9D1D9; font-size: 14px; line-height: 1.6; margin-bottom: 28px;">${blog.excerpt || ''}</p>
+        <a href="${postUrl}" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #4375FF, #3460E0); color: #FFFFFF; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 600;">
+          Read Article on HttpTechNex &rarr;
+        </a>
+        <p style="color: #484F58; font-size: 12px; margin-top: 36px; border-top: 1px solid #1C202B; padding-top: 20px; text-align: center;">
+          Sent to HttpTechNex Newsletter Subscribers &middot; <a href="${CLIENT_URL}" style="color: #4375FF; text-decoration: none;">httptechnex.online</a>
         </p>
       </div>
     `;
 
-    await sendBulkMail({
-      recipients: subscribers.map((s) => s.email),
+    const result = await sendBulkMail({
+      recipients: recipientEmails,
       subject: `New post: ${blog.title}`,
       html,
       text: `${blog.title}\n\n${blog.excerpt || ''}\n\nRead it here: ${postUrl}`,
     });
+
+    console.log(`[notifySubscribersOfNewPost] Email dispatch complete. Sent: ${result.sentCount}, Failed: ${result.failedCount}`);
+    return result;
   } catch (err) {
-    console.error('[notifySubscribersOfNewPost]', err.message);
+    console.error('[notifySubscribersOfNewPost] Error sending emails:', err.message);
+    return { error: err.message };
   }
 };
 
@@ -371,6 +386,15 @@ const deleteComment = async (req, res) => {
   res.json({ message: 'Comment deleted successfully' });
 };
 
+// POST /api/blogs/admin/:id/notify  -- admin only, manually trigger email notification for a blog post
+const triggerNotification = async (req, res) => {
+  const blog = await Blog.findById(req.params.id);
+  if (!blog) return res.status(404).json({ message: 'Post not found.' });
+
+  const result = await notifySubscribersOfNewPost(blog);
+  res.json({ message: 'Email notifications triggered successfully!', result });
+};
+
 module.exports = {
   getBlogs,
   getBlogBySlug,
@@ -384,4 +408,5 @@ module.exports = {
   updateBlog,
   deleteBlog,
   deleteComment,
+  triggerNotification,
 };

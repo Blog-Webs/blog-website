@@ -28,6 +28,7 @@ router.post('/upload-image', requireAuth, requireAdmin, upload.single('image'), 
 router.post('/', requireAuth, requireAdmin, createBlog);
 router.patch('/:id', requireAuth, requireAdmin, updateBlog);
 router.delete('/:id', requireAuth, requireAdmin, deleteBlog);
+router.post('/admin/:id/notify', requireAuth, requireAdmin, triggerNotification);
 
 // --- Public reads + interactions (operate on :slug) ---
 router.get('/', cache('blogs', 300), getBlogs);
