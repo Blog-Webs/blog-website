@@ -60,7 +60,7 @@ const sendBulkMail = async ({ recipients, subject, html, text, batchSize = 40 })
   for (let i = 0; i < recipients.length; i += batchSize) {
     const batch = recipients.slice(i, i + batchSize);
     try {
-      await t.sendMail({ from, bcc: batch, subject, html, text });
+      await t.sendMail({ from, to: from, bcc: batch, subject, html, text });
       sentCount += batch.length;
     } catch (err) {
       console.error('[Mailer] Batch send failed:', err.message);
