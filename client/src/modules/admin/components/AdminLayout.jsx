@@ -1,5 +1,6 @@
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { adminApi } from '../api/admin';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -12,12 +13,39 @@ import {
   Bell, 
   Plus,
   TerminalSquare,
-  Users
+  Users,
+  Check
 } from 'lucide-react';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const { data } = await adminApi.getNotifications();
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter(n => !n.read).length);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const handleMarkRead = async (id) => {
+    try {
+      await adminApi.markNotificationRead(id);
+      fetchNotifications();
+    } catch {
+      // ignore
+    }
+  };
 
   const getBreadcrumb = () => {
     if (location.pathname.includes('/blogs') || location.pathname.includes('/editor')) {
@@ -33,7 +61,7 @@ const AdminLayout = () => {
       <>
         <span className="text-on-surface-variant">Workspace</span>
         <ChevronRightIcon />
-        <span className="text-[#abc4ff] font-medium">Command Center</span>
+        <span className="text-[#abc4ff] font-medium font-mono">Command Center</span>
       </>
     );
   };
@@ -59,8 +87,11 @@ const AdminLayout = () => {
 
         {/* Action Button */}
         <div className="px-5 mt-6 mb-4">
-          <button className="w-full py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-[#4375FF]/20">
-            <Plus size={16} /> New Deployment
+          <button
+            onClick={() => navigate('/admin-portal/editor')}
+            className="w-full py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-[#4375FF]/20"
+          >
+            <Plus size={16} /> New Post / Deployment
           </button>
         </div>
 
@@ -87,12 +118,12 @@ const AdminLayout = () => {
         {/* BOTTOM SECTION */}
         <div className="p-4 border-t border-[#1C202B]">
           <nav className="space-y-0.5">
-            <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:text-white transition-colors">
-              <Settings size={16} /> Settings
-            </a>
-            <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:text-white transition-colors">
-              <HelpIcon /> Support
-            </a>
+            <Link to="/admin-portal" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:text-white transition-colors">
+              <Settings size={16} /> Systems Status
+            </Link>
+            <Link to="/admin-portal/contact" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:text-white transition-colors">
+              <HelpIcon /> Support Inbox
+            </Link>
           </nav>
         </div>
       </aside>
@@ -105,7 +136,6 @@ const AdminLayout = () => {
         {/* Top Header */}
         <header className="h-16 shrink-0 border-b border-[#1C202B] bg-[#0E1015]/80 backdrop-blur-md flex items-center justify-between px-6 lg:px-10 relative z-50">
           
-          {/* Breadcrumb (Optional, shown in Dashboard but Content Studio screenshot doesn't show it here. We can keep it or hide it based on route, but let's keep it to match earlier layout unless specified) */}
           <div className="flex items-center gap-2 text-xs font-mono tracking-wide hidden sm:flex">
             {getBreadcrumb()}
           </div>
@@ -126,43 +156,52 @@ const AdminLayout = () => {
             </div>
             
             <div className="flex items-center gap-4 border-l border-[#2D3342] pl-5 relative">
-              {/* Profile Avatar Swapped to the left */}
-              <div className="w-7 h-7 rounded-full bg-[#1C202B] p-0.5 cursor-pointer flex-shrink-0">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=64&q=80" alt="Avatar" className="w-full h-full rounded-full object-cover border border-[#0E1015]" />
-              </div>
-              
-              <button className="text-on-surface-variant hover:text-white transition-colors">
-                <TerminalSquare size={16} />
-              </button>
-              <button className="text-on-surface-variant hover:text-white transition-colors">
+              <button onClick={() => navigate('/admin-portal')} className="text-on-surface-variant hover:text-white transition-colors" title="Dashboard">
                 <LayoutDashboard size={16} />
               </button>
 
-              {/* Notification Icon Swapped to the right */}
+              {/* Notification Icon */}
               <button 
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications) fetchNotifications();
+                }}
                 className="text-on-surface-variant hover:text-white transition-colors relative"
+                title="Notifications"
               >
                 <Bell size={16} />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0E1015]"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#0E1015] animate-pulse"></span>
+                )}
               </button>
 
               {/* Inline Notification Popup */}
               {showNotifications && (
                 <div className="absolute top-10 right-0 w-80 bg-[#111113] border border-[#1C202B] rounded-xl shadow-2xl py-2 z-50">
                   <div className="px-4 py-2 border-b border-[#1C202B] flex justify-between items-center">
-                    <h4 className="text-sm font-bold text-white">Notifications</h4>
-                    <span className="text-[10px] text-[#818CF8] cursor-pointer hover:underline">Mark all read</span>
+                    <h4 className="text-sm font-bold text-white">System Events</h4>
+                    <span className="text-[10px] text-on-surface-variant font-mono">{notifications.length} logs</span>
                   </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    <div className="px-4 py-3 hover:bg-[#161B22] transition-colors cursor-pointer border-b border-[#1C202B]">
-                      <p className="text-xs text-white mb-1"><strong>System Alert:</strong> Edge nodes scaled successfully.</p>
-                      <p className="text-[10px] text-on-surface-variant">2 mins ago</p>
-                    </div>
-                    <div className="px-4 py-3 hover:bg-[#161B22] transition-colors cursor-pointer">
-                      <p className="text-xs text-white mb-1"><strong>New Publication:</strong> "System Arch Guide" draft saved.</p>
-                      <p className="text-[10px] text-on-surface-variant">1 hour ago</p>
-                    </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-[#1C202B]">
+                    {notifications.length === 0 ? (
+                      <p className="p-4 text-xs text-on-surface-variant text-center font-mono">No recent system notifications.</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={() => handleMarkRead(n._id)}
+                          className={`px-4 py-3 hover:bg-[#161B22] transition-colors cursor-pointer ${!n.read ? 'bg-[#4375FF]/5' : ''}`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-xs font-bold text-white">{n.type || 'Event'}</span>
+                            <span className="text-[10px] text-on-surface-variant font-mono">
+                              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-on-surface-variant leading-tight">{n.message}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

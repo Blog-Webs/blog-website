@@ -20,6 +20,11 @@ const subscribe = async (req, res) => {
     email: email.toLowerCase(),
     user: req.user ? req.user._id : undefined,
   });
+
+  const newsletterService = require('../../services/newsletterService');
+  newsletterService.sendSubscribeConfirmation({ email: email.toLowerCase() })
+    .catch((err) => console.error('[NewsletterController] Email send error:', err.message));
+
   res.status(201).json({ message: 'Subscribed! Watch your inbox for the next issue.' });
 };
 

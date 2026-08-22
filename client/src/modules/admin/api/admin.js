@@ -6,6 +6,7 @@ export const adminApi = {
   getSubscribers: () => api.get('/newsletter/admin/subscribers'),
   getNotifications: () => api.get('/admin/notifications'),
   markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
+  deleteBlog: (id) => api.delete(`/blogs/${id}`),
 
   createSubject: (payload) => api.post('/admin/content/subjects', payload),
   updateSubject: (id, payload) => api.patch(`/admin/content/subjects/${id}`, payload),

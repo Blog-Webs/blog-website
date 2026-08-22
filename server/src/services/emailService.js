@@ -67,7 +67,9 @@ const _send = async ({ to, subject, htmlContent, textContent, replyTo }) => {
   const client = getBrevoClient();
 
   if (!client) {
-    return { sent: false, skipped: true };
+    // Fallback to mailer.js (Nodemailer SMTP) if Brevo API client is not configured
+    const { sendMail } = require('../utils/mailer');
+    return sendMail({ to, subject, html: htmlContent, text: textContent });
   }
 
   try {
@@ -113,7 +115,11 @@ const _send = async ({ to, subject, htmlContent, textContent, replyTo }) => {
  */
 const _sendBulk = async ({ recipients, subject, htmlBuilder, textContent }) => {
   const client = getBrevoClient();
-  if (!client) return { sentCount: 0, failedCount: 0, skipped: true };
+  if (!client) {
+    const { sendBulkMail } = require('../utils/mailer');
+    const sampleHtml = typeof htmlBuilder === 'function' ? htmlBuilder(recipients[0] || '') : htmlBuilder;
+    return sendBulkMail({ recipients, subject, html: sampleHtml, text: textContent });
+  }
 
   let sentCount = 0;
   let failedCount = 0;

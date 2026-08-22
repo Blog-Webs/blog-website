@@ -36,6 +36,18 @@ const submitContact = async (req, res) => {
     user: req.user ? req.user._id : undefined,
   });
 
+  // Dispatch transactional email via Brevo / SMTP in background
+  if (type !== 'review') {
+    const emailService = require('../../services/emailService');
+    emailService.sendContactEmail({
+      userName: name.trim(),
+      userEmail: email.trim().toLowerCase(),
+      contactType: type,
+      subject: subject?.trim(),
+      message: message?.trim(),
+    }).catch((err) => console.error('[ContactController] Brevo email error:', err.message));
+  }
+
   res.status(201).json({ message: "Thanks — we've received it.", id: contact._id });
 };
 
