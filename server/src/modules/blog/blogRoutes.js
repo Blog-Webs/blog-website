@@ -13,6 +13,7 @@ const {
   updateBlog,
   deleteBlog,
   deleteComment,
+  triggerNotification,
 } = require('./blogController');
 const { requireAuth, requireAdmin } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
