@@ -1,4 +1,4 @@
-const GmailService = require('../services/GmailService');
+﻿const GmailService = require('../services/GmailService');
 const AiService = require('../services/AiService');
 
 const gmailController = {
@@ -24,6 +24,12 @@ const gmailController = {
     const { messageId } = req.params;
     const { body, subject } = await GmailService.getEmailBody(req.user._id, messageId);
     const result = await AiService.summarizeEmail(body, subject || '');
+    res.json(result);
+  },
+
+  async getEmailBody(req, res) {
+    const { messageId } = req.params;
+    const result = await GmailService.getEmailBody(req.user._id, messageId);
     res.json(result);
   },
 };

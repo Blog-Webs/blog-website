@@ -1,15 +1,154 @@
-'use client';
+﻿'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { MapPin, CheckCircle2, Lock, Clock, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, CheckCircle2, Lock, Clock, Sparkles, Edit2, Save, X, Plus, ChevronRight, User, BookOpen, Timer, Code2, Target } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useRoadmap } from '@/context/RoadmapContext';
 
+const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+const HOURS_OPTIONS = [5, 10, 15, 20, 30, 40];
+const ROLES = [
+  'Full Stack Software Engineer',
+  'Backend Engineer',
+  'Frontend Engineer',
+  'ML/AI Engineer',
+  'DevOps / Cloud Engineer',
+  'Data Engineer',
+  'Mobile Developer (React Native)',
+  'Product Manager',
+  'Cybersecurity Engineer',
+];
+
 export default function RoadmapPage() {
-  const { milestones, targetRole, updateMilestoneStatus } = useRoadmap();
+  const { milestones, targetRole, updateMilestoneStatus, generateRoadmap, editMilestone, setTargetRole, isGenerating } = useRoadmap();
+
+  const [showProfiler, setShowProfiler] = useState(false);
+  const [step, setStep] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{ title: string; description: string }>({ title: '', description: '' });
+
+  // Profiler form state
+  const [profile, setProfile] = useState({
+    targetRole: targetRole,
+    experience: 'Intermediate',
+    hoursPerWeek: 15,
+    techStack: '',
+    learningGoals: '',
+  });
+
+  const PROFILER_STEPS = [
+    {
+      icon: Target,
+      title: 'Target Role',
+      desc: 'What role are you working towards?',
+      field: (
+        <div className="space-y-2">
+          {ROLES.map(r => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setProfile(p => ({ ...p, targetRole: r }))}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
+                profile.targetRole === r
+                  ? 'bg-blue-500/20 border-blue-400 text-white'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
+              }`}
+            >{r}</button>
+          ))}
+        </div>
+      ),
+    },
+    {
+      icon: User,
+      title: 'Experience Level',
+      desc: 'Your current programming experience:',
+      field: (
+        <div className="flex gap-3">
+          {EXPERIENCE_LEVELS.map(l => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setProfile(p => ({ ...p, experience: l }))}
+              className={`flex-1 py-4 rounded-xl text-sm font-semibold border transition-all ${
+                profile.experience === l
+                  ? 'bg-blue-500/20 border-blue-400 text-white'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+              }`}
+            >{l}</button>
+          ))}
+        </div>
+      ),
+    },
+    {
+      icon: Timer,
+      title: 'Weekly Study Hours',
+      desc: 'How many hours per week can you dedicate?',
+      field: (
+        <div className="grid grid-cols-3 gap-3">
+          {HOURS_OPTIONS.map(h => (
+            <button
+              key={h}
+              type="button"
+              onClick={() => setProfile(p => ({ ...p, hoursPerWeek: h }))}
+              className={`py-4 rounded-xl text-sm font-bold border transition-all ${
+                profile.hoursPerWeek === h
+                  ? 'bg-blue-500/20 border-blue-400 text-white'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+              }`}
+            >{h}h/week</button>
+          ))}
+        </div>
+      ),
+    },
+    {
+      icon: Code2,
+      title: 'Tech Stack',
+      desc: 'Technologies you already know (comma separated):',
+      field: (
+        <Input
+          value={profile.techStack}
+          onChange={e => setProfile(p => ({ ...p, techStack: e.target.value }))}
+          placeholder="e.g. JavaScript, React, Python, SQL"
+          className="text-sm"
+        />
+      ),
+    },
+    {
+      icon: BookOpen,
+      title: 'Learning Goals',
+      desc: 'What do you want to achieve? (optional):',
+      field: (
+        <textarea
+          value={profile.learningGoals}
+          onChange={e => setProfile(p => ({ ...p, learningGoals: e.target.value }))}
+          placeholder="e.g. Get placed at a product company, pass FAANG interviews, build SaaS projects..."
+          className="w-full h-28 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white resize-none focus:outline-none focus:border-zinc-600 placeholder-zinc-500"
+        />
+      ),
+    },
+  ];
+
+  const handleGenerate = async () => {
+    setTargetRole(profile.targetRole);
+    await generateRoadmap(profile);
+    setShowProfiler(false);
+    setStep(0);
+  };
+
+  const startEdit = (m: typeof milestones[0]) => {
+    setEditingId(m.id);
+    setEditDraft({ title: m.title, description: m.description });
+  };
+
+  const saveEdit = () => {
+    if (editingId) {
+      editMilestone(editingId, editDraft);
+      setEditingId(null);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -23,65 +162,145 @@ export default function RoadmapPage() {
             Target Track: <strong className="text-zinc-200 font-semibold">{targetRole}</strong>
           </p>
         </div>
-        <Link href="/student-os/onboarding">
-          <Button variant="secondary" size="sm">Re-run AI Profiler</Button>
-        </Link>
+        <Button
+          onClick={() => { setShowProfiler(true); setStep(0); }}
+          variant="apple"
+          className="gap-2 self-start"
+          disabled={isGenerating}
+        >
+          <Sparkles size={14} /> {milestones.length === 0 ? 'Generate AI Roadmap' : 'Regenerate Roadmap'}
+        </Button>
       </div>
 
-      <div className="space-y-6 relative before:absolute before:inset-0 before:left-6 before:w-0.5 before:bg-zinc-800">
-        {milestones.map((m, idx) => (
-          <div key={m.id} className="relative pl-14 group">
-            <div className={`absolute left-3 top-6 -translate-x-1/2 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all ${
-              m.status === 'completed'
-                ? 'bg-emerald-500 border-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/40'
-                : m.status === 'in_progress'
-                ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/40 animate-pulse'
-                : 'bg-zinc-900 border-zinc-700 text-zinc-500'
-            }`}>
-              {m.status === 'completed' && <CheckCircle2 size={16} />}
-              {m.status === 'in_progress' && <span className="text-xs font-bold">{idx + 1}</span>}
-              {m.status === 'locked' && <Lock size={12} />}
+      {/* Roadmap Timeline */}
+      {milestones.length === 0 ? (
+        <Card className="p-12 text-center space-y-4">
+          <Sparkles size={40} className="text-blue-400 mx-auto" />
+          <h2 className="text-xl font-bold text-white">Generate Your AI Roadmap</h2>
+          <p className="text-zinc-400 text-sm">Answer a few quick questions and let AI create your personalized learning path.</p>
+          <Button onClick={() => setShowProfiler(true)} variant="apple" className="gap-2">
+            <Sparkles size={14} /> Start AI Profiler
+          </Button>
+        </Card>
+      ) : (
+        <div className="space-y-6 relative before:absolute before:inset-0 before:left-6 before:w-0.5 before:bg-zinc-800">
+          {milestones.map((m, idx) => (
+            <div key={m.id} className="relative pl-14 group">
+              <div className={`absolute left-3 top-6 -translate-x-1/2 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all ${
+                m.status === 'completed'
+                  ? 'bg-emerald-500 border-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/40'
+                  : m.status === 'in_progress'
+                  ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/40 animate-pulse'
+                  : 'bg-zinc-900 border-zinc-700 text-zinc-500'
+              }`}>
+                {m.status === 'completed' && <CheckCircle2 size={16} />}
+                {m.status === 'in_progress' && <span className="text-xs font-bold">{idx + 1}</span>}
+                {m.status === 'locked' && <Lock size={12} />}
+              </div>
+
+              <Card className={`p-6 transition-all ${m.status === 'in_progress' ? 'border-blue-500/50 bg-blue-950/20' : ''}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <Badge variant={m.status === 'completed' ? 'success' : m.status === 'in_progress' ? 'apple' : 'secondary'} className="uppercase text-[10px]">
+                    {m.status.replace('_', ' ')}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400 flex items-center gap-1">
+                      <Clock size={12} /> {m.estimatedWeeks} Weeks
+                    </span>
+                    <button
+                      onClick={() => editingId === m.id ? saveEdit() : startEdit(m)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                    >
+                      {editingId === m.id ? <Save size={14} className="text-emerald-400" /> : <Edit2 size={14} />}
+                    </button>
+                    {editingId === m.id && (
+                      <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-red-400">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editingId === m.id ? (
+                  <div className="space-y-2">
+                    <Input value={editDraft.title} onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))} className="font-bold" />
+                    <textarea
+                      value={editDraft.description}
+                      onChange={e => setEditDraft(d => ({ ...d, description: e.target.value }))}
+                      className="w-full h-20 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 resize-none focus:outline-none focus:border-zinc-600"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-lg font-bold text-white mb-1">{m.title}</h2>
+                    <p className="text-xs text-zinc-400 leading-relaxed mb-4">{m.description}</p>
+                  </>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800/60">
+                  {m.skills.map(skill => (
+                    <Badge key={skill} variant="outline" className="text-[10px]">{skill}</Badge>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  {m.status === 'in_progress' && (
+                    <Button variant="apple" size="sm" className="gap-1 text-xs" onClick={() => updateMilestoneStatus(m.id, 'completed')}>
+                      <CheckCircle2 size={14} /> Mark Completed
+                    </Button>
+                  )}
+                  {m.status === 'locked' && (
+                    <Button variant="secondary" size="sm" className="text-xs" onClick={() => updateMilestoneStatus(m.id, 'in_progress')}>
+                      Unlock Phase
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* AI Profiler Modal */}
+      {showProfiler && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <Card className="max-w-xl w-full bg-zinc-950 border-zinc-800 p-6 space-y-6">
+            {/* Steps indicator */}
+            <div className="flex items-center gap-2">
+              {PROFILER_STEPS.map((s, i) => (
+                <div key={i} className={`flex-1 h-1 rounded-full transition-all ${i <= step ? 'bg-blue-500' : 'bg-zinc-800'}`} />
+              ))}
             </div>
 
-            <Card className={`p-6 transition-all ${
-              m.status === 'in_progress' ? 'border-blue-500/50 bg-blue-950/20' : ''
-            }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <Badge variant={m.status === 'completed' ? 'success' : m.status === 'in_progress' ? 'apple' : 'secondary'} className="uppercase">
-                  {m.status.replace('_', ' ')}
-                </Badge>
-                <span className="text-xs text-zinc-400 flex items-center gap-1">
-                  <Clock size={12} /> {m.estimatedWeeks} Weeks Estimated
-                </span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-blue-400">
+                {React.createElement(PROFILER_STEPS[step].icon, { size: 20 })}
+                <span className="text-xs font-bold uppercase tracking-wider">{PROFILER_STEPS[step].title}</span>
               </div>
+              <p className="text-zinc-400 text-sm">{PROFILER_STEPS[step].desc}</p>
+            </div>
 
-              <h2 className="text-lg font-bold text-white mb-1">{m.title}</h2>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-4">{m.description}</p>
+            <div>{PROFILER_STEPS[step].field}</div>
 
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800/60">
-                {m.skills.map((skill) => (
-                  <Badge key={skill} variant="outline" className="text-[10px]">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
+            <div className="flex items-center justify-between pt-2">
+              <Button variant="ghost" onClick={() => step > 0 ? setStep(s => s - 1) : setShowProfiler(false)}>
+                {step === 0 ? 'Cancel' : 'Back'}
+              </Button>
 
-              <div className="mt-4 flex items-center justify-end gap-2">
-                {m.status === 'in_progress' && (
-                  <Button variant="apple" size="sm" className="gap-1 text-xs" onClick={() => updateMilestoneStatus(m.id, 'completed')}>
-                    <CheckCircle2 size={14} /> Mark Completed
-                  </Button>
-                )}
-                {m.status === 'locked' && (
-                  <Button variant="secondary" size="sm" className="text-xs" onClick={() => updateMilestoneStatus(m.id, 'in_progress')}>
-                    Unlock Phase
-                  </Button>
-                )}
-              </div>
-            </Card>
-          </div>
-        ))}
-      </div>
+              {step < PROFILER_STEPS.length - 1 ? (
+                <Button variant="apple" className="gap-2" onClick={() => setStep(s => s + 1)}>
+                  Next <ChevronRight size={14} />
+                </Button>
+              ) : (
+                <Button variant="apple" className="gap-2" onClick={handleGenerate} disabled={isGenerating}>
+                  <Sparkles size={14} />
+                  {isGenerating ? 'Generating...' : 'Generate My Roadmap'}
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
-const { google } = require('googleapis');
+﻿const { google } = require('googleapis');
+const { Readable } = require('stream');
 const GoogleApiService = require('./GoogleApiService');
 const StudentOSCache = require('../models/StudentOSCache');
 
@@ -32,6 +33,11 @@ const RELEVANT_MIME_TYPES = [
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.google-apps.spreadsheet',
+  'image/png',
+  'image/jpeg',
+  'text/plain',
+  'application/javascript',
+  'text/x-python',
 ];
 
 const FILE_TYPE_LABEL = {
@@ -45,9 +51,31 @@ const FILE_TYPE_LABEL = {
   'application/vnd.ms-excel': 'XLS',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
   'application/vnd.google-apps.spreadsheet': 'Sheet',
+  'image/png': 'PNG',
+  'image/jpeg': 'JPEG',
+  'text/plain': 'TXT',
+  'application/javascript': 'JS',
+  'text/x-python': 'PY',
 };
 
 const DriveService = {
+  async getStorageQuota(userId) {
+    const auth = await GoogleApiService.getAuthenticatedClient(userId);
+    const drive = google.drive({ version: 'v3', auth });
+
+    const { data } = await drive.about.get({ fields: 'storageQuota' });
+    const q = data.storageQuota;
+
+    return {
+      usedGB: q.usage ? (parseInt(q.usage) / (1024 ** 3)).toFixed(2) : '0',
+      totalGB: q.limit ? (parseInt(q.limit) / (1024 ** 3)).toFixed(2) : '15',
+      usedMB: q.usage ? (parseInt(q.usage) / (1024 ** 2)).toFixed(0) : '0',
+      usageInDrive: q.usageInDrive ? (parseInt(q.usageInDrive) / (1024 ** 3)).toFixed(2) : '0',
+      usageInDriveTrash: q.usageInDriveTrash ? (parseInt(q.usageInDriveTrash) / (1024 ** 3)).toFixed(2) : '0',
+      percentUsed: q.usage && q.limit ? Math.round((parseInt(q.usage) / parseInt(q.limit)) * 100) : 0,
+    };
+  },
+
   async getRecentFiles(userId, query = null) {
     const cacheKey = `drive:recent:${query || 'all'}`;
     const cached = await getCached(userId, cacheKey);
@@ -64,7 +92,7 @@ const DriveService = {
       q,
       pageSize: 30,
       orderBy: 'modifiedTime desc',
-      fields: 'files(id,name,mimeType,modifiedTime,createdTime,webViewLink,webContentLink,size,parents,thumbnailLink,iconLink,owners)',
+      fields: 'files(id,name,mimeType,modifiedTime,createdTime,webViewLink,webContentLink,size,thumbnailLink,iconLink)',
     });
 
     const now = Date.now();
@@ -85,6 +113,41 @@ const DriveService = {
 
     await setCache(userId, cacheKey, files, 5 * 60 * 1000);
     return files;
+  },
+
+  async uploadFileToDrive(userId, fileBuffer, filename, mimeType) {
+    const auth = await GoogleApiService.getAuthenticatedClient(userId);
+    const drive = google.drive({ version: 'v3', auth });
+
+    const readable = new Readable();
+    readable.push(fileBuffer);
+    readable.push(null);
+
+    const { data } = await drive.files.create({
+      requestBody: {
+        name: filename,
+        mimeType,
+      },
+      media: {
+        mimeType,
+        body: readable,
+      },
+      fields: 'id,name,mimeType,webViewLink,webContentLink,size,modifiedTime',
+    });
+
+    // Invalidate drive cache
+    await StudentOSCache.deleteMany({ user: userId, cacheKey: { $regex: /^drive:/ } });
+
+    return {
+      id: data.id,
+      name: data.name,
+      mimeType: data.mimeType,
+      fileType: FILE_TYPE_LABEL[data.mimeType] || 'File',
+      webViewLink: data.webViewLink,
+      webContentLink: data.webContentLink,
+      size: data.size ? Math.round(parseInt(data.size) / 1024) + ' KB' : 'Uploaded',
+      modifiedTime: data.modifiedTime,
+    };
   },
 
   async searchFiles(userId, query) {

@@ -1,24 +1,19 @@
-const AiService = require('../services/AiService');
+﻿const AiService = require('../services/AiService');
 const ClassroomService = require('../services/ClassroomService');
 const CalendarService = require('../services/CalendarService');
 const GmailService = require('../services/GmailService');
 const DriveService = require('../services/DriveService');
-const GmailServiceMod = require('../services/GmailService');
 
 const aiController = {
-  // GET /api/studentos/ai/status
   getStatus(req, res) {
     res.json({ available: AiService.isAvailable() });
   },
 
-  // POST /api/studentos/ai/chat
   async chat(req, res) {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: 'Message is required.' });
 
     const userId = req.user._id;
-
-    // Build context by fetching live data
     const [assignments, events, driveFiles, recentEmails] = await Promise.allSettled([
       ClassroomService.getAssignments(userId),
       CalendarService.getUpcomingEvents(userId, 7),
@@ -37,15 +32,13 @@ const aiController = {
     res.json(result);
   },
 
-  // POST /api/studentos/ai/summarize-email/:messageId
   async summarizeEmail(req, res) {
     const { messageId } = req.params;
-    const { body, subject } = await GmailServiceMod.getEmailBody(req.user._id, messageId);
+    const { body, subject } = await GmailService.getEmailBody(req.user._id, messageId);
     const result = await AiService.summarizeEmail(body, subject || '');
     res.json(result);
   },
 
-  // POST /api/studentos/ai/flashcards
   async generateFlashcards(req, res) {
     const { content, topic } = req.body;
     if (!content?.trim()) return res.status(400).json({ message: 'Content is required.' });
@@ -53,11 +46,37 @@ const aiController = {
     res.json(result);
   },
 
-  // POST /api/studentos/ai/quiz
   async generateQuiz(req, res) {
-    const { content, topic } = req.body;
-    if (!content?.trim()) return res.status(400).json({ message: 'Content is required.' });
-    const result = await AiService.generateQuiz(content, topic || '');
+    const { content, topic, count, difficulty } = req.body;
+    // AI generates quiz from topic name even without content
+    const effectiveContent = content?.trim() || `Generate a comprehensive quiz on: ${topic}`;
+    const result = await AiService.generateQuiz(effectiveContent, topic || 'General', count || 5, difficulty || 'medium');
+    res.json(result);
+  },
+
+  async generateAssessmentReport(req, res) {
+    const { topic, score, total, wrongQuestions } = req.body;
+    if (score === undefined || !total) return res.status(400).json({ message: 'score and total are required.' });
+    const result = await AiService.generateAssessmentReport({ topic, score, total, wrongQuestions: wrongQuestions || [] });
+    res.json(result);
+  },
+
+  async analyzeWeakAreas(req, res) {
+    const { assessmentResults, roadmapPhase, targetRole } = req.body;
+    const result = await AiService.analyzeWeakAreas({ assessmentResults: assessmentResults || [], roadmapPhase, targetRole });
+    res.json(result);
+  },
+
+  async generateDailyPlan(req, res) {
+    const { roadmapPhase, targetRole, availableHours } = req.body;
+    const result = await AiService.generateDailyPlan({ roadmapPhase, targetRole, availableHours: availableHours || 6 });
+    res.json(result);
+  },
+
+  async generateRoadmap(req, res) {
+    const { targetRole, experience, hoursPerWeek, techStack, learningGoals } = req.body;
+    if (!targetRole) return res.status(400).json({ message: 'targetRole is required.' });
+    const result = await AiService.generateRoadmap({ targetRole, experience, hoursPerWeek, techStack, learningGoals });
     res.json(result);
   },
 };

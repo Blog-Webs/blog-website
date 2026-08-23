@@ -7,10 +7,12 @@ const SCOPES = [
   'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
   'https://www.googleapis.com/auth/classroom.announcements.readonly',
   'https://www.googleapis.com/auth/classroom.rosters.readonly',
-  'https://www.googleapis.com/auth/drive.readonly',
+  // Full Drive access — needed for file upload & storage quota
+  'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/calendar.readonly',
+  // Full Calendar access — needed for event create/edit/delete
+  'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/tasks',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',

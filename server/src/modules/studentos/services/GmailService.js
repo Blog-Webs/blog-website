@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const GoogleApiService = require('./GoogleApiService');
 const { getCached, setCache } = require('./CacheHelper');
+const StudentOSCache = require('../models/StudentOSCache');
 
 // Keywords to detect teacher/placement emails
 const TEACHER_KEYWORDS = ['faculty', 'professor', 'hod', 'department', 'college', 'university', 'registrar', 'academic'];

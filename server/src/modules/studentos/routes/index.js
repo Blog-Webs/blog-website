@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../../../middleware/auth');
 const requireStudentOS = require('../middleware/requireStudentOS');
@@ -12,6 +12,7 @@ const calendarCtrl = require('../controllers/calendarController');
 const tasksCtrl = require('../controllers/tasksController');
 const aiCtrl = require('../controllers/aiController');
 const filesCtrl = require('../controllers/filesController');
+const careerCtrl = require('../controllers/careerController');
 
 const multer = require('multer');
 const os = require('os');
@@ -24,9 +25,13 @@ function cacheControl(seconds = 15) {
   };
 }
 
-// ── Auth (no StudentOS token required, just httpTechNex login) ──
+function asyncWrap(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
+// ── Auth (no StudentOS token required) ──
 router.get('/auth/url', requireAuth, authCtrl.getAuthUrl);
-router.get('/auth/callback', authCtrl.handleCallback); // Google redirects here (no auth header)
+router.get('/auth/callback', authCtrl.handleCallback);
 router.get('/auth/status', requireAuth, cacheControl(15), authCtrl.getStatus);
 router.delete('/auth/disconnect', requireAuth, authCtrl.disconnect);
 
@@ -34,7 +39,7 @@ router.delete('/auth/disconnect', requireAuth, authCtrl.disconnect);
 router.use(requireAuth);
 router.use(requireStudentOS);
 
-// Dashboard (all-in-one)
+// Dashboard
 router.get('/dashboard', asyncWrap(dashboardCtrl.getDashboard));
 
 // Classroom
@@ -45,16 +50,22 @@ router.get('/classroom/announcements', asyncWrap(classroomCtrl.getAnnouncements)
 // Drive
 router.get('/drive/files', asyncWrap(driveCtrl.getFiles));
 router.get('/drive/search', asyncWrap(driveCtrl.searchFiles));
+router.get('/drive/storage', asyncWrap(driveCtrl.getStorageQuota));
+router.post('/drive/upload', upload.single('file'), asyncWrap(driveCtrl.uploadFile));
 
 // Gmail
 router.get('/gmail/emails', asyncWrap(gmailCtrl.getEmails));
 router.get('/gmail/search', asyncWrap(gmailCtrl.searchEmails));
 router.patch('/gmail/:messageId/read', asyncWrap(gmailCtrl.markAsRead));
 router.get('/gmail/:messageId/summarize', asyncWrap(gmailCtrl.summarizeEmail));
+router.get('/gmail/:messageId/body', asyncWrap(gmailCtrl.getEmailBody));
 
-// Calendar
+// Calendar - Full CRUD
 router.get('/calendar/events', asyncWrap(calendarCtrl.getEvents));
 router.get('/calendar/today', asyncWrap(calendarCtrl.getTodayEvents));
+router.post('/calendar/events', asyncWrap(calendarCtrl.createEvent));
+router.patch('/calendar/events/:eventId', asyncWrap(calendarCtrl.updateEvent));
+router.delete('/calendar/events/:eventId', asyncWrap(calendarCtrl.deleteEvent));
 
 // Tasks
 router.get('/tasks/lists', asyncWrap(tasksCtrl.getTaskLists));
@@ -64,20 +75,22 @@ router.patch('/tasks/:taskId', asyncWrap(tasksCtrl.updateTask));
 router.delete('/tasks/:taskId', asyncWrap(tasksCtrl.deleteTask));
 router.post('/tasks/:taskId/complete', asyncWrap(tasksCtrl.completeTask));
 
+// Career Hub
+router.get('/career/jobs', asyncWrap(careerCtrl.getJobs));
+
 // AI
 router.get('/ai/status', asyncWrap(aiCtrl.getStatus));
 router.post('/ai/chat', asyncWrap(aiCtrl.chat));
 router.get('/ai/summarize-email/:messageId', asyncWrap(aiCtrl.summarizeEmail));
 router.post('/ai/flashcards', asyncWrap(aiCtrl.generateFlashcards));
 router.post('/ai/quiz', asyncWrap(aiCtrl.generateQuiz));
+router.post('/ai/assessment-report', asyncWrap(aiCtrl.generateAssessmentReport));
+router.post('/ai/weak-areas', asyncWrap(aiCtrl.analyzeWeakAreas));
+router.post('/ai/daily-plan', asyncWrap(aiCtrl.generateDailyPlan));
+router.post('/ai/generate-roadmap', asyncWrap(aiCtrl.generateRoadmap));
 
 // Files (RAG Uploads)
 router.post('/files/upload', upload.single('file'), asyncWrap(filesCtrl.uploadDocument));
 router.get('/files', asyncWrap(filesCtrl.getDocuments));
-
-// Async error wrapper — passes thrown errors to Express error handler
-function asyncWrap(fn) {
-  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-}
 
 module.exports = router;

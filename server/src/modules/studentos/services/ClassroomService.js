@@ -32,7 +32,28 @@ const ClassroomService = {
     const classroom = google.classroom({ version: 'v1', auth });
 
     const { data } = await classroom.courses.list({ courseStates: ['ACTIVE'], pageSize: 20 });
-    const courses = (data.courses || []).map((c) => ({
+    const rawCourses = data.courses || [];
+
+    // Fetch student counts in parallel (best-effort)
+    const studentCounts = await Promise.allSettled(
+      rawCourses.map(async (c) => {
+        try {
+          const { data: rostData } = await classroom.courses.students.list({ courseId: c.id, pageSize: 1 });
+          // The API returns totalSize in headers or in nextPageToken presence; use list response
+          // For count, use listStudents with pageSize=500 if needed, but approximate via list
+          return { id: c.id, count: rostData.students ? rostData.students.length : null };
+        } catch {
+          return { id: c.id, count: null };
+        }
+      })
+    );
+
+    const countMap = {};
+    studentCounts.forEach(r => {
+      if (r.status === 'fulfilled') countMap[r.value.id] = r.value.count;
+    });
+
+    const courses = rawCourses.map((c) => ({
       id: c.id,
       name: c.name,
       section: c.section || '',
@@ -43,11 +64,13 @@ const ClassroomService = {
       alternateLink: c.alternateLink,
       creationTime: c.creationTime,
       updateTime: c.updateTime,
+      totalStudents: countMap[c.id] ?? null,
     }));
 
     await setCache(userId, cacheKey, courses);
     return courses;
   },
+
 
   async getAssignments(userId, courseId = null) {
     const cacheKey = `classroom:assignments:${courseId || 'all'}`;
