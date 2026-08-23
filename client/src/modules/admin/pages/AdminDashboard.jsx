@@ -1,7 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Users, Cpu, Server, Eye, ExternalLink, Plus, Edit2, Trash2, MessageSquare, Loader2, BookOpen } from 'lucide-react';
+import { Users, Cpu, Server, Eye, ExternalLink, Plus, Edit2, Trash2, MessageSquare, Loader2, BookOpen, Code, Database, Globe, Layers, TerminalSquare } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/admin';
+
+const renderSubjectIcon = (iconKey) => {
+  switch (iconKey) {
+    case 'binary-tree':
+    case 'tree':
+    case 'code':
+      return <Code size={22} className="text-[#38bdf8]" />;
+    case 'coffee':
+    case 'java':
+      return <Cpu size={22} className="text-[#f97316]" />;
+    case 'calculator':
+    case 'aptitude':
+    case 'math':
+      return <TerminalSquare size={22} className="text-[#34d399]" />;
+    case 'database':
+    case 'db':
+      return <Database size={22} className="text-[#a855f7]" />;
+    case 'globe':
+    case 'react':
+    case 'web':
+      return <Globe size={22} className="text-[#60a5fa]" />;
+    case 'layers':
+    default:
+      return <Layers size={22} className="text-[#4375FF]" />;
+  }
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -63,7 +89,7 @@ const AdminDashboard = () => {
           </p>
         </div>
         <Link
-          to="/admin-portal/editor"
+          to="/admin-portal/blogs"
           className="px-5 py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white font-medium text-xs font-mono tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-[#4375FF]/20"
         >
           <Plus size={16} /> Create New Post
@@ -322,28 +348,30 @@ const AdminDashboard = () => {
             <div
               key={subj._id}
               onClick={() => navigate('/admin-portal/content')}
-              className="bg-[#111113] border border-[#1C202B] rounded-xl p-6 text-center hover:border-[#4375FF] transition-colors cursor-pointer group"
+              className="bg-[#111113] border border-[#1C202B] rounded-xl p-5 text-center hover:border-[#4375FF] transition-all cursor-pointer group flex flex-col items-center justify-between"
             >
-              <div className="w-12 h-12 mx-auto rounded-full bg-[#1C202B] flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
-                {subj.icon || '🎓'}
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#1C202B] border border-[#2D3342] flex items-center justify-center mb-3 group-hover:scale-105 group-hover:border-[#4375FF]/40 transition-all">
+                {renderSubjectIcon(subj.icon)}
               </div>
-              <h3 className="text-sm font-bold text-white mb-1 truncate" title={subj.title}>
-                {subj.title}
-              </h3>
-              <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
-                {subj.chapterCount} Chapters • {subj.isFree ? 'Free Subject' : 'Pro Subject'}
-              </p>
+              <div className="w-full">
+                <h3 className="text-sm font-bold text-white mb-1 truncate" title={subj.title}>
+                  {subj.title}
+                </h3>
+                <p className="text-[11px] font-mono text-on-surface-variant uppercase tracking-wider">
+                  {subj.chapterCount} {subj.chapterCount === 1 ? 'Chapter' : 'Chapters'} • {subj.isFree ? 'Free' : 'Pro'}
+                </p>
+              </div>
             </div>
           ))}
 
           <div
             onClick={() => navigate('/admin-portal/content')}
-            className="border border-dashed border-[#2D3342] rounded-xl p-6 flex flex-col items-center justify-center text-on-surface-variant hover:text-white hover:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
+            className="border border-dashed border-[#2D3342] rounded-xl p-5 flex flex-col items-center justify-center text-on-surface-variant hover:text-white hover:border-[#4375FF]/50 hover:bg-[#4375FF]/5 transition-all cursor-pointer min-h-[140px]"
           >
-            <div className="w-10 h-10 rounded-full border border-dashed border-current flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-full border border-dashed border-current flex items-center justify-center mb-2">
               <Plus size={16} />
             </div>
-            <span className="text-sm font-medium">Create Subject</span>
+            <span className="text-xs font-semibold">Manage Curriculum</span>
           </div>
         </div>
       </div>

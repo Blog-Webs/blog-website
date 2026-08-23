@@ -43,21 +43,24 @@ const getStats = async (req, res) => {
         .limit(5)
         .lean(),
       Subject.find()
-        .select('_id title slug icon isFree chapters')
+        .select('_id name title slug icon isFree chapters color description order')
+        .sort({ order: 1 })
         .lean(),
     ]);
 
-    // Enhance subjects with real chapter count
+    // Enhance subjects with real chapter count from database
     const courseArchitecture = await Promise.all(
       subjectsList.map(async (subj) => {
         const chapterCount = await Chapter.countDocuments({ subject: subj._id });
         return {
           _id: subj._id,
-          title: subj.title,
+          title: subj.name || subj.title || 'Untitled Subject',
           slug: subj.slug,
-          icon: subj.icon || '🎓',
+          icon: subj.icon || 'layers',
+          color: subj.color || '#4375FF',
           chapterCount,
-          isFree: subj.isFree,
+          isFree: subj.isFree !== false,
+          description: subj.description || '',
         };
       })
     );

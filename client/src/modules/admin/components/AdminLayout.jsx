@@ -88,8 +88,8 @@ const AdminLayout = () => {
         {/* Action Button */}
         <div className="px-5 mt-6 mb-4">
           <button
-            onClick={() => navigate('/admin-portal/editor')}
-            className="w-full py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-[#4375FF]/20"
+            onClick={() => navigate('/admin-portal/blogs')}
+            className="w-full py-2.5 bg-[#4375FF] hover:bg-[#3460E0] text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-[#4375FF]/20 cursor-pointer"
           >
             <Plus size={16} /> New Post / Deployment
           </button>
@@ -141,17 +141,16 @@ const AdminLayout = () => {
           </div>
 
           {/* Search & Actions */}
-          <div className="flex items-center gap-5 ml-auto">
-            <div className="relative hidden md:block">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <div className="flex items-center gap-4 ml-auto">
+            <div className="relative hidden md:flex items-center">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10" />
               <input 
                 type="text" 
-                placeholder="Search commands, docs, or blogs..." 
-                className="w-72 bg-[#111113] border border-[#2D3342] text-sm text-white rounded-full py-1.5 pl-9 pr-12 focus:outline-none focus:border-[#818CF8] transition-all"
+                placeholder="Search blogs, subjects, or users..." 
+                className="w-64 lg:w-80 bg-[#111113] border border-[#2D3342] text-xs text-white rounded-full py-2 pl-9 pr-14 focus:outline-none focus:border-[#4375FF] transition-all"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <kbd className="bg-[#2D3342] text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-mono">⌘</kbd>
-                <kbd className="bg-[#2D3342] text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-mono">K</kbd>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                <kbd className="bg-[#1C202B] border border-[#2D3342] text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">⌘K</kbd>
               </div>
             </div>
             
