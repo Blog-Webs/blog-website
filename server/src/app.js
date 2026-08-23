@@ -38,7 +38,7 @@ app.set('trust proxy', 1);
 
 // Supports one or more comma-separated origins, e.g.
 // CLIENT_URL=https://httptechnex.vercel.app,https://httptechnex-git-main.vercel.app
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:3000')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -48,7 +48,7 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow no-origin requests (server-to-server, curl, health checks)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.includes('localhost')) {
         callback(null, true);
       } else {
         console.warn(
@@ -114,6 +114,7 @@ app.use('/api/admin/content', adminContentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/studentos', studentOSRoutes);
+app.use('/api/student-os', studentOSRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/coding', codingRoutes);

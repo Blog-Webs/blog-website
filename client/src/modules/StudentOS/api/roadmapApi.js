@@ -1,47 +1,49 @@
-import api from '../../core/api/client';
-
-const BASE = '/roadmap';
+import api from '../../../lib/api';
 
 export const roadmapApi = {
-  // ── Onboarding ─────────────────────────────────────────────────────────
-  getOnboardingStatus: ()           => api.get(`${BASE}/onboarding/status`),
-  getDomains:          ()           => api.get(`${BASE}/onboarding/domains`),
-  getCareerGoals:      (domain)     => api.get(`${BASE}/onboarding/career-goals?domain=${encodeURIComponent(domain)}`),
-  getSkills:           (domain)     => api.get(`${BASE}/onboarding/skills?domain=${encodeURIComponent(domain)}`),
-  step1:               (data)       => api.post(`${BASE}/onboarding/step1`, data),
-  step2:               (data)       => api.post(`${BASE}/onboarding/step2`, data),
-  step3:               (data)       => api.post(`${BASE}/onboarding/step3`, data),
-  step4:               (data)       => api.post(`${BASE}/onboarding/step4`, data),
-  completeOnboarding:  ()           => api.post(`${BASE}/onboarding/complete`),
+  // Onboarding & Domains
+  getOnboardingStatus: () => api.get('/roadmap/onboarding/status'),
+  getDomains: () => api.get('/roadmap/onboarding/domains'),
+  getCareerGoals: () => api.get('/roadmap/onboarding/career-goals'),
+  getSkills: () => api.get('/roadmap/onboarding/skills'),
+  submitStep1: (data) => api.post('/roadmap/onboarding/step1', data),
+  submitStep2: (data) => api.post('/roadmap/onboarding/step2', data),
+  submitStep3: (data) => api.post('/roadmap/onboarding/step3', data),
+  submitStep4: (data) => api.post('/roadmap/onboarding/step4', data),
+  completeOnboarding: (data) => api.post('/roadmap/onboarding/complete', data),
 
-  // ── Profile ─────────────────────────────────────────────────────────────
-  getProfile:          ()           => api.get(`${BASE}/profile`),
-  updateProfile:       (data)       => api.patch(`${BASE}/profile`, data),
+  // Profile
+  getProfile: () => api.get('/roadmap/profile'),
+  updateProfile: (data) => api.patch('/roadmap/profile', data),
 
-  // ── Assessment ──────────────────────────────────────────────────────────
-  getAssessmentSkills: (domain)     => api.get(`${BASE}/assessment/skills?domain=${encodeURIComponent(domain || '')}`),
-  startAssessment:     (skill, domain) => api.post(`${BASE}/assessment/start`, { skill, domain }),
-  getNextBatch:        (data)       => api.post(`${BASE}/assessment/next`, data),
-  submitAssessment:    (data)       => api.post(`${BASE}/assessment/submit`, data),
-  getAssessmentHistory: ()          => api.get(`${BASE}/assessment/history`),
+  // Assessment
+  getAssessmentSkills: () => api.get('/roadmap/assessment/skills'),
+  startAssessment: (data) => api.post('/roadmap/assessment/start', data),
+  getNextBatch: (data) => api.post('/roadmap/assessment/next', data),
+  submitAssessment: (data) => api.post('/roadmap/assessment/submit', data),
+  getAssessmentHistory: () => api.get('/roadmap/assessment/history'),
 
-  // ── Roadmap ─────────────────────────────────────────────────────────────
-  getRoadmapStatus:    ()           => api.get(`${BASE}/roadmap/status`),
-  getRoadmap:          ()           => api.get(`${BASE}/roadmap`),
-  generateRoadmap:     ()           => api.post(`${BASE}/roadmap/generate`),
-  completeTopic:       (roadmapId, topicId) => api.patch(`${BASE}/roadmap/${roadmapId}/topic/${topicId}/complete`),
-  pauseRoadmap:        (roadmapId)  => api.patch(`${BASE}/roadmap/${roadmapId}/pause`),
-  resumeRoadmap:       (roadmapId)  => api.patch(`${BASE}/roadmap/${roadmapId}/resume`),
+  // Roadmap
+  getRoadmapStatus: () => api.get('/roadmap/roadmap/status'),
+  getRoadmap: () => api.get('/roadmap/roadmap'),
+  generateRoadmap: (data) => api.post('/roadmap/roadmap/generate', data),
+  completeTopic: (roadmapId, topicId) => api.patch(`/roadmap/roadmap/${roadmapId}/topic/${topicId}/complete`),
+  pauseRoadmap: (roadmapId) => api.patch(`/roadmap/roadmap/${roadmapId}/pause`),
+  resumeRoadmap: (roadmapId) => api.patch(`/roadmap/roadmap/${roadmapId}/resume`),
 
-  // ── Daily Plan ──────────────────────────────────────────────────────────
-  getDailyPlan:        (date)       => api.get(`${BASE}/daily-plan${date ? `?date=${date}` : ''}`),
-  generateDailyPlan:   (date)       => api.post(`${BASE}/daily-plan/generate`, date ? { date } : {}),
-  completeTask:        (planId, taskId, data) => api.patch(`${BASE}/daily-plan/${planId}/task/${taskId}/complete`, data || {}),
-  logSession:          (data)       => api.post(`${BASE}/session`, data),
+  // Daily Plan & Progress
+  getDailyPlan: () => api.get('/roadmap/daily-plan'),
+  generateDailyPlan: (data) => api.post('/roadmap/daily-plan/generate', data),
+  completeTask: (planId, taskId) => api.patch(`/roadmap/daily-plan/${planId}/task/${taskId}/complete`),
+  logSession: (data) => api.post('/roadmap/session', data),
+  getProgress: () => api.get('/roadmap/progress'),
+  getAnalytics: () => api.get('/roadmap/analytics'),
+  getRecommendations: () => api.get('/roadmap/recommendations'),
 
-  // ── Progress & Analytics ─────────────────────────────────────────────────
-  getProgress:         ()           => api.get(`${BASE}/progress`),
-  getAnalytics:        (period)     => api.get(`${BASE}/analytics${period ? `?period=${period}` : ''}`),
-  getRecommendations:  ()           => api.get(`${BASE}/recommendations`),
-  getLeaderboard:      ()           => api.get(`${BASE}/leaderboard`),
+  // Admin Domains
+  createDomain: (data) => api.post('/roadmap/admin/domains', data),
+  updateDomain: (key, data) => api.patch(`/roadmap/admin/domains/${key}`, data),
+  deleteDomain: (key) => api.delete(`/roadmap/admin/domains/${key}`),
 };
+
+export default roadmapApi;
