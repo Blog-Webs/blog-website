@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
+import MonacoEditor from '@monaco-editor/react';
 import { Play, Code2, RefreshCw, Terminal, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
-
-const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 const STARTER_CODES: Record<string, string> = {
   javascript: `// StudentOS Interactive JavaScript Playground

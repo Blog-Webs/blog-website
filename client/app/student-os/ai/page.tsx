@@ -21,7 +21,7 @@ export default function AiAssistantPage() {
     {
       id: 'm-1',
       sender: 'ai',
-      text: "Hello Alex! I am your StudentOS AI Academic Tutor. How can I assist you with code debugging, system architecture, or exam preparation today?",
+      text: "Hello! I am your StudentOS AI Academic Tutor. How can I assist you with code debugging, system architecture, or exam preparation today?",
       timestamp: '10:00 AM',
     },
   ]);
