@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
   Sparkles, Focus, Menu, Command, Code2, MapPin, ClipboardList,
-  TrendingUp, Brain, AlertTriangle, Search, Bell, Globe, CheckCircle2, ShieldAlert
+  TrendingUp, Brain, AlertTriangle, Search, Bell, Globe, CheckCircle2,
+  ShieldAlert, User as UserIcon, Flame
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ import AssessmentPage from '../../../../app/student-os/assessment/page';
 import WeakAreasPage from '../../../../app/student-os/weak-areas/page';
 import CareerDashboard from '../../../../app/student-os/career/page';
 import FocusModePage from '../../../../app/student-os/focus/page';
+import StudentProfilePage from '../../../../app/student-os/profile/page';
 
 const MAIN_NAV = [
   { href: '/student-os', label: 'Dashboard', icon: LayoutDashboard },
@@ -49,12 +51,13 @@ const CAREER_NAV = [
 const INTELLIGENCE_NAV = [
   { href: '/student-os/ai', label: 'AI Assistant', icon: Sparkles, badge: 'Pro' },
   { href: '/student-os/focus', label: 'Focus Mode', icon: Focus },
+  { href: '/student-os/profile', label: 'Academic Profile', icon: UserIcon, badge: 'New' },
 ];
 
 function StudentOSShell({ children }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isGoogleConnected, googleEmail, connectGoogleWorkspace } = useStudentOS();
+  const { isGoogleConnected, googleEmail, connectGoogleWorkspace, userName, userAvatar, streakDays } = useStudentOS();
 
   const isActiveRoute = (href) => {
     if (href === '/student-os') {
@@ -63,7 +66,7 @@ function StudentOSShell({ children }) {
     return location.pathname.startsWith(href);
   };
 
-  let displayName = 'StudentOS User';
+  let displayName = userName || 'StudentOS User';
   let avatarInitials = 'SO';
   try {
     const auth = useAuth();
@@ -136,6 +139,12 @@ function StudentOSShell({ children }) {
 
         {/* Status Bar */}
         <div className="flex items-center gap-3">
+          {/* Daily Streak Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
+            <Flame size={13} className="text-amber-400 fill-amber-400 animate-pulse" />
+            <span>{streakDays || 1} Day Streak</span>
+          </div>
+
           {isGoogleConnected ? (
             <Badge variant="success" className="hidden sm:flex items-center gap-1 text-[10px] py-1">
               <CheckCircle2 size={11} /> {googleEmail || 'Google Connected'}
@@ -146,12 +155,25 @@ function StudentOSShell({ children }) {
             </Badge>
           )}
 
-          <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
-              {avatarInitials}
-            </div>
+          {/* User Profile Pill -> Links directly to /student-os/profile */}
+          <Link
+            to="/student-os/profile"
+            className="flex items-center gap-2 pl-2 border-l border-zinc-800 hover:opacity-85 transition-opacity"
+            title="Open Academic Profile"
+          >
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt={displayName}
+                className="w-7 h-7 rounded-full object-cover border border-blue-500 shadow-sm"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
+                {avatarInitials}
+              </div>
+            )}
             <span className="hidden sm:inline text-xs font-semibold text-zinc-200">{displayName}</span>
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -213,7 +235,7 @@ function StudentOSShell({ children }) {
             })}
 
             <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Intelligence
+              Intelligence & Profile
             </div>
             {INTELLIGENCE_NAV.map((item) => {
               const active = isActiveRoute(item.href);
@@ -267,6 +289,7 @@ export default function StudentOSRoutes() {
             <Route path="weak-areas" element={<WeakAreasPage />} />
             <Route path="career" element={<CareerDashboard />} />
             <Route path="focus" element={<FocusModePage />} />
+            <Route path="profile" element={<StudentProfilePage />} />
           </Routes>
         </StudentOSShell>
       </RoadmapProvider>
