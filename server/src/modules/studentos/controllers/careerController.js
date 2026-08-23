@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 
 // JSearch via RapidAPI — set JSEARCH_API_KEY in server .env
 const JSEARCH_BASE = 'https://jsearch.p.rapidapi.com/search';
@@ -84,6 +84,80 @@ const careerController = {
       console.error('[CareerHub JSearch Error]', err.message);
       // Graceful fallback
       return res.json({ jobs: getMockJobs(companyType, experience), source: 'mock', page: 1, totalPages: 1 });
+    }
+  },
+
+  async matchResume(req, res) {
+    try {
+      const AiService = require('../services/AiService');
+      const fs = require('fs');
+
+      let resumeText = req.body.resumeText || '';
+
+      if (req.file) {
+        try {
+          const fileContent = fs.readFileSync(req.file.path, 'utf-8');
+          resumeText = fileContent;
+          fs.unlink(req.file.path, () => {});
+        } catch {}
+      }
+
+      if (!resumeText || !resumeText.trim()) {
+        return res.status(400).json({ message: 'No resume content provided.' });
+      }
+
+      const parsed = await AiService.parseResumeAndMatch(resumeText);
+      const targetRole = parsed.recommendedRoles?.[0] || 'Software Engineer';
+      const expLevel = parsed.experienceLevel || 'entry';
+
+      // Fetch matched jobs for the extracted profile
+      let matchedJobs = getMockJobs('product', expLevel);
+      if (RAPIDAPI_KEY) {
+        try {
+          const { data } = await axios.get(JSEARCH_BASE, {
+            params: {
+              query: `${targetRole} hiring`,
+              num_pages: '1',
+              employment_types: expLevel === 'intern' ? 'INTERN' : 'FULLTIME',
+            },
+            headers: {
+              'X-RapidAPI-Key': RAPIDAPI_KEY,
+              'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+            },
+            timeout: 7000,
+          });
+
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            matchedJobs = data.data.map((j) => ({
+              id: j.job_id,
+              title: j.job_title,
+              company: j.employer_name,
+              companyLogo: j.employer_logo || null,
+              location: j.job_city ? `${j.job_city}, ${j.job_country}` : j.job_country || 'Remote',
+              isRemote: j.job_is_remote,
+              type: j.job_employment_type || 'FULLTIME',
+              salary: j.job_min_salary && j.job_max_salary
+                ? `$${j.job_min_salary.toLocaleString()} – $${j.job_max_salary.toLocaleString()} / yr`
+                : 'Competitive Salary',
+              description: (j.job_description || '').slice(0, 300) + '...',
+              applyUrl: j.job_apply_link,
+              postedAt: j.job_posted_at_datetime_utc,
+              required: j.job_required_skills || parsed.skills || [],
+              companyType: 'product',
+            }));
+          }
+        } catch (apiErr) {
+          console.warn('[JSearch resume matching fallback]', apiErr.message);
+        }
+      }
+
+      res.json({
+        parsed,
+        jobs: matchedJobs,
+      });
+    } catch (err) {
+      console.error('[matchResume error]', err);
+      res.status(500).json({ message: 'Failed to process resume', error: err.message });
     }
   },
 };

@@ -1,4 +1,4 @@
-﻿const AiService = require('../services/AiService');
+const AiService = require('../services/AiService');
 const ClassroomService = require('../services/ClassroomService');
 const CalendarService = require('../services/CalendarService');
 const GmailService = require('../services/GmailService');
@@ -29,7 +29,13 @@ const aiController = {
     };
 
     const result = await AiService.chat(message.trim(), context);
-    res.json(result);
+    const replyText = result.reply || result.response || result.text || '';
+    res.json({
+      reply: replyText,
+      response: replyText,
+      text: replyText,
+      available: result.available ?? true,
+    });
   },
 
   async summarizeEmail(req, res) {

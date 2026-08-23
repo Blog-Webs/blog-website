@@ -15,12 +15,24 @@ const academicProfileSchema = new mongoose.Schema(
       index: true,
     },
 
-    // ── Step 1: Basic Academic Info ─────────────────────────────────────────
-    collegeName:  { type: String, trim: true, default: '' },
-    degree:       { type: String, trim: true, default: '' }, // "B.Tech", "MBBS", "LLB"
-    branch:       { type: String, trim: true, default: '' }, // "CSE", "Anatomy", "Criminal Law"
-    yearOfStudy:  { type: Number, min: 1, max: 7, default: 1 },
-    semester:     { type: Number, min: 1, max: 14, default: 1 },
+    // ── Step 1: Basic Academic & Personal Info ───────────────────────────
+    collegeName:          { type: String, trim: true, default: '' },
+    degree:               { type: String, trim: true, default: '' }, // "B.Tech", "B.Sc", "MCA"
+    branch:               { type: String, trim: true, default: '' }, // "Computer Science", "IT", "ECE"
+    yearOfStudy:          { type: Number, min: 1, max: 7, default: 1 },
+    semester:             { type: Number, min: 1, max: 14, default: 1 },
+    percentageOrCgpa:     { type: String, trim: true, default: '' }, // "8.9 CGPA" or "85%"
+    areaOfInterest:       { type: String, trim: true, default: '' }, // "AI & ML, Cloud Systems"
+    targetGraduationYear: { type: Number, default: 2026 },
+
+    // ── Personal & Contact Details ──────────────────────────────────────────
+    phone:           { type: String, trim: true, default: '' },
+    address:         { type: String, trim: true, default: '' },
+    location:        { type: String, trim: true, default: '' }, // "Bangalore, India"
+    profilePhotoUrl: { type: String, trim: true, default: '' },
+    linkedInUrl:     { type: String, trim: true, default: '' },
+    githubUrl:       { type: String, trim: true, default: '' },
+    bio:             { type: String, trim: true, default: '' },
 
     // ── Step 2: Domain ──────────────────────────────────────────────────────
     domain:    { type: String, trim: true, default: '' }, // "engineering", "medical", "law"

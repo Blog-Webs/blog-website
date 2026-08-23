@@ -100,6 +100,9 @@ const AdminLayout = () => {
             <NavLink to="/admin-portal" end className={navLinkClass}>
               <TerminalSquare size={16} /> Dash Board
             </NavLink>
+            <NavLink to="/admin-portal/studentos-users" className={navLinkClass}>
+              <Users size={16} /> StudentOS Students
+            </NavLink>
             <NavLink to="/admin-portal/content" className={navLinkClass}>
               <BookOpen size={16} /> Curriculum
             </NavLink>

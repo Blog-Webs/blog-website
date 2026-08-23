@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getStats, checkAdmin, getNotifications, markNotificationRead } = require('./adminController');
 const { requireAdmin } = require('../../middleware/auth');
+const profileCtrl = require('../studentos/controllers/profileController');
 
 // requireAdmin alone (no requireAuth in front of it) so an unauthenticated
 // or non-admin caller always gets a generic 404, never a 401/403 that
@@ -11,5 +12,6 @@ router.get('/stats', getStats);
 router.get('/check', checkAdmin);
 router.get('/notifications', getNotifications);
 router.put('/notifications/:id/read', markNotificationRead);
+router.get('/studentos/students', profileCtrl.getAdminStudents);
 
 module.exports = router;

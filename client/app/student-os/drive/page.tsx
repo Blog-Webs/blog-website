@@ -203,30 +203,58 @@ export default function DrivePage() {
         </div>
       )}
 
-      {/* Preview Modal */}
+      {/* Enlarged High-Resolution Preview Modal */}
       {preview && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-5xl bg-zinc-950 rounded-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <div>
-                <p className="text-sm font-bold text-white truncate">{preview.name}</p>
-                {preview.webViewLink && (
-                  <a href={preview.webViewLink} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
-                    <ExternalLink size={10} /> Open in Google Drive
-                  </a>
-                )}
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-2 sm:p-4 md:p-6">
+          <div className="w-full max-w-6xl h-[92vh] bg-zinc-950 rounded-2xl border border-zinc-800/90 overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/60 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-purple-400 shrink-0">
+                  {getFileIcon(preview)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate max-w-[450px]">{preview.name}</p>
+                  <p className="text-[11px] text-zinc-400">{preview.fileType} · {preview.size || 'Google Cloud'}</p>
+                </div>
               </div>
-              <button onClick={() => setPreview(null)} className="p-2 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white">
-                <X size={18} />
-              </button>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {preview.webViewLink && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5 h-8 text-purple-300 border-purple-500/30 hover:bg-purple-500/10"
+                    onClick={() => window.open(preview.webViewLink, '_blank')}
+                  >
+                    <ExternalLink size={13} /> Open in Google Drive
+                  </Button>
+                )}
+                <button
+                  onClick={() => setPreview(null)}
+                  className="p-1.5 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <iframe
-                src={preview.webViewLink?.replace('/view', '/preview') || preview.webViewLink}
-                className="w-full h-full min-h-[500px] border-0"
-                title={preview.name}
-                allow="autoplay"
-              />
+
+            <div className="flex-1 bg-zinc-950 p-2 overflow-hidden flex items-center justify-center">
+              {['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(preview.mimeType) ? (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img
+                    src={preview.thumbnailLink?.replace(/=s\d+/, '=s1600') || preview.webContentLink || preview.webViewLink}
+                    alt={preview.name}
+                    className="max-h-[82vh] max-w-full object-contain rounded-xl shadow-2xl border border-zinc-800/60"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={preview.webViewLink?.replace('/view', '/preview') || preview.webViewLink}
+                  className="w-full h-full border-0 rounded-xl bg-zinc-900"
+                  title={preview.name}
+                  allow="autoplay"
+                />
+              )}
             </div>
           </div>
         </div>

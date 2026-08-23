@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
   Sparkles, Focus, Menu, X, Command, Code2, MapPin, ClipboardList,
-  TrendingUp, Brain, AlertTriangle, Search, Bell, Globe, CheckCircle2, ShieldAlert
+  TrendingUp, Brain, AlertTriangle, Search, Bell, Globe, CheckCircle2, ShieldAlert,
+  Flame, User as UserIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ const CAREER_NAV = [
 const INTELLIGENCE_NAV = [
   { href: '/student-os/ai', label: 'AI Assistant', icon: Sparkles, badge: 'Pro' },
   { href: '/student-os/focus', label: 'Focus Mode', icon: Focus },
+  { href: '/student-os/profile', label: 'Academic Profile', icon: UserIcon },
 ];
 
 export default function StudentOSLayout({
@@ -42,7 +44,7 @@ export default function StudentOSLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isGoogleConnected, googleEmail, connectGoogleWorkspace } = useStudentOS();
+  const { isGoogleConnected, googleEmail, userName, userAvatar, streakDays, connectGoogleWorkspace } = useStudentOS();
 
   const isActiveRoute = (href: string) => {
     if (href === '/student-os') return pathname === '/student-os';
@@ -85,7 +87,7 @@ export default function StudentOSLayout({
             </div>
             <span className="font-bold text-sm tracking-tight text-white font-sans">StudentOS</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50">
-              v2.0 API Connected
+              v3.0 Live
             </span>
           </Link>
         </div>
@@ -99,8 +101,14 @@ export default function StudentOSLayout({
           </kbd>
         </div>
 
-        {/* Workspace Connection Badge & User Status Bar */}
+        {/* Streak, Connection & User Profile Header */}
         <div className="flex items-center gap-3">
+          {/* Daily Streak Badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold shadow-sm">
+            <Flame size={13} className="text-amber-400 animate-pulse fill-amber-400" />
+            <span>{streakDays} {streakDays === 1 ? 'Day' : 'Days'} Streak</span>
+          </div>
+
           {isGoogleConnected ? (
             <Badge variant="success" className="hidden sm:flex items-center gap-1 text-[10px] py-1">
               <CheckCircle2 size={11} /> {googleEmail || 'Google Connected'}
@@ -111,12 +119,22 @@ export default function StudentOSLayout({
             </Badge>
           )}
 
-          <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
-              SO
-            </div>
-            <span className="hidden sm:inline text-xs font-semibold text-zinc-200">StudentOS User</span>
-          </div>
+          <Link href="/student-os/profile" className="flex items-center gap-2 pl-2 border-l border-zinc-800 hover:opacity-80 transition-opacity">
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt={userName}
+                className="w-7 h-7 rounded-full object-cover border border-zinc-700 shadow-sm"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
+                {userName ? userName.slice(0, 2).toUpperCase() : 'SO'}
+              </div>
+            )}
+            <span className="hidden sm:inline text-xs font-semibold text-zinc-200 max-w-[130px] truncate">
+              {userName || 'StudentOS User'}
+            </span>
+          </Link>
         </div>
       </header>
 

@@ -89,7 +89,10 @@ const studentOSAuthController = {
       .select('googleEmail scope createdAt updatedAt');
     res.json({
       connected: !!token,
-      googleEmail: token?.googleEmail || null,
+      googleEmail: token?.googleEmail || req.user?.email || null,
+      userName: req.user?.name || '',
+      userAvatar: req.user?.avatar || '',
+      userEmail: req.user?.email || '',
       connectedAt: token?.createdAt || null,
     });
   },

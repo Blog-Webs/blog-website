@@ -16,6 +16,9 @@ interface StudentOSContextType {
   addFocusMinutes: (minutes: number) => void;
   isGoogleConnected: boolean;
   googleEmail: string | null;
+  userName: string;
+  userAvatar: string;
+  streakDays: number;
   connectGoogleWorkspace: () => Promise<void>;
   disconnectGoogleWorkspace: () => Promise<void>;
 }
@@ -32,6 +35,9 @@ const StudentOSContext = createContext<StudentOSContextType>({
   addFocusMinutes: () => {},
   isGoogleConnected: false,
   googleEmail: null,
+  userName: 'StudentOS User',
+  userAvatar: '',
+  streakDays: 1,
   connectGoogleWorkspace: async () => {},
   disconnectGoogleWorkspace: async () => {},
 });
@@ -86,6 +92,45 @@ export const StudentOSProvider = ({ children }: { children: React.ReactNode }) =
 
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('StudentOS User');
+  const [userAvatar, setUserAvatar] = useState<string>('');
+  const [streakDays, setStreakDays] = useState<number>(1);
+
+  // Daily streak tracker
+  useEffect(() => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const saved = localStorage.getItem('studentos_streak_tracker');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const lastDate = parsed.lastDate;
+        const currentStreak = parsed.streak || 1;
+
+        if (lastDate === todayStr) {
+          setStreakDays(currentStreak);
+        } else {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+          if (lastDate === yesterdayStr) {
+            const nextStreak = currentStreak + 1;
+            setStreakDays(nextStreak);
+            localStorage.setItem('studentos_streak_tracker', JSON.stringify({ lastDate: todayStr, streak: nextStreak }));
+          } else {
+            // Missed a day or first time
+            setStreakDays(1);
+            localStorage.setItem('studentos_streak_tracker', JSON.stringify({ lastDate: todayStr, streak: 1 }));
+          }
+        }
+      } else {
+        setStreakDays(1);
+        localStorage.setItem('studentos_streak_tracker', JSON.stringify({ lastDate: todayStr, streak: 1 }));
+      }
+    } catch {
+      setStreakDays(1);
+    }
+  }, []);
 
   // Fetch initial tasks and auth status from backend if authenticated
   useEffect(() => {
@@ -96,7 +141,20 @@ export const StudentOSProvider = ({ children }: { children: React.ReactNode }) =
       .then((res) => {
         if (res.data) {
           setIsGoogleConnected(!!res.data.connected);
-          setGoogleEmail(res.data.email || null);
+          setGoogleEmail(res.data.googleEmail || null);
+          if (res.data.userName) setUserName(res.data.userName);
+          if (res.data.userAvatar) setUserAvatar(res.data.userAvatar);
+        }
+      })
+      .catch(() => {});
+
+    // Also fallback/sync from /auth/me
+    api.get('/auth/me')
+      .then((res) => {
+        if (res.data?.user) {
+          if (res.data.user.name) setUserName(res.data.user.name);
+          if (res.data.user.avatar) setUserAvatar(res.data.user.avatar);
+          if (res.data.user.email && !googleEmail) setGoogleEmail(res.data.user.email);
         }
       })
       .catch(() => {});
@@ -200,6 +258,9 @@ export const StudentOSProvider = ({ children }: { children: React.ReactNode }) =
         addFocusMinutes,
         isGoogleConnected,
         googleEmail,
+        userName,
+        userAvatar,
+        streakDays,
         connectGoogleWorkspace,
         disconnectGoogleWorkspace,
       }}

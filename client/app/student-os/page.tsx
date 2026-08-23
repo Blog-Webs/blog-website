@@ -15,10 +15,10 @@ import { useRoadmap } from '@/context/RoadmapContext';
 import { useAuth } from '@/modules/core/context/AuthContext';
 
 export default function StudentOSDashboard() {
-  const { tasks, events, focusMinutesToday, googleEmail } = useStudentOS();
+  const { tasks, events, focusMinutesToday, googleEmail, userName, streakDays } = useStudentOS();
   const { milestones, targetRole } = useRoadmap();
 
-  let displayName = 'Student';
+  let displayName = userName || 'Student';
   try {
     const auth = useAuth();
     if (auth?.user?.displayName) {
@@ -31,7 +31,7 @@ export default function StudentOSDashboard() {
   } catch (err) {
     // optional fallback
   }
-  if (displayName === 'Student' && googleEmail) {
+  if ((!displayName || displayName === 'Student') && googleEmail) {
     displayName = googleEmail.split('@')[0];
   }
 
@@ -115,8 +115,8 @@ export default function StudentOSDashboard() {
             <Flame size={18} className="text-amber-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">7 Days</div>
-            <p className="text-xs text-amber-400 mt-1 font-medium">Consistency badge active</p>
+            <div className="text-3xl font-bold text-white">{streakDays} {streakDays === 1 ? 'Day' : 'Days'}</div>
+            <p className="text-xs text-amber-400 mt-1 font-medium">Daily visit streak active</p>
           </CardContent>
         </Card>
       </div>

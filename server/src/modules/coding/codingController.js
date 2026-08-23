@@ -133,49 +133,107 @@ exports.deleteFile = async (req, res) => {
 exports.executeCode = async (req, res) => {
   try {
     const { language, fileName, content, stdin } = req.body;
-    
-    // Judge0 CE language IDs
-    const languageMap = {
-      'python': { id: 71 },
-      'java': { id: 62 },
-      'javascript': { id: 63 },
-      'cpp': { id: 54 },
+
+    const pistonLangMap = {
+      'java': { lang: 'java', version: '15.0.2', file: 'Main.java' },
+      'python': { lang: 'python', version: '3.10.0', file: 'main.py' },
+      'javascript': { lang: 'javascript', version: '18.15.0', file: 'index.js' },
+      'typescript': { lang: 'typescript', version: '5.0.3', file: 'index.ts' },
+      'cpp': { lang: 'c++', version: '10.2.0', file: 'main.cpp' },
+      'c': { lang: 'c', version: '10.2.0', file: 'main.c' },
+      'go': { lang: 'go', version: '1.16.2', file: 'main.go' },
+      'rust': { lang: 'rust', version: '1.68.2', file: 'main.rs' },
     };
 
-    const runConfig = languageMap[language] || languageMap['python'];
+    let targetLang = (language || 'javascript').toLowerCase();
+    if (targetLang === 'js') targetLang = 'javascript';
+    if (targetLang === 'py') targetLang = 'python';
+    if (targetLang === 'c++') targetLang = 'cpp';
 
-    let finalContent = content;
-    if (language === 'java') {
-      // Judge0 saves as Main.java, so any public class must be named Main
-      finalContent = finalContent.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+    const pConfig = pistonLangMap[targetLang] || pistonLangMap['javascript'];
+
+    let sourceCode = content || '';
+    if (targetLang === 'java' && !sourceCode.includes('class Main')) {
+      sourceCode = sourceCode.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
     }
 
-    const response = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+    const startMs = Date.now();
+
+    // 1. Try Piston API (fast & supports all requested languages)
+    try {
+      const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: pConfig.lang,
+          version: pConfig.version,
+          files: [{ name: fileName || pConfig.file, content: sourceCode }],
+          stdin: stdin || '',
+        }),
+      });
+
+      if (pistonRes.ok) {
+        const pData = await pistonRes.json();
+        const execTime = `${Date.now() - startMs}ms`;
+        const stdout = pData.run?.stdout || (pData.run?.code === 0 && !pData.run?.stderr ? pData.run?.output : '');
+        const stderr = pData.run?.stderr || pData.compile?.stderr || (pData.run?.code !== 0 ? pData.run?.output : '');
+
+        return res.json({
+          run: {
+            output: stdout || pData.run?.output || '',
+            stdout: stdout || '',
+            stderr: stderr || '',
+            code: pData.run?.code ?? 0,
+            execTime,
+          },
+          compile: {
+            stderr: pData.compile?.stderr || pData.compile?.output || '',
+          },
+        });
+      }
+    } catch (pistonErr) {
+      console.warn('[Piston API fallback]', pistonErr.message);
+    }
+
+    // 2. Fallback to Judge0 CE
+    const judge0Map = {
+      'python': 71,
+      'java': 62,
+      'javascript': 63,
+      'cpp': 54,
+      'c': 50,
+      'go': 60,
+      'rust': 73,
+    };
+
+    const judge0Id = judge0Map[targetLang] || 63;
+    const j0Res = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        language_id: runConfig.id,
-        source_code: finalContent,
+        language_id: judge0Id,
+        source_code: sourceCode,
         stdin: stdin || '',
-      })
+      }),
     });
 
-    const data = await response.json();
-    
-    // Map Judge0 output back to what the frontend expects
-    res.json({
+    const j0Data = await j0Res.json();
+    const execTime = `${Date.now() - startMs}ms`;
+
+    return res.json({
       run: {
-        output: data.stdout || '',
-        stderr: data.stderr || ''
+        output: j0Data.stdout || j0Data.stderr || '',
+        stdout: j0Data.stdout || '',
+        stderr: j0Data.stderr || '',
+        code: j0Data.status?.id === 3 ? 0 : 1,
+        execTime,
       },
       compile: {
-        stderr: data.compile_output || ''
-      }
+        stderr: j0Data.compile_output || '',
+      },
     });
   } catch (err) {
     console.error('Execution error:', err);
-    res.status(500).json({ message: 'Failed to execute code' });
+    res.status(500).json({ message: 'Failed to execute code', error: err.message });
   }
 };

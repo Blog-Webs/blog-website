@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../../../middleware/auth');
 const requireStudentOS = require('../middleware/requireStudentOS');
@@ -13,6 +13,7 @@ const tasksCtrl = require('../controllers/tasksController');
 const aiCtrl = require('../controllers/aiController');
 const filesCtrl = require('../controllers/filesController');
 const careerCtrl = require('../controllers/careerController');
+const profileCtrl = require('../controllers/profileController');
 
 const multer = require('multer');
 const os = require('os');
@@ -29,11 +30,15 @@ function asyncWrap(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 }
 
-// ── Auth (no StudentOS token required) ──
+// ── Auth & Profile (no StudentOS Google token required) ──
 router.get('/auth/url', requireAuth, authCtrl.getAuthUrl);
 router.get('/auth/callback', authCtrl.handleCallback);
 router.get('/auth/status', requireAuth, cacheControl(15), authCtrl.getStatus);
 router.delete('/auth/disconnect', requireAuth, authCtrl.disconnect);
+
+// Student Profile (requires httpTechNex login)
+router.get('/profile', requireAuth, asyncWrap(profileCtrl.getProfile));
+router.put('/profile', requireAuth, asyncWrap(profileCtrl.updateProfile));
 
 // ── All routes below require both httpTechNex login AND Google Workspace connected ──
 router.use(requireAuth);
@@ -77,6 +82,7 @@ router.post('/tasks/:taskId/complete', asyncWrap(tasksCtrl.completeTask));
 
 // Career Hub
 router.get('/career/jobs', asyncWrap(careerCtrl.getJobs));
+router.post('/career/match-resume', upload.single('resume'), asyncWrap(careerCtrl.matchResume));
 
 // AI
 router.get('/ai/status', asyncWrap(aiCtrl.getStatus));

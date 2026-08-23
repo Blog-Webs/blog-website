@@ -24,4 +24,6 @@ export const adminApi = {
   createIconOption: (payload) => api.post('/admin/content/icons', payload),
   updateIconOption: (id, payload) => api.patch(`/admin/content/icons/${id}`, payload),
   deleteIconOption: (id) => api.delete(`/admin/content/icons/${id}`),
+
+  getStudentOSUsers: (params) => api.get('/admin/studentos/students', { params }),
 };
