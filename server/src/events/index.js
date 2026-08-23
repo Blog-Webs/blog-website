@@ -5,6 +5,13 @@ const AdminNotification = require('../modules/admin/AdminNotification');
 // --- User Registration Event ---
 eventBus.on('UserRegistered', async (user) => {
   try {
+    const { Newsletter } = require('../models');
+    await Newsletter.findOneAndUpdate(
+      { email: user.email.toLowerCase() },
+      { email: user.email.toLowerCase(), isActive: true, user: user._id },
+      { upsert: true, new: true }
+    );
+
     const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <h2>Welcome to HttpTechNex, ${user.name}!</h2>

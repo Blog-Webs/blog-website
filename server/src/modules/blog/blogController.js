@@ -7,18 +7,28 @@ const { sendBulkMail } = require('../../utils/mailer');
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// Emails every active subscriber that a new post is live. Fire-and-forget
+// Emails every active subscriber and registered user that a new post is live. Fire-and-forget
 // from the caller's perspective — failures are logged, never thrown.
 const notifySubscribersOfNewPost = async (blog) => {
   try {
-    const subscribers = await Newsletter.find({ isActive: true }).select('email');
-    if (!subscribers || subscribers.length === 0) {
+    const newsletterSubs = await Newsletter.find({ isActive: true }).select('email').lean();
+    const users = await User.find({}).select('email').lean();
+
+    const recipientSet = new Set([
+      ...(newsletterSubs || []).map((s) => s.email?.toLowerCase()),
+      ...(users || []).map((u) => u.email?.toLowerCase()),
+    ]);
+
+    const recipientEmails = Array.from(recipientSet).filter(
+      (email) => email && /^\S+@\S+\.\S+$/.test(email)
+    );
+
+    if (recipientEmails.length === 0) {
       console.log('[notifySubscribersOfNewPost] No active subscribers found to notify.');
       return { sentCount: 0, failedCount: 0 };
     }
 
-    const recipientEmails = subscribers.map((s) => s.email);
-    console.log(`[notifySubscribersOfNewPost] Dispatching notification for "${blog.title}" to ${recipientEmails.length} subscriber(s)...`);
+    console.log(`[notifySubscribersOfNewPost] Dispatching notification for "${blog.title}" to ${recipientEmails.length} recipient(s)...`);
 
     const postUrl = `${CLIENT_URL}/blog/${blog.slug}`;
     const html = `
@@ -35,7 +45,7 @@ const notifySubscribersOfNewPost = async (blog) => {
           Read Article on HttpTechNex &rarr;
         </a>
         <p style="color: #484F58; font-size: 12px; margin-top: 36px; border-top: 1px solid #1C202B; padding-top: 20px; text-align: center;">
-          Sent to HttpTechNex Newsletter Subscribers &middot; <a href="${CLIENT_URL}" style="color: #4375FF; text-decoration: none;">httptechnex.online</a>
+          Sent to HttpTechNex Community &middot; <a href="${CLIENT_URL}" style="color: #4375FF; text-decoration: none;">httptechnex.online</a>
         </p>
       </div>
     `;
@@ -341,8 +351,7 @@ const updateBlog = async (req, res) => {
   await blog.save();
   res.json({ blog });
 
-  const justPublished = !wasPublished && blog.status === 'published';
-  if (justPublished) {
+  if (blog.status === 'published') {
     notifySubscribersOfNewPost(blog);
     UserNotification.create({
       type: 'BLOG_PUBLISHED',
