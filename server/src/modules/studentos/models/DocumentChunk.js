@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const documentChunkSchema = new mongoose.Schema({
   documentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Document', required: true },
   text: { type: String, required: true },
-  embedding: { type: [Number], required: true }, // The 768-dimensional vector
+  embedding: { type: [Number], default: [] }, // The 768-dimensional vector (or empty if offline)
   metadata: { type: Object, default: {} },
   chunkIndex: { type: Number, required: true }
 }, { timestamps: true });

@@ -77,35 +77,55 @@ Summary (use bullet points):`;
 
     const parts = [];
 
-    // --- RAG RETRIEVAL ---
-    try {
-      const embeddingModel = ai.getGenerativeModel({ model: 'gemini-embedding-001' });
-      const embedResult = await embeddingModel.embedContent(message);
-      const queryEmbedding = embedResult.embedding.values;
+      let docTexts = '';
 
-      const vectorResults = await DocumentChunk.aggregate([
-        {
-          $vectorSearch: {
-            index: 'vector_index',
-            path: 'embedding',
-            queryVector: queryEmbedding,
-            numCandidates: 100,
-            limit: 5,
+      try {
+        const embeddingModel = ai.getGenerativeModel({ model: 'gemini-embedding-001' });
+        const embedResult = await embeddingModel.embedContent(message);
+        const queryEmbedding = embedResult.embedding?.values;
+
+        if (queryEmbedding && queryEmbedding.length > 0) {
+          const vectorResults = await DocumentChunk.aggregate([
+            {
+              $vectorSearch: {
+                index: 'vector_index',
+                path: 'embedding',
+                queryVector: queryEmbedding,
+                numCandidates: 100,
+                limit: 5,
+              }
+            },
+            {
+              $project: { _id: 0, text: 1, score: { $meta: 'vectorSearchScore' } }
+            }
+          ]);
+
+          if (vectorResults && vectorResults.length > 0) {
+            docTexts = vectorResults.map(r => r.text).join('\n---\n');
           }
-        },
-        {
-          $project: { _id: 0, text: 1, score: { $meta: 'vectorSearchScore' } }
         }
-      ]);
+      } catch (vectorErr) {
+        // Fallback to keyword matching across chunks if vectorSearch index is absent
+        try {
+          const keywords = message.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
+          if (keywords.length > 0) {
+            const regexQuery = keywords.map(k => `(?=.*${k})`).join('');
+            const textResults = await DocumentChunk.find({
+              text: { $regex: keywords.join('|'), $options: 'i' }
+            }).limit(4).select('text').lean();
 
-      if (vectorResults && vectorResults.length > 0) {
-        const docTexts = vectorResults.map(r => r.text).join('\n---\n');
-        parts.push(`Information from uploaded course documents:\n${docTexts}`);
+            if (textResults && textResults.length > 0) {
+              docTexts = textResults.map(r => r.text).join('\n---\n');
+            }
+          }
+        } catch (textErr) {
+          console.warn('[Text Search Fallback warning]', textErr.message);
+        }
       }
-    } catch (err) {
-      console.error('[RAG Retrieval Error]', err);
-    }
-    // ---------------------
+
+      if (docTexts) {
+        parts.push(`Information from uploaded course documents & syllabi:\n${docTexts}`);
+      }
 
     if (ctx.assignments && ctx.assignments.length) {
       const list = ctx.assignments.slice(0, 5).map((a) =>
