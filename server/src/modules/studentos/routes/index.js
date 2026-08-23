@@ -39,6 +39,7 @@ router.delete('/auth/disconnect', requireAuth, authCtrl.disconnect);
 // Student Profile (requires httpTechNex login)
 router.get('/profile', requireAuth, asyncWrap(profileCtrl.getProfile));
 router.put('/profile', requireAuth, asyncWrap(profileCtrl.updateProfile));
+router.post('/profile/avatar', requireAuth, upload.single('avatar'), asyncWrap(profileCtrl.uploadAvatar));
 
 // ── All routes below require both httpTechNex login AND Google Workspace connected ──
 router.use(requireAuth);

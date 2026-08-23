@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User as UserIcon, GraduationCap, Building2, BookOpen, Award, Phone,
   MapPin, Globe, Link2, Code2, Save, CheckCircle2, RefreshCw,
-  Sparkles, Camera, Briefcase, Clock, Layers, ShieldCheck
+  Sparkles, Camera, Briefcase, Clock, Layers, ShieldCheck, Upload, Cloud
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,11 @@ export default function StudentProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Cloudinary Avatar Upload State
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUploadSuccess, setAvatarUploadSuccess] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -83,6 +88,39 @@ export default function StudentProfilePage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Upload photo to Cloudinary
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    setAvatarUploadSuccess(false);
+
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+
+      const res = await api.post('/student-os/profile/avatar', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const newAvatarUrl = res.data?.avatarUrl;
+      if (newAvatarUrl) {
+        setFormData(prev => ({ ...prev, avatar: newAvatarUrl }));
+        try {
+          localStorage.setItem('studentos_user_avatar', newAvatarUrl);
+          window.dispatchEvent(new Event('storage'));
+        } catch {}
+        setAvatarUploadSuccess(true);
+        setTimeout(() => setAvatarUploadSuccess(false), 4000);
+      }
+    } catch (err: any) {
+      alert('Failed to upload image to Cloudinary: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -101,6 +139,15 @@ export default function StudentProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {/* Hidden File Input for Cloudinary Upload */}
+      <input
+        type="file"
+        ref={avatarInputRef}
+        onChange={handleAvatarFileChange}
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -136,20 +183,55 @@ export default function StudentProfilePage() {
         </div>
       )}
 
+      {avatarUploadSuccess && (
+        <div className="p-4 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center gap-3 text-blue-300 text-xs font-semibold shadow-lg">
+          <Cloud size={18} className="text-blue-400 shrink-0" />
+          <span>Profile photo uploaded to Cloudinary successfully!</span>
+        </div>
+      )}
+
       {/* Avatar & Persona Summary Card */}
       <Card className="p-6 bg-zinc-950 border-zinc-800 shadow-xl flex flex-col md:flex-row items-center gap-6">
         <div className="relative group shrink-0">
-          {formData.avatar ? (
-            <img
-              src={formData.avatar}
-              alt={formData.name}
-              className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-2xl"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-teal-400 text-white font-bold text-2xl flex items-center justify-center shadow-2xl border-2 border-zinc-700">
-              {formData.name ? formData.name.slice(0, 2).toUpperCase() : 'SO'}
+          <div
+            onClick={() => avatarInputRef.current?.click()}
+            className="cursor-pointer relative overflow-hidden rounded-full transition-transform active:scale-95"
+            title="Click to upload profile photo to Cloudinary"
+          >
+            {formData.avatar ? (
+              <img
+                src={formData.avatar}
+                alt={formData.name}
+                className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-2xl"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-teal-400 text-white font-bold text-2xl flex items-center justify-center shadow-2xl border-2 border-zinc-700">
+                {formData.name ? formData.name.slice(0, 2).toUpperCase() : 'SO'}
+              </div>
+            )}
+
+            {/* Hover overlay with Cloudinary upload indicator */}
+            <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploadingAvatar ? (
+                <RefreshCw size={20} className="animate-spin text-blue-400" />
+              ) : (
+                <>
+                  <Camera size={18} />
+                  <span className="text-[9px] font-bold mt-0.5">Upload</span>
+                </>
+              )}
             </div>
-          )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white border-2 border-zinc-950 shadow-md transition-all"
+            title="Upload photo to Cloudinary"
+          >
+            {uploadingAvatar ? <RefreshCw size={12} className="animate-spin" /> : <Upload size={12} />}
+          </button>
         </div>
 
         <div className="flex-1 text-center md:text-left space-y-1">
@@ -158,6 +240,11 @@ export default function StudentProfilePage() {
             <Badge variant="outline" className="text-[10px] border-zinc-700 max-w-fit mx-auto md:mx-0">
               {formData.degree || 'B.Tech'} · {formData.branch || 'Engineering'}
             </Badge>
+            {formData.avatar && formData.avatar.includes('cloudinary') && (
+              <Badge variant="secondary" className="text-[9px] py-0 text-blue-400 border-blue-500/30 max-w-fit mx-auto md:mx-0">
+                <Cloud size={9} className="mr-1" /> Cloudinary Hosted
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-zinc-400">{formData.collegeName || 'University / Institution'}</p>
           {googleEmail && <p className="text-[11px] text-zinc-500 font-mono">{googleEmail}</p>}
@@ -341,13 +428,26 @@ export default function StudentProfilePage() {
 
                 <div>
                   <label className="text-xs text-zinc-400 font-semibold mb-1.5 block">
-                    Profile Photo URL
+                    Profile Photo (Cloudinary)
                   </label>
-                  <Input
-                    value={formData.avatar}
-                    onChange={e => handleChange('avatar', e.target.value)}
-                    placeholder="https://..."
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.avatar}
+                      onChange={e => handleChange('avatar', e.target.value)}
+                      placeholder="https://res.cloudinary.com/..."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="gap-1.5 shrink-0 text-xs"
+                    >
+                      {uploadingAvatar ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
+                      Upload File
+                    </Button>
+                  </div>
                 </div>
               </div>
 

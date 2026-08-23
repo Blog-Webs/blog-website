@@ -1,6 +1,66 @@
-﻿const { User, AcademicProfile } = require('../../../models');
+const fs = require('fs');
+const { User, AcademicProfile } = require('../../../models');
+const cloudinary = require('../../../config/cloudinary');
 
 const profileController = {
+  // POST /api/studentos/profile/avatar — Upload avatar to Cloudinary
+  async uploadAvatar(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No image file provided' });
+      }
+
+      let avatarUrl = '';
+
+      // Check if Cloudinary is configured
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+        const uploadRes = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'studentos/avatars',
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { quality: 'auto', fetch_format: 'auto' },
+          ],
+        });
+        avatarUrl = uploadRes.secure_url;
+      } else {
+        // Fallback: create base64 data URI if cloudinary not configured in current environment
+        const fileData = fs.readFileSync(req.file.path);
+        const mime = req.file.mimetype || 'image/png';
+        avatarUrl = `data:${mime};base64,${fileData.toString('base64')}`;
+      }
+
+      // Clean up local temp file
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch {}
+
+      // Update User document in MongoDB
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.avatar = avatarUrl;
+        await user.save();
+      }
+
+      // Also update AcademicProfile profilePhotoUrl
+      await AcademicProfile.findOneAndUpdate(
+        { user: req.user._id },
+        { profilePhotoUrl: avatarUrl },
+        { upsert: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Profile photo uploaded to Cloudinary successfully',
+        avatarUrl,
+      });
+    } catch (err) {
+      console.error('[uploadAvatar error]', err);
+      if (req.file?.path) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+      }
+      res.status(500).json({ message: 'Failed to upload profile photo', error: err.message });
+    }
+  },
   // GET /api/studentos/profile — Get full student profile
   async getProfile(req, res) {
     try {
