@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StudentOSProvider, useStudentOS } from '@/context/StudentOSContext';
 import { RoadmapProvider } from '@/context/RoadmapContext';
+import { useAuth } from '../../core/context/AuthContext';
 
 // Import StudentOS App Pages
 import StudentOSDashboard from '../../../../app/student-os/page';
@@ -61,6 +62,27 @@ function StudentOSShell({ children }) {
     }
     return location.pathname.startsWith(href);
   };
+
+  let displayName = 'StudentOS User';
+  let avatarInitials = 'SO';
+  try {
+    const auth = useAuth();
+    if (auth?.user?.displayName) {
+      displayName = auth.user.displayName;
+      avatarInitials = auth.user.displayName[0].toUpperCase();
+    } else if (auth?.user?.name) {
+      displayName = auth.user.name;
+      avatarInitials = auth.user.name[0].toUpperCase();
+    } else if (auth?.user?.email) {
+      displayName = auth.user.email.split('@')[0];
+      avatarInitials = auth.user.email[0].toUpperCase();
+    }
+  } catch (err) {}
+
+  if (displayName === 'StudentOS User' && googleEmail) {
+    displayName = googleEmail.split('@')[0];
+    avatarInitials = googleEmail[0].toUpperCase();
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100 font-sans">
@@ -126,9 +148,9 @@ function StudentOSShell({ children }) {
 
           <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
-              SO
+              {avatarInitials}
             </div>
-            <span className="hidden sm:inline text-xs font-semibold text-zinc-200">StudentOS User</span>
+            <span className="hidden sm:inline text-xs font-semibold text-zinc-200">{displayName}</span>
           </div>
         </div>
       </header>

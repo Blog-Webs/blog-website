@@ -12,10 +12,28 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useStudentOS } from '@/context/StudentOSContext';
 import { useRoadmap } from '@/context/RoadmapContext';
+import { useAuth } from '@/modules/core/context/AuthContext';
 
 export default function StudentOSDashboard() {
-  const { tasks, events, focusMinutesToday } = useStudentOS();
+  const { tasks, events, focusMinutesToday, googleEmail } = useStudentOS();
   const { milestones, targetRole } = useRoadmap();
+
+  let displayName = 'Student';
+  try {
+    const auth = useAuth();
+    if (auth?.user?.displayName) {
+      displayName = auth.user.displayName;
+    } else if (auth?.user?.name) {
+      displayName = auth.user.name;
+    } else if (auth?.user?.email) {
+      displayName = auth.user.email.split('@')[0];
+    }
+  } catch (err) {
+    // optional fallback
+  }
+  if (displayName === 'Student' && googleEmail) {
+    displayName = googleEmail.split('@')[0];
+  }
 
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
   const completedTasks = tasks.filter((t) => t.status === 'completed');
@@ -23,23 +41,23 @@ export default function StudentOSDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Apple-style Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950/90 p-8 md:p-10 backdrop-blur-2xl shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950/90 p-6 md:p-10 backdrop-blur-2xl shadow-2xl">
         <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             <div className="inline-flex items-center gap-2">
               <Badge variant="apple" className="gap-1 px-3 py-1 text-xs">
                 <Sparkles size={13} /> Academic Operating System
               </Badge>
             </div>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-              Welcome back, <span className="bg-gradient-to-r from-white via-zinc-200 to-blue-400 bg-clip-text text-transparent">Alex</span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight truncate">
+              Welcome back, <span className="bg-gradient-to-r from-white via-zinc-200 to-blue-400 bg-clip-text text-transparent">{displayName}</span>
             </h1>
             <p className="text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed">
               Target Track: <strong className="text-zinc-200 font-semibold">{targetRole}</strong>. All system diagnostics, focus records, and tasks are synced.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link href="/student-os/ai">
               <Button variant="apple" size="lg" className="gap-2">
                 <Sparkles size={16} /> Launch AI Tutor
