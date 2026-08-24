@@ -1,12 +1,133 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const mongoose = require('mongoose');
+const Document = require('../models/Document');
 const DocumentChunk = require('../models/DocumentChunk');
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-1.5-flash';
 
 function getAI() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
   return new GoogleGenerativeAI(key);
+}
+
+function cosineSimilarity(vecA, vecB) {
+  if (!vecA || !vecB || vecA.length !== vecB.length || vecA.length === 0) return 0;
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+async function getRAGContext(ai, message, userId) {
+  let docTexts = '';
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return '';
+    }
+    const docQuery = userId ? { $or: [{ uploadedBy: userId }, { uploadedBy: null }] } : {};
+    const userDocs = await Document.find(docQuery).sort({ createdAt: -1 }).maxTimeMS(3000).lean();
+    if (!userDocs || userDocs.length === 0) return '';
+
+    const docIds = userDocs.map(d => d._id);
+    const msgLower = message.toLowerCase();
+
+    // Check if query matches specific document title or filename
+    const matchedDocs = userDocs.filter(d => {
+      const title = (d.title || d.originalName || '').toLowerCase();
+      const baseName = title.replace(/\.pdf$|\.docx?$/i, '').replace(/[-_]/g, ' ');
+      const words = baseName.split(/\s+/).filter(w => w.length > 2);
+      return words.some(w => msgLower.includes(w)) || msgLower.includes(baseName);
+    });
+
+    const targetDocIds = matchedDocs.length > 0 ? matchedDocs.map(d => d._id) : docIds;
+
+    let retrievedChunks = [];
+
+    // Try Vector Embedding Search (Atlas Vector Search or In-Memory Cosine Similarity)
+    if (ai) {
+      try {
+        const embeddingModel = ai.getGenerativeModel({ model: 'text-embedding-004' });
+        const embedResult = await embeddingModel.embedContent(message);
+        const queryEmbedding = embedResult.embedding?.values;
+
+        if (queryEmbedding && queryEmbedding.length > 0) {
+          try {
+            const vectorResults = await DocumentChunk.aggregate([
+              {
+                $vectorSearch: {
+                  index: 'vector_index',
+                  path: 'embedding',
+                  queryVector: queryEmbedding,
+                  numCandidates: 100,
+                  limit: 5,
+                }
+              },
+              { $project: { documentId: 1, text: 1 } }
+            ]);
+            if (vectorResults && vectorResults.length > 0) {
+              retrievedChunks = vectorResults;
+            }
+          } catch (e) {
+            // In-memory Cosine Similarity across chunk embeddings
+            const allChunks = await DocumentChunk.find({ documentId: { $in: targetDocIds } }).lean();
+            const scoredChunks = allChunks.map(c => ({
+              ...c,
+              similarity: (c.embedding && c.embedding.length > 0) ? cosineSimilarity(queryEmbedding, c.embedding) : 0
+            })).sort((a, b) => b.similarity - a.similarity);
+
+            retrievedChunks = scoredChunks.filter(c => c.similarity > 0.3).slice(0, 5);
+            if (retrievedChunks.length === 0 && scoredChunks.length > 0) {
+              retrievedChunks = scoredChunks.slice(0, 5);
+            }
+          }
+        }
+      } catch (embErr) {
+        console.warn('[Embedding Search Warning]', embErr.message);
+      }
+    }
+
+    // Keyword matching fallback
+    if (retrievedChunks.length === 0) {
+      const stopWords = new Set(['explain', 'summarize', 'about', 'what', 'read', 'tell', 'show', 'pdf', 'document', 'file', 'this', 'that', 'with', 'from']);
+      const keywords = message.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
+      if (keywords.length > 0) {
+        const textResults = await DocumentChunk.find({
+          documentId: { $in: targetDocIds },
+          text: { $regex: keywords.join('|'), $options: 'i' }
+        }).limit(5).select('documentId text').lean();
+        if (textResults && textResults.length > 0) {
+          retrievedChunks = textResults;
+        }
+      }
+    }
+
+    // Full Document Chunks Fallback
+    if (retrievedChunks.length === 0) {
+      retrievedChunks = await DocumentChunk.find({ documentId: { $in: targetDocIds } })
+        .sort({ chunkIndex: 1 })
+        .limit(8)
+        .select('documentId text chunkIndex')
+        .lean();
+    }
+
+    const docMap = {};
+    userDocs.forEach(d => { docMap[d._id.toString()] = d.title || d.originalName; });
+
+    docTexts = retrievedChunks
+      .map(c => `[Document: ${docMap[c.documentId?.toString()] || 'Uploaded Document'}]\n${c.text}`)
+      .join('\n\n---\n\n');
+
+  } catch (err) {
+    console.error('[getRAGContext Error]', err);
+  }
+  return docTexts;
 }
 
 const AiService = {
@@ -48,26 +169,21 @@ Summary (use bullet points):`;
     return { summary: result.response.text().trim(), available: true };
   },
 
-  async chat(message, context) {
+  async chat(message, context, userId) {
     const ai = getAI();
+    const docTexts = await getRAGContext(ai, message, userId);
+
     if (!ai) {
-      // Smart offline academic reasoning fallback
-      let fallbackReply = `Here is an academic overview of your inquiry:\n\n` +
-        `**Key Concepts & Solution Framework**:\n` +
-        `- Focus on foundational principles and asymptotic complexity trade-offs.\n` +
-        `- When designing distributed systems or data structures, prioritize fault tolerance and high consistency.\n` +
-        `- Ensure all edge cases and boundary conditions are tested.\n\n` +
-        `\`\`\`javascript\n` +
-        `// Example Implementation Snippet\n` +
-        `function analyzeConcept(query) {\n` +
-        `  console.log("Analyzing:", query);\n` +
-        `  return { status: "optimized", complexity: "O(log N)" };\n` +
-        `}\n` +
-        `\`\`\`\n\n` +
-        `*(Note: To unlock live Google Gemini 2.5 generative reasoning with your uploaded syllabi, configure \`GEMINI_API_KEY\` in \`server/.env\`)*`;
+      let offlineReply = docTexts
+        ? `Here is the extracted content and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`GEMINI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
+        : `Here is an academic overview of your inquiry:\n\n` +
+          `**Key Concepts & Solution Framework**:\n` +
+          `- Focus on foundational principles and asymptotic complexity trade-offs.\n` +
+          `- When designing distributed systems or data structures, prioritize fault tolerance and high consistency.\n` +
+          `- Ensure all edge cases and boundary conditions are tested.`;
 
       return {
-        reply: fallbackReply,
+        reply: offlineReply,
         available: false,
       };
     }
@@ -77,55 +193,9 @@ Summary (use bullet points):`;
 
     const parts = [];
 
-      let docTexts = '';
-
-      try {
-        const embeddingModel = ai.getGenerativeModel({ model: 'gemini-embedding-001' });
-        const embedResult = await embeddingModel.embedContent(message);
-        const queryEmbedding = embedResult.embedding?.values;
-
-        if (queryEmbedding && queryEmbedding.length > 0) {
-          const vectorResults = await DocumentChunk.aggregate([
-            {
-              $vectorSearch: {
-                index: 'vector_index',
-                path: 'embedding',
-                queryVector: queryEmbedding,
-                numCandidates: 100,
-                limit: 5,
-              }
-            },
-            {
-              $project: { _id: 0, text: 1, score: { $meta: 'vectorSearchScore' } }
-            }
-          ]);
-
-          if (vectorResults && vectorResults.length > 0) {
-            docTexts = vectorResults.map(r => r.text).join('\n---\n');
-          }
-        }
-      } catch (vectorErr) {
-        // Fallback to keyword matching across chunks if vectorSearch index is absent
-        try {
-          const keywords = message.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
-          if (keywords.length > 0) {
-            const regexQuery = keywords.map(k => `(?=.*${k})`).join('');
-            const textResults = await DocumentChunk.find({
-              text: { $regex: keywords.join('|'), $options: 'i' }
-            }).limit(4).select('text').lean();
-
-            if (textResults && textResults.length > 0) {
-              docTexts = textResults.map(r => r.text).join('\n---\n');
-            }
-          }
-        } catch (textErr) {
-          console.warn('[Text Search Fallback warning]', textErr.message);
-        }
-      }
-
-      if (docTexts) {
-        parts.push(`Information from uploaded course documents & syllabi:\n${docTexts}`);
-      }
+    if (docTexts) {
+      parts.push(`Information from uploaded course documents & syllabi:\n${docTexts}`);
+    }
 
     if (ctx.assignments && ctx.assignments.length) {
       const list = ctx.assignments.slice(0, 5).map((a) =>
@@ -166,7 +236,12 @@ Assistant:`;
       return { reply: result.response.text().trim(), available: true };
     } catch (err) {
       console.error('[AI Generation Error]', err);
-      // Return a 200 OK with an error reply instead of crashing the route
+      if (docTexts) {
+        return {
+          reply: `I retrieved the relevant content from your uploaded document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Gemini API returned an authentication/model error: ${err.message})*`,
+          available: false
+        };
+      }
       return { reply: `Sorry, I ran into an error with the AI model: ${err.message}. Please check your Gemini API key and model name.`, available: false };
     }
   },

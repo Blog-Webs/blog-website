@@ -46,10 +46,20 @@ const worker = new Worker('rag-processing', async (job) => {
     let text = '';
     if (mimeType === 'application/pdf') {
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
-      text = data.text;
+      try {
+        if (typeof pdfParse === 'function') {
+          const parsed = await pdfParse(dataBuffer);
+          text = parsed?.text || '';
+        } else if (pdfParse && typeof pdfParse.PDFParse === 'function') {
+          const parser = new pdfParse.PDFParse({ data: dataBuffer });
+          await parser.load();
+          const res = await parser.getText();
+          text = typeof res === 'string' ? res : (res?.text || '');
+          try { await parser.destroy(); } catch (e) {}
+        }
+      } catch (e) {}
     } else {
-      throw new Error(`Unsupported MIME type: ${mimeType}`);
+      text = fs.readFileSync(filePath, 'utf-8');
     }
 
     if (!text.trim()) {

@@ -28,7 +28,7 @@ const aiController = {
       recentEmails: recentEmails.status === 'fulfilled' ? recentEmails.value : [],
     };
 
-    const result = await AiService.chat(message.trim(), context);
+    const result = await AiService.chat(message.trim(), context, userId);
     const replyText = result.reply || result.response || result.text || '';
     res.json({
       reply: replyText,
