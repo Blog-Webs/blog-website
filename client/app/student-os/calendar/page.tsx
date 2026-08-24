@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock,
-  Trash2, Edit2, X, Check, Sparkles, Flag, RefreshCw, CalendarDays
+  Trash2, Edit2, X, Check, Sparkles, Flag, RefreshCw, CalendarDays,
+  Search, Filter, Layers, List
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,11 +34,11 @@ type CalEvent = {
   festivalIcon?: string;
 };
 
-// National holidays and festivals mapped by Month (0-indexed) and Day
+// Comprehensive list of national holidays and cultural observances
 const PUBLIC_HOLIDAYS: { month: number; day: number; title: string; type: string; icon: string }[] = [
   { month: 0, day: 1, title: "New Year's Day", type: 'holiday', icon: '🎆' },
   { month: 0, day: 14, title: 'Makar Sankranti / Pongal', type: 'festival', icon: '🪁' },
-  { month: 0, day: 26, title: 'Republic Day (India)', type: 'national_holiday', icon: '🇮🇳' },
+  { month: 0, day: 26, title: 'Republic Day', type: 'national_holiday', icon: '🇮🇳' },
   { month: 1, day: 14, title: "Valentine's Day", type: 'observance', icon: '💝' },
   { month: 1, day: 26, title: 'Maha Shivratri', type: 'festival', icon: '🔱' },
   { month: 2, day: 14, title: 'Holi (Festival of Colors)', type: 'festival', icon: '🎨' },
@@ -47,7 +48,7 @@ const PUBLIC_HOLIDAYS: { month: number; day: number; title: string; type: string
   { month: 4, day: 1, title: 'International Workers’ Day', type: 'holiday', icon: '🛠️' },
   { month: 4, day: 12, title: 'Buddha Purnima', type: 'festival', icon: '🪷' },
   { month: 5, day: 21, title: 'International Yoga Day', type: 'observance', icon: '🧘' },
-  { month: 7, day: 15, title: 'Independence Day (India)', type: 'national_holiday', icon: '🇮🇳' },
+  { month: 7, day: 15, title: 'Independence Day', type: 'national_holiday', icon: '🇮🇳' },
   { month: 7, day: 16, title: 'Janmashtami', type: 'festival', icon: '🦚' },
   { month: 7, day: 27, title: 'Ganesh Chaturthi', type: 'festival', icon: '🐘' },
   { month: 8, day: 5, title: "Teachers' Day", type: 'observance', icon: '📚' },
@@ -83,6 +84,8 @@ export default function CalendarPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showHolidays, setShowHolidays] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeView, setActiveView] = useState<'month' | 'agenda'>('month');
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -91,14 +94,36 @@ export default function CalendarPage() {
   // Form state
   const [form, setForm] = useState({ title: '', description: '', date: '', time: '10:00', color: '1', allDay: false });
 
+  // Persistent events save helper
+  const saveEventsState = (newEvents: CalEvent[]) => {
+    setEvents(newEvents);
+    try {
+      localStorage.setItem('studentos_calendar_events', JSON.stringify(newEvents));
+    } catch {}
+  };
+
   const fetchEvents = useCallback(async () => {
     setLoading(true);
+
+    // First load from localStorage
+    try {
+      const saved = localStorage.getItem('studentos_calendar_events');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEvents(parsed);
+        }
+      }
+    } catch {}
+
     try {
       const res = await api.get('/student-os/calendar/events', { params: { days: 90 } });
       const apiEvents = res.data?.events || [];
-      setEvents(apiEvents);
+      if (Array.isArray(apiEvents) && apiEvents.length > 0) {
+        saveEventsState(apiEvents);
+      }
     } catch {
-      setEvents([]);
+      // Retain localStorage events on API fallback
     } finally {
       setLoading(false);
     }
@@ -142,22 +167,33 @@ export default function CalendarPage() {
     setSaving(true);
 
     const start = form.allDay ? form.date : `${form.date}T${form.time}:00`;
-    const payload = { title: form.title, description: form.description, start, allDay: form.allDay, color: form.color };
+    const newEvt: CalEvent = {
+      id: editing ? editing.id : `evt-${Date.now()}`,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      start,
+      allDay: form.allDay,
+      colorId: form.color,
+      type: 'academic',
+    };
+
+    let updated: CalEvent[];
+    if (editing) {
+      updated = events.map(e => e.id === editing.id ? newEvt : e);
+    } else {
+      updated = [newEvt, ...events];
+    }
+
+    saveEventsState(updated);
+    setShowModal(false);
 
     try {
       if (editing) {
-        await api.patch(`/student-os/calendar/events/${editing.id}`, payload);
+        await api.patch(`/student-os/calendar/events/${editing.id}`, newEvt);
       } else {
-        await api.post('/student-os/calendar/events', payload);
+        await api.post('/student-os/calendar/events', newEvt);
       }
-      // Automatically close modal immediately upon saving
-      setShowModal(false);
-      await fetchEvents();
-    } catch (err) {
-      console.error(err);
-      // Still close modal to maintain clean UI flow
-      setShowModal(false);
-    } finally {
+    } catch {} finally {
       setSaving(false);
     }
   };
@@ -165,21 +201,23 @@ export default function CalendarPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this event?')) return;
     setDeletingId(id);
+    const updated = events.filter(e => e.id !== id);
+    saveEventsState(updated);
+
     try {
       await api.delete(`/student-os/calendar/events/${id}`);
-      setEvents(prev => prev.filter(e => e.id !== id));
-    } catch {}
-    finally { setDeletingId(null); }
+    } catch {} finally {
+      setDeletingId(null);
+    }
   };
 
-  // Build calendar grid
+  // Calendar Grid Calculations
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const cells = Array.from({ length: firstDay }, () => null).concat(
     Array.from({ length: daysInMonth }, (_, i) => i + 1)
   );
 
-  // Get holidays for active view month and year
   const monthHolidays = PUBLIC_HOLIDAYS.filter(h => h.month === viewMonth);
 
   const getHolidaysOnDay = (day: number) => {
@@ -193,6 +231,11 @@ export default function CalendarPage() {
       return d.getFullYear() === viewYear && d.getMonth() === viewMonth && d.getDate() === day;
     });
   };
+
+  const filteredEvents = events.filter(e =>
+    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (e.description && e.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const prevMonth = () => {
     if (viewMonth === 0) {
@@ -213,18 +256,39 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <CalendarIcon className="text-emerald-400" /> Calendar, Holidays & Deadlines
+          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <CalendarIcon className="text-emerald-400" /> Academic & Personal Calendar
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Real Google Calendar sync with national public holidays and academic milestone tracking.
+            Interactive schedule manager integrated with national public holidays, exams, and personal milestones.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start">
+        <div className="flex items-center gap-2 self-start flex-wrap">
+          {/* View switch buttons */}
+          <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+            <button
+              onClick={() => setActiveView('month')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                activeView === 'month' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <CalendarDays size={13} /> Month
+            </button>
+            <button
+              onClick={() => setActiveView('agenda')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                activeView === 'agenda' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <List size={13} /> Schedule List
+            </button>
+          </div>
+
           <Button
             variant={showHolidays ? 'secondary' : 'outline'}
             size="sm"
@@ -235,100 +299,148 @@ export default function CalendarPage() {
             {showHolidays ? 'Holidays: ON' : 'Holidays: OFF'}
           </Button>
 
-          <Button onClick={() => openCreate()} variant="apple" size="sm" className="gap-2 h-9">
+          <Button onClick={() => openCreate()} variant="apple" size="sm" className="gap-2 h-9 shadow-md shadow-blue-500/20">
             <Plus size={16} /> Add Event
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar Grid */}
-        <Card className="lg:col-span-2 p-6 space-y-4 bg-zinc-950 border-zinc-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-white font-sans">{MONTHS[viewMonth]} {viewYear}</h2>
-              <Badge variant="secondary" className="text-[10px] py-0 font-mono">
-                {events.length} Events
-              </Badge>
+        {/* Main Grid View */}
+        {activeView === 'month' ? (
+          <Card className="lg:col-span-2 p-6 space-y-4 bg-zinc-950 border-zinc-800 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-white font-sans">{MONTHS[viewMonth]} {viewYear}</h2>
+                <Badge variant="secondary" className="text-[10px] py-0 font-mono">
+                  {events.length} Saved Events
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft size={18} /></Button>
+                <Button variant="ghost" size="sm" onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }} className="text-xs">
+                  Today
+                </Button>
+                <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight size={18} /></Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft size={18} /></Button>
-              <Button variant="ghost" size="sm" onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }} className="text-xs">
-                Today
-              </Button>
-              <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight size={18} /></Button>
+
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-zinc-400 border-b border-zinc-800 pb-2">
+              {DAYS.map(d => <span key={d}>{d}</span>)}
             </div>
-          </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-zinc-400 border-b border-zinc-800 pb-2">
-            {DAYS.map(d => <span key={d}>{d}</span>)}
-          </div>
+            <div className="grid grid-cols-7 gap-1.5">
+              {cells.map((day, idx) => {
+                if (!day) return <div key={`empty-${idx}`} className="min-h-[75px]" />;
+                const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+                const dayEvents = getEventsOnDay(day);
+                const dayHolidays = getHolidaysOnDay(day);
+                const dateKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-          <div className="grid grid-cols-7 gap-1.5">
-            {cells.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="min-h-[70px]" />;
-              const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-              const dayEvents = getEventsOnDay(day);
-              const dayHolidays = getHolidaysOnDay(day);
-              const dateKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                return (
+                  <div
+                    key={day}
+                    className={`min-h-[75px] p-1.5 rounded-2xl border text-left transition-all flex flex-col gap-1 cursor-pointer overflow-hidden ${
+                      isToday
+                        ? 'bg-blue-600/15 border-blue-500/60 shadow-md ring-1 ring-blue-500/30'
+                        : dayHolidays.length > 0
+                        ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
+                        : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700'
+                    }`}
+                    onClick={() => openCreate(dateKey)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[11px] font-bold ${isToday ? 'text-blue-400 bg-blue-500/20 px-1.5 rounded-full' : 'text-zinc-400'}`}>
+                        {day}
+                      </span>
+                      {dayHolidays.length > 0 && (
+                        <span className="text-xs" title={dayHolidays[0].title}>{dayHolidays[0].icon}</span>
+                      )}
+                    </div>
 
-              return (
-                <div
-                  key={day}
-                  className={`min-h-[70px] p-1.5 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer overflow-hidden ${
-                    isToday
-                      ? 'bg-blue-600/15 border-blue-500/60 shadow-sm'
-                      : dayHolidays.length > 0
-                      ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
-                      : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700'
-                  }`}
-                  onClick={() => openCreate(dateKey)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[11px] font-bold ${isToday ? 'text-blue-400 bg-blue-500/20 px-1.5 rounded-full' : 'text-zinc-400'}`}>
-                      {day}
-                    </span>
-                    {dayHolidays.length > 0 && (
-                      <span className="text-xs" title={dayHolidays[0].title}>{dayHolidays[0].icon}</span>
+                    {/* Holiday chips */}
+                    {dayHolidays.map((h, hi) => (
+                      <span
+                        key={`h-${hi}`}
+                        className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold truncate border border-amber-500/30"
+                        title={h.title}
+                      >
+                        {h.icon} {h.title}
+                      </span>
+                    ))}
+
+                    {/* User Event chips */}
+                    {dayEvents.slice(0, 2).map(e => (
+                      <span
+                        key={e.id}
+                        className="text-[9px] px-1 py-0.5 rounded font-medium truncate text-white shadow-xs"
+                        style={{ backgroundColor: getColorBg(e.colorId) + 'cc' }}
+                        title={e.title}
+                      >
+                        {e.title}
+                      </span>
+                    ))}
+                    {dayEvents.length > 2 && (
+                      <span className="text-[9px] text-zinc-500 font-mono">+{dayEvents.length - 2} more</span>
                     )}
                   </div>
+                );
+              })}
+            </div>
+          </Card>
+        ) : (
+          /* Full Schedule Agenda View */
+          <Card className="lg:col-span-2 p-6 space-y-4 bg-zinc-950 border-zinc-800 shadow-xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <List size={18} className="text-blue-400" /> Complete Schedule Overview
+              </h2>
+              <div className="relative w-64">
+                <Search size={13} className="absolute left-3 top-2.5 text-zinc-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Filter events..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
 
-                  {/* Holiday chips */}
-                  {dayHolidays.map((h, hi) => (
-                    <span
-                      key={`h-${hi}`}
-                      className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold truncate border border-amber-500/30"
-                      title={h.title}
-                    >
-                      {h.icon} {h.title}
-                    </span>
-                  ))}
+            <div className="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+              {filteredEvents.length === 0 && (
+                <p className="text-xs text-zinc-500 text-center py-12">No matching events found.</p>
+              )}
 
-                  {/* User Event chips */}
-                  {dayEvents.slice(0, 2).map(e => (
-                    <span
-                      key={e.id}
-                      className="text-[9px] px-1 py-0.5 rounded font-medium truncate text-white shadow-xs"
-                      style={{ backgroundColor: getColorBg(e.colorId) + 'cc' }}
-                      title={e.title}
-                    >
-                      {e.title}
-                    </span>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <span className="text-[9px] text-zinc-500 font-mono">+{dayEvents.length - 2} more</span>
-                  )}
+              {filteredEvents.map(evt => (
+                <div key={evt.id} className="p-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 flex items-center justify-between gap-4 hover:border-zinc-700 transition-all">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getColorBg(evt.colorId) }} />
+                    <div>
+                      <h4 className="text-xs font-bold text-white">{evt.title}</h4>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">{formatEventDate(evt.start)} {evt.description ? `· ${evt.description}` : ''}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => openEdit(evt)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white">
+                      <Edit2 size={13} />
+                    </button>
+                    <button onClick={() => handleDelete(evt.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-zinc-400 hover:text-red-400">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Upcoming Events & Holidays Feed */}
-        <Card className="p-6 space-y-4 bg-zinc-950 border-zinc-800 flex flex-col max-h-[640px]">
+        <Card className="p-6 space-y-4 bg-zinc-950 border-zinc-800 flex flex-col max-h-[640px] shadow-xl">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Clock size={15} className="text-emerald-400" /> Upcoming Schedule
+              <Clock size={15} className="text-emerald-400" /> Upcoming Feed
             </h3>
             {loading && <RefreshCw size={13} className="animate-spin text-zinc-500" />}
           </div>
@@ -338,7 +450,7 @@ export default function CalendarPage() {
             {showHolidays && monthHolidays.length > 0 && (
               <div className="space-y-2 mb-4">
                 <p className="text-[10px] font-bold text-amber-400/90 uppercase tracking-widest flex items-center gap-1">
-                  <Flag size={11} /> {MONTHS[viewMonth]} Holidays & Festivals
+                  <Flag size={11} /> {MONTHS[viewMonth]} Holidays & Observances
                 </p>
                 {monthHolidays.map((h, idx) => (
                   <div key={idx} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2">
@@ -357,9 +469,9 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {/* Custom / Google Calendar Events */}
+            {/* Custom Events */}
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1">
-              <CalendarDays size={11} /> Your Calendar Events
+              <CalendarDays size={11} /> Personal Events ({events.length})
             </p>
 
             {events.length === 0 && !loading && (
@@ -408,7 +520,7 @@ export default function CalendarPage() {
         </Card>
       </div>
 
-      {/* Create / Edit Modal (Auto-closes on submit) */}
+      {/* Create / Edit Event Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="max-w-md w-full border-zinc-800 bg-zinc-950 p-6 space-y-4 shadow-2xl">
@@ -498,12 +610,9 @@ export default function CalendarPage() {
                 <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="apple" disabled={saving} className="gap-1.5">
-                  {saving ? 'Saving...' : (
-                    <>
-                      <Check size={14} /> {editing ? 'Update Event' : 'Create Event'}
-                    </>
-                  )}
+                <Button type="submit" variant="apple" disabled={saving}>
+                  {saving ? <RefreshCw size={14} className="animate-spin mr-1.5" /> : <Check size={14} className="mr-1.5" />}
+                  {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Event'}
                 </Button>
               </div>
             </form>

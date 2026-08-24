@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import {
@@ -79,10 +79,10 @@ export default function RoadmapPage() {
               key={r}
               type="button"
               onClick={() => setProfile(p => ({ ...p, targetRole: r }))}
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+              className={`w-full text-left px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all ${
                 profile.targetRole === r
-                  ? 'bg-blue-500/20 border-blue-400 text-white'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                  ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-xs'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
               }`}
             >{r}</button>
           ))}
@@ -100,10 +100,10 @@ export default function RoadmapPage() {
               key={l}
               type="button"
               onClick={() => setProfile(p => ({ ...p, experience: l }))}
-              className={`flex-1 py-4 rounded-xl text-sm font-semibold border transition-all ${
+              className={`flex-1 py-4 rounded-2xl text-sm font-bold border transition-all ${
                 profile.experience === l
-                  ? 'bg-blue-500/20 border-blue-400 text-white'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                  ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-xs'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
               }`}
             >{l}</button>
           ))}
@@ -121,10 +121,10 @@ export default function RoadmapPage() {
               key={h}
               type="button"
               onClick={() => setProfile(p => ({ ...p, hoursPerWeek: h }))}
-              className={`py-3.5 rounded-xl text-sm font-bold border transition-all ${
+              className={`py-3.5 rounded-2xl text-sm font-extrabold border transition-all ${
                 profile.hoursPerWeek === h
-                  ? 'bg-blue-500/20 border-blue-400 text-white'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                  ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-xs'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
               }`}
             >{h}h/week</button>
           ))}

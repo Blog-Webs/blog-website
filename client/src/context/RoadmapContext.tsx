@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { RoadmapMilestone } from '@/types/studentos';
@@ -61,18 +61,50 @@ const RoadmapContext = createContext<RoadmapContextType>({
 });
 
 export const RoadmapProvider = ({ children }: { children: React.ReactNode }) => {
-  const [targetRole, setTargetRole] = useState('Full Stack Software Engineer');
-  const [milestones, setMilestones] = useState<RoadmapMilestone[]>([]);
+  const [targetRole, setTargetRoleState] = useState('Full Stack Software Engineer');
+  const [milestones, setMilestonesState] = useState<RoadmapMilestone[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [weakAreas, setWeakAreas] = useState<WeakArea[]>([]);
   const [assessmentHistory, setAssessmentHistory] = useState<AssessmentResult[]>([]);
 
-  // Try to load from backend roadmap
+  // Helper to persist milestones
+  const setMilestones = (newMilestones: RoadmapMilestone[] | ((prev: RoadmapMilestone[]) => RoadmapMilestone[])) => {
+    setMilestonesState(prev => {
+      const updated = typeof newMilestones === 'function' ? newMilestones(prev) : newMilestones;
+      try {
+        localStorage.setItem('studentos_roadmap_milestones', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const setTargetRole = (role: string) => {
+    setTargetRoleState(role);
+    try {
+      localStorage.setItem('studentos_target_role', role);
+    } catch {}
+  };
+
+  // Initial load from localStorage and backend
   useEffect(() => {
+    try {
+      const savedRole = localStorage.getItem('studentos_target_role');
+      if (savedRole) setTargetRoleState(savedRole);
+
+      const savedMilestones = localStorage.getItem('studentos_roadmap_milestones');
+      if (savedMilestones) {
+        const parsed = JSON.parse(savedMilestones);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMilestonesState(parsed);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: Try loading from backend roadmap
     api.get('/roadmap')
       .then((res) => {
         if (res.data?.roadmap?.phases && Array.isArray(res.data.roadmap.phases)) {
-          // Map backend phases to local milestone format
           const phases = res.data.roadmap.phases.map((p: any, idx: number) => ({
             id: p._id || `m-${idx + 1}`,
             title: p.title || p.name,
@@ -81,7 +113,10 @@ export const RoadmapProvider = ({ children }: { children: React.ReactNode }) => 
             estimatedWeeks: p.estimatedWeeks || p.durationWeeks || 4,
             skills: p.skills || p.topics?.map((t: any) => t.name || t) || [],
           }));
-          setMilestones(phases);
+          setMilestonesState(phases);
+          try {
+            localStorage.setItem('studentos_roadmap_milestones', JSON.stringify(phases));
+          } catch {}
         }
       })
       .catch(() => {});
@@ -107,7 +142,6 @@ export const RoadmapProvider = ({ children }: { children: React.ReactNode }) => 
       });
 
       if (res.data?.milestones && Array.isArray(res.data.milestones)) {
-        // Ensure proper types
         const mapped: RoadmapMilestone[] = res.data.milestones.map((m: any, idx: number) => ({
           id: m.id || `m-${idx + 1}`,
           title: m.title,
@@ -116,13 +150,15 @@ export const RoadmapProvider = ({ children }: { children: React.ReactNode }) => 
           estimatedWeeks: m.estimatedWeeks || 4,
           skills: Array.isArray(m.skills) ? m.skills : [],
         }));
-        setMilestones(mapped);
+        setMilestonesState(mapped);
+        try {
+          localStorage.setItem('studentos_roadmap_milestones', JSON.stringify(mapped));
+        } catch {}
         setTargetRole(profile.targetRole);
       }
     } catch (err) {
       console.error('[generateRoadmap error]', err);
-      // Fallback with a default structure
-      setMilestones([
+      const fallback: RoadmapMilestone[] = [
         {
           id: 'm-1',
           title: `Phase 1: Foundations for ${profile.targetRole}`,
@@ -131,14 +167,32 @@ export const RoadmapProvider = ({ children }: { children: React.ReactNode }) => 
           estimatedWeeks: 4,
           skills: ['Core Language', 'Data Structures', 'Algorithms', 'Version Control'],
         },
-      ]);
+        {
+          id: 'm-2',
+          title: `Phase 2: Advanced Topics & System Architecture`,
+          description: `Master high-concurrency design, storage internals, and cloud deployments.`,
+          status: 'locked',
+          estimatedWeeks: 6,
+          skills: ['Distributed Systems', 'Caching', 'Database Optimization', 'Cloud Deployments'],
+        },
+      ];
+      setMilestonesState(fallback);
+      try {
+        localStorage.setItem('studentos_roadmap_milestones', JSON.stringify(fallback));
+      } catch {}
     } finally {
       setIsGenerating(false);
     }
   }, []);
 
   const addAssessmentResult = (result: AssessmentResult) => {
-    setAssessmentHistory(prev => [result, ...prev.slice(0, 9)]);
+    setAssessmentHistory(prev => {
+      const updated = [result, ...prev.slice(0, 19)];
+      try {
+        localStorage.setItem('studentos_assessment_history', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   return (

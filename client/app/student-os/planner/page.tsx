@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -49,11 +49,10 @@ export default function DailyPlannerPage() {
   const activePhase = milestones.find(m => m.status === 'in_progress');
   const todayStr = getTodayKey();
 
-  // Load existing 24-hour persistent plan for today
+  // Load existing persistent plan
   useEffect(() => {
     try {
-      const storageKey = `studentos_daily_plan_${todayStr}`;
-      const saved = localStorage.getItem(storageKey);
+      const saved = localStorage.getItem('studentos_daily_plan_current') || localStorage.getItem(`studentos_daily_plan_${todayStr}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -67,8 +66,8 @@ export default function DailyPlannerPage() {
   const savePlanState = (newSlots: Slot[]) => {
     setSlots(newSlots);
     try {
-      const storageKey = `studentos_daily_plan_${todayStr}`;
-      localStorage.setItem(storageKey, JSON.stringify(newSlots));
+      localStorage.setItem('studentos_daily_plan_current', JSON.stringify(newSlots));
+      localStorage.setItem(`studentos_daily_plan_${todayStr}`, JSON.stringify(newSlots));
     } catch {}
   };
 
@@ -107,8 +106,9 @@ export default function DailyPlannerPage() {
   };
 
   const handleReset = () => {
-    if (!confirm('Clear today’s schedule and regenerate?')) return;
+    if (!confirm('Clear current schedule and recreate?')) return;
     try {
+      localStorage.removeItem('studentos_daily_plan_current');
       localStorage.removeItem(`studentos_daily_plan_${todayStr}`);
     } catch {}
     setSlots([]);
@@ -170,10 +170,10 @@ export default function DailyPlannerPage() {
               <button
                 key={h}
                 onClick={() => setHoursInput(h)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                   hoursInput === h
-                    ? 'bg-blue-500/20 border-blue-400 text-white'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                    ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-xs'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                 }`}
               >{h}h</button>
             ))}

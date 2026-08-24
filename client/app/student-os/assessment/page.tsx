@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -465,6 +465,26 @@ export default function AssessmentPage() {
       {/* ── TAB 2: Past Test History & Mistake Reviews ── */}
       {activeTab === 'history' && (
         <div className="space-y-4">
+          {testHistory.length > 0 && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-xs text-zinc-400 font-semibold">
+                Saved Attempts: <strong className="text-white">{testHistory.length}</strong> · Average Score: <strong className="text-emerald-400">{Math.round(testHistory.reduce((acc, curr) => acc + curr.percentage, 0) / testHistory.length)}%</strong>
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (confirm('Clear all assessment history?')) {
+                    saveHistory([]);
+                  }
+                }}
+                className="text-xs text-zinc-500 hover:text-red-400 h-7 px-2"
+              >
+                Clear History
+              </Button>
+            </div>
+          )}
+
           {testHistory.length === 0 ? (
             <Card className="p-12 text-center space-y-3 bg-zinc-950 border-zinc-800">
               <History size={40} className="text-zinc-600 mx-auto" />

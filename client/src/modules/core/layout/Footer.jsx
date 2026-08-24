@@ -5,9 +5,9 @@ const Footer = () => {
   return (
     <footer className="w-full mt-auto relative overflow-hidden">
       {/* Top gradient border */}
-      <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, #3B82F6 30%, #6366F1 60%, transparent)' }} />
+      <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, #00a86b 30%, #059669 60%, transparent)' }} />
 
-      <div className="bg-[#0a0a0f] px-6 pt-14 pb-8">
+      <div className="bg-[#0b0f19] px-6 pt-14 pb-8">
         <div className="max-w-[1200px] mx-auto">
 
           {/* Main grid */}
@@ -17,9 +17,9 @@ const Footer = () => {
             <div className="md:col-span-1">
               {/* Logo */}
               <Link to="/" className="inline-flex items-center gap-0.5 mb-4">
-                <span className="font-display text-lg font-bold" style={{ color: '#3B82F6' }}>&lt;</span>
+                <span className="font-display text-lg font-extrabold text-[#00a86b]">&lt;</span>
                 <span className="font-display text-lg font-bold text-white">&nbsp;httpTechNex&nbsp;</span>
-                <span className="font-display text-lg font-bold" style={{ color: '#3B82F6' }}>/&gt;</span>
+                <span className="font-display text-lg font-extrabold text-[#00a86b]">/&gt;</span>
               </Link>
 
               <p className="text-[13px] text-gray-500 leading-relaxed mb-6">

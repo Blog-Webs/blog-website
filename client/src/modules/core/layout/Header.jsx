@@ -124,11 +124,11 @@ const Header = () => {
             </span>
           </button>
 
-          {/* Logo — < httpTechNex /> with blue brackets */}
+          {/* Logo — < httpTechNex /> with Brevo emerald brackets */}
           <Link to="/" className="flex items-center gap-0.5">
-            <span className="font-display text-xl font-bold" style={{ color: '#3B82F6' }}>&lt;</span>
+            <span className="font-display text-xl font-extrabold text-[#00a86b]">&lt;</span>
             <span className="font-display text-xl font-bold text-white">&nbsp;httpTechNex&nbsp;</span>
-            <span className="font-display text-xl font-bold" style={{ color: '#3B82F6' }}>/&gt;</span>
+            <span className="font-display text-xl font-extrabold text-[#00a86b]">/&gt;</span>
           </Link>
         </div>
         

@@ -52,12 +52,12 @@ export default function StudentOSLayout({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100">
+    <div className="min-h-screen flex flex-col bg-[#0b0f19] text-slate-100 font-sans">
       {/* ── Google Workspace Integration Banner (when disconnected) ── */}
       {!isGoogleConnected && (
-        <div className="bg-gradient-to-r from-blue-900/60 via-indigo-900/40 to-zinc-950 border-b border-blue-500/20 px-4 py-2 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-50">
-          <div className="flex items-center gap-2 text-zinc-200 font-medium">
-            <Globe size={14} className="text-blue-400 shrink-0" />
+        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border-b border-emerald-500/20 px-4 py-2 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-50">
+          <div className="flex items-center gap-2 text-slate-200 font-medium">
+            <Globe size={14} className="text-emerald-400 shrink-0" />
             <span>Connect your <strong>Google Workspace</strong> (Classroom, Drive, Gmail, Calendar) to sync real live data.</span>
           </div>
           <Button
@@ -71,32 +71,32 @@ export default function StudentOSLayout({
         </div>
       )}
 
-      {/* ── Apple Top Navigation Header ── */}
-      <header className="sticky top-0 z-40 h-14 border-b border-zinc-800/80 bg-zinc-950/75 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between">
+      {/* ── SaaS Header Bar ── */}
+      <header className="sticky top-0 z-40 h-16 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-2xl px-4 lg:px-6 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+            className="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <Menu size={18} />
           </button>
 
-          <Link href="/student-os" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Command size={14} />
+          <Link href="/student-os" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+              <Command size={16} />
             </div>
-            <span className="font-bold text-sm tracking-tight text-white font-sans">StudentOS</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50">
-              v3.0 Live
+            <span className="font-extrabold text-base tracking-tight text-white font-sans">StudentOS</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/30">
+              SaaS v3.0
             </span>
           </Link>
         </div>
 
         {/* Center Search Trigger */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-400 w-80 cursor-pointer hover:border-zinc-700 transition-colors">
-          <Search size={14} className="text-zinc-500" />
+        <div className="hidden md:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 w-80 cursor-pointer hover:border-slate-700 transition-all shadow-xs">
+          <Search size={14} className="text-slate-500" />
           <span className="flex-1">Search tasks, courses, code files...</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-400 border border-zinc-700 font-mono">
+          <kbd className="px-1.5 py-0.5 rounded-md bg-slate-800 text-[10px] text-slate-400 border border-slate-700 font-mono">
             ⌘K
           </kbd>
         </div>
@@ -104,8 +104,8 @@ export default function StudentOSLayout({
         {/* Streak, Connection & User Profile Header */}
         <div className="flex items-center gap-3">
           {/* Daily Streak Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold shadow-sm">
-            <Flame size={13} className="text-amber-400 animate-pulse fill-amber-400" />
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold shadow-xs">
+            <Flame size={14} className="text-amber-400 animate-pulse fill-amber-400" />
             <span>{streakDays} {streakDays === 1 ? 'Day' : 'Days'} Streak</span>
           </div>
 
@@ -114,24 +114,24 @@ export default function StudentOSLayout({
               <CheckCircle2 size={11} /> {googleEmail || 'Google Connected'}
             </Badge>
           ) : (
-            <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-[10px] py-1 text-zinc-400">
+            <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-[10px] py-1 text-slate-400">
               <ShieldAlert size={11} className="text-amber-400" /> Standalone Mode
             </Badge>
           )}
 
-          <Link href="/student-os/profile" className="flex items-center gap-2 pl-2 border-l border-zinc-800 hover:opacity-80 transition-opacity">
+          <Link href="/student-os/profile" className="flex items-center gap-2 pl-2 border-l border-slate-800 hover:opacity-85 transition-opacity">
             {userAvatar ? (
               <img
                 src={userAvatar}
                 alt={userName}
-                className="w-7 h-7 rounded-full object-cover border border-zinc-700 shadow-sm"
+                className="w-8 h-8 rounded-full object-cover border border-slate-700 shadow-sm"
               />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center shadow-sm">
                 {userName ? userName.slice(0, 2).toUpperCase() : 'SO'}
               </div>
             )}
-            <span className="hidden sm:inline text-xs font-semibold text-zinc-200 max-w-[130px] truncate">
+            <span className="hidden sm:inline text-xs font-semibold text-slate-200 max-w-[130px] truncate">
               {userName || 'StudentOS User'}
             </span>
           </Link>
@@ -142,17 +142,17 @@ export default function StudentOSLayout({
         {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 z-30 lg:hidden backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* ── Left Sidebar (Apple Sleek Aesthetic) ── */}
-        <aside className={`fixed lg:static top-14 bottom-0 left-0 z-40 w-60 bg-zinc-950/90 border-r border-zinc-800/80 backdrop-blur-xl flex flex-col transition-transform duration-200 ${
+        {/* ── Left Sidebar (Brevo Modern SaaS Aesthetic) ── */}
+        <aside className={`fixed lg:static top-16 bottom-0 left-0 z-40 w-64 bg-slate-950/90 border-r border-slate-800/80 backdrop-blur-2xl flex flex-col transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1">
-            <div className="px-3 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+          <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-1.5">
+            <div className="px-3 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Core Workspace
             </div>
             {MAIN_NAV.map((item) => {
@@ -162,19 +162,19 @@ export default function StudentOSLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 shadow-xs'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={16} className={active ? 'text-emerald-400' : 'text-slate-500'} />
                   <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}
 
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="px-3 pt-5 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Career & Roadmap
             </div>
             {CAREER_NAV.map((item) => {
@@ -184,19 +184,19 @@ export default function StudentOSLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 shadow-xs'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={16} className={active ? 'text-emerald-400' : 'text-slate-500'} />
                   <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}
 
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="px-3 pt-5 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Intelligence
             </div>
             {INTELLIGENCE_NAV.map((item) => {
@@ -206,13 +206,13 @@ export default function StudentOSLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 shadow-xs'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={16} className={active ? 'text-emerald-400' : 'text-slate-500'} />
                   <span className="flex-1 truncate">{item.label}</span>
                   {item.badge && <Badge variant="apple" className="py-0 text-[9px]">{item.badge}</Badge>}
                 </Link>
@@ -222,11 +222,10 @@ export default function StudentOSLayout({
         </aside>
 
         {/* ── Main Viewport Panel ── */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#09090b]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0b0f19]">
           {children}
         </main>
       </div>
     </div>
   );
 }
-
