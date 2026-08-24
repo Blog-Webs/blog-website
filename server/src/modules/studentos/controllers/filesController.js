@@ -23,6 +23,47 @@ function chunkText(text, maxWords = 350, overlap = 40) {
   return chunks;
 }
 
+const zlib = require('zlib');
+
+function decompressPdfStreams(buffer) {
+  try {
+    const str = buffer.toString('binary');
+    const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    let match;
+    let extractedTexts = [];
+
+    while ((match = streamRegex.exec(str)) !== null) {
+      const rawStream = Buffer.from(match[1], 'binary');
+      let decompressed = null;
+      try {
+        decompressed = zlib.inflateSync(rawStream);
+      } catch (e1) {
+        try {
+          decompressed = zlib.unzipSync(rawStream);
+        } catch (e2) {
+          try {
+            decompressed = zlib.inflateRawSync(rawStream);
+          } catch (e3) {}
+        }
+      }
+
+      const textToSearch = decompressed ? decompressed.toString('utf-8') : rawStream.toString('utf-8');
+      const tjMatches = textToSearch.match(/\(([^()]{2,})\)\s*T[jJ]/g) || textToSearch.match(/\[([\s\S]*?)\]\s*TJ/g);
+      if (tjMatches) {
+        tjMatches.forEach(m => {
+          const clean = m.replace(/[\(\)\[\]\/]/g, ' ').replace(/\\[0-9]{3}/g, '').replace(/\s+/g, ' ').trim();
+          if (clean.length > 1 && !/^(F[0-9]+|Font|Helvetica|Times|Courier|DeviceRGB|Color)/i.test(clean)) {
+            extractedTexts.push(clean);
+          }
+        });
+      }
+    }
+    return extractedTexts.join(' ').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
 async function extractPdfText(dataBuffer) {
   let text = '';
   try {
@@ -42,14 +83,21 @@ async function extractPdfText(dataBuffer) {
     console.warn('[PDF Parsing warning]', err.message);
   }
 
-  if (!text || !text.trim()) {
+  if (!text || !text.trim() || text.includes('%PDF-') || text.includes('/FlateDecode')) {
+    const streamText = decompressPdfStreams(dataBuffer);
+    if (streamText && streamText.trim().length > 10) {
+      text = streamText;
+    }
+  }
+
+  if (!text || !text.trim() || text.includes('%PDF-')) {
     try {
       const str = dataBuffer.toString('binary');
       const matches = str.match(/\(([^()]+)\)\s*Tj/g) || str.match(/BT[\s\S]*?ET/g);
       if (matches && matches.length > 0) {
         text = matches
           .map(m => m.replace(/[\(\)\/]/g, ' ').replace(/\s+/g, ' '))
-          .filter(t => t.trim().length > 2)
+          .filter(t => t.trim().length > 2 && !t.includes('obj') && !t.includes('stream'))
           .join(' ');
       }
     } catch (e) {}

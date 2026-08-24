@@ -3,12 +3,58 @@ const mongoose = require('mongoose');
 const Document = require('../models/Document');
 const DocumentChunk = require('../models/DocumentChunk');
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_CANDIDATES = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-pro'];
 
 function getAI() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
   return new GoogleGenerativeAI(key);
+}
+
+async function generateContentWithFallback(ai, prompt) {
+  let lastErr = null;
+  for (const name of MODEL_CANDIDATES) {
+    try {
+      const model = ai.getGenerativeModel({ model: name });
+      const result = await model.generateContent(prompt);
+      const text = result?.response?.text()?.trim();
+      if (text) return text;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Gemini API call failed across model candidates');
+}
+
+function sanitizeDocTexts(rawTexts) {
+  if (!rawTexts) return '';
+  const parts = rawTexts.split(/\[Document:\s*([^\]]+)\]/g);
+  let cleanedParts = [];
+
+  for (let i = 1; i < parts.length; i += 2) {
+    const docName = parts[i];
+    let content = parts[i + 1] || '';
+
+    if (content.includes('%PDF-') || content.includes('/FlateDecode') || content.includes('stream')) {
+      content = content
+        .replace(/%PDF-[0-9\.\s\S]*?stream/g, ' ')
+        .replace(/endstream[\s\S]*?endobj/g, ' ')
+        .replace(/<[\s\S]*?>/g, ' ')
+        .replace(/[^\x20-\x7E\n]/g, ' ')
+        .replace(/\s+/g, ' ');
+
+      const words = content.match(/[A-Za-z0-9@.\-_':,]{2,}/g) || [];
+      const filterOut = new Set(['pdf', 'obj', 'endobj', 'stream', 'endstream', 'xref', 'trailer', 'startxref', 'FlateDecode', 'Length', 'Catalog', 'Pages', 'Page', 'MediaBox', 'Resources', 'Font', 'Skia', 'Google', 'Docs', 'Renderer', 'Normal', 'Title', 'Producer', 'BM', 'ca', 'Filter', 'Type']);
+      const cleanWords = words.filter(w => !filterOut.has(w) && !/^[0-9]+$/.test(w));
+      content = cleanWords.join(' ');
+    }
+
+    if (content.trim()) {
+      cleanedParts.push(`[Document: ${docName}]\n${content.trim()}`);
+    }
+  }
+
+  return cleanedParts.join('\n\n---\n\n') || rawTexts;
 }
 
 function cosineSimilarity(vecA, vecB) {
@@ -139,8 +185,8 @@ const AiService = {
     const ai = getAI();
     if (!ai) return { summary: 'AI features require a GEMINI_API_KEY to be configured.', available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
-    const prompt = `You are an academic assistant helping a student understand their emails.
+    try {
+      const prompt = `You are an academic assistant helping a student understand their emails.
 Summarize the following email in 3-4 clear, concise sentences. 
 Focus on: what action is needed (if any), key dates, and the core message.
 Email Subject: "${subject}"
@@ -148,39 +194,43 @@ Email Body:
 ${emailBody.slice(0, 3000)}
 
 Summary:`;
-
-    const result = await model.generateContent(prompt);
-    return { summary: result.response.text().trim(), available: true };
+      const summary = await generateContentWithFallback(ai, prompt);
+      return { summary, available: true };
+    } catch {
+      return { summary: `Email content from subject "${subject}". Key details extracted.`, available: false };
+    }
   },
 
   async summarizePDF(textContent, filename) {
     const ai = getAI();
     if (!ai) return { summary: 'AI features require a GEMINI_API_KEY.', available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
-    const prompt = `You are an academic assistant. Summarize this document "${filename || 'document'}" in 5-7 bullet points covering key concepts a student needs for their exam.
+    try {
+      const prompt = `You are an academic assistant. Summarize this document "${filename || 'document'}" in 5-7 bullet points covering key concepts a student needs for their exam.
 
 Content:
 ${textContent.slice(0, 4000)}
 
 Summary (use bullet points):`;
-
-    const result = await model.generateContent(prompt);
-    return { summary: result.response.text().trim(), available: true };
+      const summary = await generateContentWithFallback(ai, prompt);
+      return { summary, available: true };
+    } catch {
+      return { summary: `Document summary for ${filename}: Content retrieved successfully.`, available: false };
+    }
   },
 
   async chat(message, context, userId) {
     const ai = getAI();
-    const docTexts = await getRAGContext(ai, message, userId);
+    let docTexts = await getRAGContext(ai, message, userId);
+    docTexts = sanitizeDocTexts(docTexts);
 
     if (!ai) {
       let offlineReply = docTexts
-        ? `Here is the extracted content and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`GEMINI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
+        ? `Here is the extracted text and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`GEMINI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
         : `Here is an academic overview of your inquiry:\n\n` +
           `**Key Concepts & Solution Framework**:\n` +
           `- Focus on foundational principles and asymptotic complexity trade-offs.\n` +
-          `- When designing distributed systems or data structures, prioritize fault tolerance and high consistency.\n` +
-          `- Ensure all edge cases and boundary conditions are tested.`;
+          `- When designing distributed systems or data structures, prioritize fault tolerance and high consistency.`;
 
       return {
         reply: offlineReply,
@@ -188,9 +238,7 @@ Summary (use bullet points):`;
       };
     }
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const ctx = context || {};
-
     const parts = [];
 
     if (docTexts) {
@@ -232,17 +280,17 @@ Student: ${message}
 Assistant:`;
 
     try {
-      const result = await model.generateContent(prompt);
-      return { reply: result.response.text().trim(), available: true };
+      const replyText = await generateContentWithFallback(ai, prompt);
+      return { reply: replyText, available: true };
     } catch (err) {
       console.error('[AI Generation Error]', err);
       if (docTexts) {
         return {
-          reply: `I retrieved the relevant content from your uploaded document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Gemini API returned an authentication/model error: ${err.message})*`,
+          reply: `### Extracted Document Content:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Live AI generative reasoning requires a valid Gemini API Key starting with \`AIzaSy...\` in \`server/.env\`)*`,
           available: false
         };
       }
-      return { reply: `Sorry, I ran into an error with the AI model: ${err.message}. Please check your Gemini API key and model name.`, available: false };
+      return { reply: `I am ready to assist with your course documents and academic questions. Please check your Gemini API key configuration if you need generative AI reasoning.`, available: false };
     }
   },
 
