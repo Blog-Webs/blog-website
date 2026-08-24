@@ -151,7 +151,12 @@ export default function AiAssistantPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const removeDoc = (id: string) => { setUploadedDocs(prev => prev.filter(d => d.id !== id)); };
+  const removeDoc = async (id: string) => {
+    setUploadedDocs(prev => prev.filter(d => d.id !== id));
+    try {
+      await api.delete(`/student-os/files/${id}`);
+    } catch (e) {}
+  };
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-120px)] min-h-[500px]">

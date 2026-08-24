@@ -99,5 +99,6 @@ router.post('/ai/generate-roadmap', asyncWrap(aiCtrl.generateRoadmap));
 // Files (RAG Uploads)
 router.post('/files/upload', upload.single('file'), asyncWrap(filesCtrl.uploadDocument));
 router.get('/files', asyncWrap(filesCtrl.getDocuments));
+router.delete('/files/:id', asyncWrap(filesCtrl.deleteDocument));
 
 module.exports = router;

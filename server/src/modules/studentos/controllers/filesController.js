@@ -204,7 +204,20 @@ const getDocuments = async (req, res) => {
   }
 };
 
+const deleteDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Document.findByIdAndDelete(id);
+    await DocumentChunk.deleteMany({ documentId: id });
+    res.json({ success: true, message: 'Document deleted successfully' });
+  } catch (err) {
+    console.error('[deleteDocument error]', err);
+    res.status(500).json({ message: 'Failed to delete document: ' + err.message });
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
+  deleteDocument,
 };
