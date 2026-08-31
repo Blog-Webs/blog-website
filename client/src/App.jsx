@@ -37,6 +37,8 @@ const AdminDomainsPage = lazy(() => import('./modules/admin/pages/AdminDomainsPa
 const AdminStudentOSUsers = lazy(() => import('./modules/admin/pages/AdminStudentOSUsers'));
 // StudentOS — completely isolated module
 const StudentOSRoutes = lazy(() => import('./modules/StudentOS/routes/StudentOSRoutes'));
+// HouseWorkAI — multi-agent office simulation
+const HouseWorkAIRoutes = lazy(() => import('./modules/HouseWorkAI/routes/HouseWorkAIRoutes'));
 
 const PageFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
@@ -93,6 +95,9 @@ function App() {
 
         {/* StudentOS — AI Academic Hub, completely isolated from the main site */}
         <Route path="/student-os/*" element={<StudentOSRoutes />} />
+
+        {/* HouseWorkAI — Multi-agent office simulation, isolated module */}
+        <Route path="/housework-ai/*" element={<HouseWorkAIRoutes />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

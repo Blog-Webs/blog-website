@@ -25,6 +25,7 @@ const studentOSRoutes = require('./modules/studentos/routes/index');
 const forumRoutes = require('./modules/forum/forumRoutes');
 const notificationRoutes = require('./modules/admin/notificationRoutes');
 const codingRoutes = require('./modules/coding/codingRoutes');
+const houseWorkAIRoutes = require('./modules/houseworkai/routes/index');
 
 // Load EventBus listeners
 require('./events');
@@ -118,6 +119,8 @@ app.use('/api/student-os', studentOSRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/coding', codingRoutes);
+// ── HouseWorkAI Multi-Agent Engine ───────────────────────────────────────────
+app.use('/api/housework-ai', houseWorkAIRoutes);
 // ── AI Roadmap Engine (new, additive) ────────────────────────────────────────
 const roadmapRoutes = require('./modules/roadmap/routes/index');
 app.use('/api/roadmap', roadmapRoutes);

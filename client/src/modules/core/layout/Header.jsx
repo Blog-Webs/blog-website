@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLiveUserCount } from '../hooks/useLiveUserCount';
 import SearchModal from '../components/search/SearchModal';
 import GoogleSignInButton from '../components/ui/GoogleSignInButton';
-import { Bell, FileText, BookOpen, Megaphone, LayoutDashboard, LogOut } from 'lucide-react';
+import { Bell, FileText, BookOpen, Megaphone, LayoutDashboard, LogOut, Cpu } from 'lucide-react';
 import { notificationApi } from '../../workspace/api/userFeatures';
 
 const navLinkClass = ({ isActive }) =>
@@ -140,6 +140,18 @@ const Header = () => {
           <NavLink to="/todos" className={navLinkClass}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
+          <NavLink
+            to="/housework-ai"
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
+                isActive ? 'text-blue-400 font-bold' : 'text-blue-400/60 font-semibold hover:text-blue-400'
+              }`
+            }
+          >
+            <Cpu size={11} />
+            HouseWork AI
+            <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 leading-none font-bold">NEW</span>
+          </NavLink>
         </nav>
 
         {/* Right: Actions */}
@@ -275,6 +287,16 @@ const Header = () => {
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
+          <NavLink to="/housework-ai" onClick={() => setMobileOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
+                isActive ? 'text-blue-400 font-bold' : 'text-blue-400/60 font-semibold hover:text-blue-400'
+              }`
+            }
+          >
+            <Cpu size={11} /> HouseWork AI
+            <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 leading-none">NEW</span>
+          </NavLink>
           {!user && (
             <div className="pt-2">
               <GoogleSignInButton />

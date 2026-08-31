@@ -11,11 +11,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
 
+type AgentMeta = { id: string; name: string; role: string; emoji: string };
+
 type Message = {
   id: string;
   sender: 'user' | 'ai';
   text: string;
   timestamp: string;
+  agents?: AgentMeta[];
 };
 
 type ChatSession = {
@@ -40,8 +43,13 @@ const QUICK_PROMPTS = [
 const INITIAL_AI_MSG: Message = {
   id: 'm-0',
   sender: 'ai',
-  text: "Hello! I am your StudentOS AI Academic Tutor powered by Gemini. How can I assist you with code, system design, or exam prep today?",
+  text: "Hello! We are your StudentOS Multi-Agent Intelligence Team (Sophia 🎓, Dev 👨‍💻, Atlas 🏗️, Sage 📋, Nova 🔍). How can our specialized agents collaborate on your code, system design, or exam prep today?",
   timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+  agents: [
+    { id: 'sophia', name: 'Sophia', role: 'Academic Tutor', emoji: '🎓' },
+    { id: 'dev', name: 'Dev', role: 'Code Specialist', emoji: '👨‍💻' },
+    { id: 'atlas', name: 'Atlas', role: 'System Architect', emoji: '🏗️' },
+  ],
 };
 
 function MessageBubble({ msg }: { msg: Message }) {
@@ -71,6 +79,16 @@ function MessageBubble({ msg }: { msg: Message }) {
         {isAi ? <Bot size={16} className="text-white" /> : <User size={16} className="text-white" />}
       </div>
       <div className="max-w-[82%]">
+        {isAi && msg.agents && msg.agents.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-1.5">
+            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider self-center mr-1">Collaborated:</span>
+            {msg.agents.map(a => (
+              <span key={a.id} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-1 font-medium">
+                <span>{a.emoji}</span> {a.name} <span className="text-emerald-500/70">({a.role})</span>
+              </span>
+            ))}
+          </div>
+        )}
         <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isAi ? 'bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-tl-xs' : 'bg-blue-600 text-white rounded-tr-xs shadow-md'
         }`}>
@@ -246,6 +264,7 @@ export default function AiAssistantPage() {
         sender: 'ai',
         text: aiText,
         timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        agents: res.data?.agents || [],
       };
 
       updatedSessions = updatedSessions.map(s => s.id === activeSessionId ? {

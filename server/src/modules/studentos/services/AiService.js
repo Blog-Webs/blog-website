@@ -4,6 +4,56 @@ const Document = require('../models/Document');
 const DocumentChunk = require('../models/DocumentChunk');
 
 const MODEL_CANDIDATES = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-pro'];
+const MODEL_NAME = 'gemini-1.5-flash';
+
+// ── Multi-Agent Definitions for StudentOS ─────────────────────────────────
+const STUDENT_AGENTS = {
+  sophia: {
+    id: 'sophia', name: 'Sophia', role: 'Academic Tutor', emoji: '🎓',
+    systemPrompt: `You are Sophia, an expert Academic Tutor AI agent.
+Focus on explaining core concepts, theory, intuition, and step-by-step logic clearly for a student.`,
+  },
+  dev: {
+    id: 'dev', name: 'Dev', role: 'Code Specialist', emoji: '👨‍💻',
+    systemPrompt: `You are Dev, a senior Software Engineering AI agent.
+Focus on clean code examples, syntax, implementation details, and algorithmic code snippets.`,
+  },
+  atlas: {
+    id: 'atlas', name: 'Atlas', role: 'System Architect', emoji: '🏗️',
+    systemPrompt: `You are Atlas, a System Architecture AI agent.
+Focus on high-level system design, trade-offs, scalability, database choices, and asymptotic complexity (Big-O).`,
+  },
+  sage: {
+    id: 'sage', name: 'Sage', role: 'Study Planner', emoji: '📋',
+    systemPrompt: `You are Sage, an Academic Planning AI agent.
+Focus on actionable study steps, practice exercises, key takeaways, and learning milestones for the student.`,
+  },
+  nova: {
+    id: 'nova', name: 'Nova', role: 'QA & Edge Case Reviewer', emoji: '🔍',
+    systemPrompt: `You are Nova, a QA and Code Reviewer AI agent.
+Focus on edge cases, potential pitfalls, error handling, security considerations, and verification steps.`,
+  },
+};
+
+function routeStudentTask(message) {
+  const lower = message.toLowerCase();
+  const assigned = [STUDENT_AGENTS.sophia]; // Sophia leads academic queries by default
+
+  if (lower.includes('code') || lower.includes('function') || lower.includes('algorithm') || lower.includes('python') || lower.includes('java') || lower.includes('bug') || lower.includes('implement')) {
+    assigned.push(STUDENT_AGENTS.dev);
+    assigned.push(STUDENT_AGENTS.nova);
+  }
+  if (lower.includes('system') || lower.includes('design') || lower.includes('architecture') || lower.includes('sql') || lower.includes('database') || lower.includes('paxos') || lower.includes('raft') || lower.includes('cap')) {
+    assigned.push(STUDENT_AGENTS.atlas);
+  }
+  if (lower.includes('plan') || lower.includes('study') || lower.includes('exam') || lower.includes('prep') || lower.includes('schedule') || lower.includes('roadmap')) {
+    assigned.push(STUDENT_AGENTS.sage);
+  }
+
+  // Deduplicate and cap at 3 agents max for concise speed
+  const unique = Array.from(new Set(assigned));
+  return unique.slice(0, 3);
+}
 
 function getAI() {
   const key = process.env.GEMINI_API_KEY;
@@ -223,17 +273,20 @@ Summary (use bullet points):`;
     const ai = getAI();
     let docTexts = await getRAGContext(ai, message, userId);
     docTexts = sanitizeDocTexts(docTexts);
+    const assignedAgents = routeStudentTask(message);
 
     if (!ai) {
+      const offlineAgentOutputs = assignedAgents.map(a => `${a.emoji} **${a.name} (${a.role})**: Ready to assist on ${a.role.toLowerCase()} aspects of your query.`).join('\n\n');
       let offlineReply = docTexts
         ? `Here is the extracted text and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`GEMINI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
-        : `Here is an academic overview of your inquiry:\n\n` +
+        : `### Multi-Agent Academic Team:\n${offlineAgentOutputs}\n\n` +
           `**Key Concepts & Solution Framework**:\n` +
           `- Focus on foundational principles and asymptotic complexity trade-offs.\n` +
           `- When designing distributed systems or data structures, prioritize fault tolerance and high consistency.`;
 
       return {
         reply: offlineReply,
+        agents: assignedAgents.map(a => ({ id: a.id, name: a.name, role: a.role, emoji: a.emoji })),
         available: false,
       };
     }
@@ -272,26 +325,41 @@ Summary (use bullet points):`;
       ? `Use the following context to help answer the student's question if relevant:\n\n${parts.join('\n\n')}\n\n`
       : '';
 
-    const prompt = `You are StudentOS AI, a helpful and friendly academic assistant for students.
+    // Run assigned agents in PARALLEL (true multi-agent execution)
+    const agentResults = await Promise.allSettled(
+      assignedAgents.map(async (agent) => {
+        const agentPrompt = `${agent.systemPrompt}
+
 ${contextStr}
-Answer the following question in a clear, helpful way. Keep it concise and use the context provided above to ground your answer.
+Student Request: "${message}"
 
-Student: ${message}
-Assistant:`;
+Respond concisely (2-4 paragraphs) strictly from your specialized domain perspective as ${agent.name} (${agent.role}).`;
+        const text = await generateContentWithFallback(ai, agentPrompt);
+        return { agentId: agent.id, name: agent.name, role: agent.role, emoji: agent.emoji, response: text };
+      })
+    );
 
-    try {
-      const replyText = await generateContentWithFallback(ai, prompt);
-      return { reply: replyText, available: true };
-    } catch (err) {
-      console.error('[AI Generation Error]', err);
-      if (docTexts) {
-        return {
-          reply: `### Extracted Document Content:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Live AI generative reasoning requires a valid Gemini API Key starting with \`AIzaSy...\` in \`server/.env\`)*`,
-          available: false
-        };
-      }
-      return { reply: `I am ready to assist with your course documents and academic questions. Please check your Gemini API key configuration if you need generative AI reasoning.`, available: false };
+    const successfulAgentResponses = agentResults
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    if (successfulAgentResponses.length === 0) {
+      return {
+        reply: "The AI multi-agent team encountered an issue generating responses. Please check your Gemini API key configuration.",
+        available: false
+      };
     }
+
+    // Build synthesized multi-agent response
+    const combinedBlocks = successfulAgentResponses.map(r => 
+      `### ${r.emoji} ${r.name} (${r.role})\n${r.response}`
+    ).join('\n\n---\n\n');
+
+    return {
+      reply: combinedBlocks,
+      agents: successfulAgentResponses.map(r => ({ id: r.agentId, name: r.name, role: r.role, emoji: r.emoji })),
+      available: true,
+    };
   },
 
   async generateFlashcards(content, topic) {

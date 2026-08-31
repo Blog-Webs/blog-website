@@ -41,6 +41,21 @@ router.get('/profile', requireAuth, asyncWrap(profileCtrl.getProfile));
 router.put('/profile', requireAuth, asyncWrap(profileCtrl.updateProfile));
 router.post('/profile/avatar', requireAuth, upload.single('avatar'), asyncWrap(profileCtrl.uploadAvatar));
 
+// ── Multi-Agent AI & RAG Files Endpoints (accessible with or without Google Workspace) ──
+router.get('/ai/status', asyncWrap(aiCtrl.getStatus));
+router.post('/ai/chat', asyncWrap(aiCtrl.chat));
+router.post('/ai/flashcards', asyncWrap(aiCtrl.generateFlashcards));
+router.post('/ai/quiz', asyncWrap(aiCtrl.generateQuiz));
+router.post('/ai/assessment-report', asyncWrap(aiCtrl.generateAssessmentReport));
+router.post('/ai/weak-areas', asyncWrap(aiCtrl.analyzeWeakAreas));
+router.post('/ai/daily-plan', asyncWrap(aiCtrl.generateDailyPlan));
+router.post('/ai/generate-roadmap', asyncWrap(aiCtrl.generateRoadmap));
+
+// Files (RAG Uploads)
+router.post('/files/upload', upload.single('file'), asyncWrap(filesCtrl.uploadDocument));
+router.get('/files', asyncWrap(filesCtrl.getDocuments));
+router.delete('/files/:id', asyncWrap(filesCtrl.deleteDocument));
+
 // ── All routes below require both httpTechNex login AND Google Workspace connected ──
 router.use(requireAuth);
 router.use(requireStudentOS);
@@ -84,21 +99,5 @@ router.post('/tasks/:taskId/complete', asyncWrap(tasksCtrl.completeTask));
 // Career Hub
 router.get('/career/jobs', asyncWrap(careerCtrl.getJobs));
 router.post('/career/match-resume', upload.single('resume'), asyncWrap(careerCtrl.matchResume));
-
-// AI
-router.get('/ai/status', asyncWrap(aiCtrl.getStatus));
-router.post('/ai/chat', asyncWrap(aiCtrl.chat));
-router.get('/ai/summarize-email/:messageId', asyncWrap(aiCtrl.summarizeEmail));
-router.post('/ai/flashcards', asyncWrap(aiCtrl.generateFlashcards));
-router.post('/ai/quiz', asyncWrap(aiCtrl.generateQuiz));
-router.post('/ai/assessment-report', asyncWrap(aiCtrl.generateAssessmentReport));
-router.post('/ai/weak-areas', asyncWrap(aiCtrl.analyzeWeakAreas));
-router.post('/ai/daily-plan', asyncWrap(aiCtrl.generateDailyPlan));
-router.post('/ai/generate-roadmap', asyncWrap(aiCtrl.generateRoadmap));
-
-// Files (RAG Uploads)
-router.post('/files/upload', upload.single('file'), asyncWrap(filesCtrl.uploadDocument));
-router.get('/files', asyncWrap(filesCtrl.getDocuments));
-router.delete('/files/:id', asyncWrap(filesCtrl.deleteDocument));
 
 module.exports = router;

@@ -13,20 +13,23 @@ const aiController = {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: 'Message is required.' });
 
-    const userId = req.user._id;
-    const [assignments, events, driveFiles, recentEmails] = await Promise.allSettled([
-      ClassroomService.getAssignments(userId),
-      CalendarService.getUpcomingEvents(userId, 7),
-      DriveService.getRecentFiles(userId),
-      GmailService.getUnreadEmails(userId, 5),
-    ]);
+    const userId = req.user?._id || null;
+    let assignments = [], events = [], driveFiles = [], recentEmails = [];
 
-    const context = {
-      assignments: assignments.status === 'fulfilled' ? assignments.value : [],
-      events: events.status === 'fulfilled' ? events.value : [],
-      driveFiles: driveFiles.status === 'fulfilled' ? driveFiles.value : [],
-      recentEmails: recentEmails.status === 'fulfilled' ? recentEmails.value : [],
-    };
+    if (userId) {
+      const results = await Promise.allSettled([
+        ClassroomService.getAssignments(userId),
+        CalendarService.getUpcomingEvents(userId, 7),
+        DriveService.getRecentFiles(userId),
+        GmailService.getUnreadEmails(userId, 5),
+      ]);
+      assignments = results[0].status === 'fulfilled' ? results[0].value : [];
+      events = results[1].status === 'fulfilled' ? results[1].value : [];
+      driveFiles = results[2].status === 'fulfilled' ? results[2].value : [];
+      recentEmails = results[3].status === 'fulfilled' ? results[3].value : [];
+    }
+
+    const context = { assignments, events, driveFiles, recentEmails };
 
     const result = await AiService.chat(message.trim(), context, userId);
     const replyText = result.reply || result.response || result.text || '';
@@ -34,6 +37,7 @@ const aiController = {
       reply: replyText,
       response: replyText,
       text: replyText,
+      agents: result.agents || [],
       available: result.available ?? true,
     });
   },
