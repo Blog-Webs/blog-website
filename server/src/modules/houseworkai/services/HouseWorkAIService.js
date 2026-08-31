@@ -104,7 +104,7 @@ function getAI() {
   return new GoogleGenerativeAI(key);
 }
 
-const MODEL_CANDIDATES = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-pro'];
+const MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
 
 async function generateWithFallback(ai, prompt) {
   let lastErr = null;
@@ -272,6 +272,42 @@ Be confident and collaborative. Start with "The team is..."`;
 
   getAgents() {
     return Object.values(AGENTS).map(({ id, name, role, emoji }) => ({ id, name, role, emoji }));
+  },
+
+  /**
+   * Process direct message with a specific agent persona
+   */
+  async processDirectAgentMessage(agentId, userMessage) {
+    const ai = getAI();
+    const agent = AGENTS[agentId] || AGENTS.aria;
+    if (!ai) {
+      return {
+        agentId: agent.id,
+        agentName: agent.name,
+        role: agent.role,
+        response: this._fallbackAgentResponse(agent.id, userMessage),
+        aiAvailable: false,
+      };
+    }
+    try {
+      const response = await this._runAgent(ai, agent.id, userMessage, true);
+      return {
+        agentId: agent.id,
+        agentName: agent.name,
+        role: agent.role,
+        response,
+        aiAvailable: true,
+      };
+    } catch (err) {
+      console.warn(`[HouseWorkAI] Direct agent chat error for ${agentId}:`, err.message);
+      return {
+        agentId: agent.id,
+        agentName: agent.name,
+        role: agent.role,
+        response: this._fallbackAgentResponse(agent.id, userMessage),
+        aiAvailable: true,
+      };
+    }
   },
 };
 

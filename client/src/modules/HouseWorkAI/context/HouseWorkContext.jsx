@@ -29,6 +29,13 @@ async function callBackend(message) {
   return res.data;
 }
 
+async function callBackendDirectAgent(agentId, message) {
+  const res = await axios.post(`${API_BASE}/housework-ai/agent-chat`, { agentId, message }, {
+    timeout: 30000,
+  });
+  return res.data;
+}
+
 // ── Context ────────────────────────────────────────────────────────────────
 const HouseWorkContext = createContext(null);
 
@@ -238,10 +245,41 @@ export function HouseWorkProvider({ children }) {
     setOrbMode('idle');
   }, []);
 
+  const sendDirectAgentMessage = useCallback(async (agentId, text) => {
+    if (!text || !text.trim()) return;
+
+    const userMsg = { id: Date.now(), role: 'user', text: text.trim(), timestamp: new Date(), assignedAgents: [agentId] };
+    setMessages(prev => [...prev, userMsg]);
+    setIsThinking(true);
+
+    try {
+      const data = await callBackendDirectAgent(agentId, text.trim());
+      setAiAvailable(data.aiAvailable ?? true);
+
+      const agentMsg = {
+        id: Date.now() + 100,
+        role: 'agent',
+        agentId: data.agentId || agentId,
+        isPrimary: true,
+        text: data.response,
+        timestamp: new Date(),
+        assignedAgents: [],
+      };
+
+      setMessages(prev => [...prev, agentMsg]);
+      setIsThinking(false);
+      if (data.response) speak(data.response);
+      setAgentWorking(agentId, text.slice(0, 50), 4000);
+    } catch (err) {
+      console.warn('[HouseWorkAI] Direct agent chat error:', err.message);
+      setIsThinking(false);
+    }
+  }, [setAgentWorking, speak]);
+
   return (
     <HouseWorkContext.Provider value={{
       messages, agents, isThinking, isSpeaking, isListening, orbMode, aiAvailable,
-      sendMessage, speak, startListening, stopListening,
+      sendMessage, sendDirectAgentMessage, speak, startListening, stopListening,
     }}>
       {children}
     </HouseWorkContext.Provider>

@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const Document = require('../models/Document');
 const DocumentChunk = require('../models/DocumentChunk');
 
-const MODEL_CANDIDATES = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-pro'];
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+const MODEL_NAME = 'gemini-2.5-flash';
 
 // ── Multi-Agent Definitions for StudentOS ─────────────────────────────────
 const STUDENT_AGENTS = {

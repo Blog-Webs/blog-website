@@ -37,6 +37,27 @@ const HouseWorkAIController = {
   }),
 
   /**
+   * POST /api/housework-ai/agent-chat
+   * Direct message with a specific persona agent.
+   * Body: { agentId: string, message: string }
+   */
+  processDirectAgentMessage: asyncWrap(async (req, res) => {
+    const { agentId, message } = req.body;
+
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'message is required and must be a non-empty string.' });
+    }
+
+    const result = await HouseWorkAIService.processDirectAgentMessage(agentId || 'aria', message.trim());
+
+    res.json({
+      ok: true,
+      message: message.trim(),
+      ...result,
+    });
+  }),
+
+  /**
    * GET /api/housework-ai/status
    * Returns whether Gemini AI is available.
    */

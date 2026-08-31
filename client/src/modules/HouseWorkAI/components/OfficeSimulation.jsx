@@ -6,7 +6,7 @@ import { Play, Pause, FastForward, UserCheck, Armchair, Coffee, Send, Sparkles, 
 const EMPLOYEES = [
   { id: 'aria', name: 'Alice', gender: 'female', role: 'Project Manager', hair: '#f97316', outfit: '#8b5cf6', skin: '#fed7aa', deskId: 'desk-0', seatX: 220, seatY: 180, homeX: 220, homeY: 180, emoji: '👩‍💼', statusColor: '#eab308' },
   { id: 'dev', name: 'Bob', gender: 'male', role: 'Lead Dev', hair: '#f59e0b', outfit: '#3b82f6', skin: '#fde68a', deskId: 'desk-1', seatX: 380, seatY: 180, homeX: 380, homeY: 180, emoji: '👨‍💻', statusColor: '#06b6d4' },
-  { id: 'carol', name: 'Carol', gender: 'female', role: 'Research AI', hair: '#ef4444', outfit: '#ec4899', skin: '#fecdd3', deskId: 'desk-2', seatX: 540, seatY: 180, homeX: 540, homeY: 180, emoji: '👩‍🔬', statusColor: '#ef4444' },
+  { id: 'nova', name: 'Nova', gender: 'female', role: 'QA Engineer', hair: '#ef4444', outfit: '#ec4899', skin: '#fecdd3', deskId: 'desk-2', seatX: 540, seatY: 180, homeX: 540, homeY: 180, emoji: '🔍', statusColor: '#ef4444' },
   { id: 'pixel', name: 'Pixel', gender: 'female', role: 'UI Designer', hair: '#a855f7', outfit: '#d946ef', skin: '#fed7aa', deskId: 'desk-3', seatX: 220, seatY: 340, homeX: 220, homeY: 340, emoji: '🎨', statusColor: '#a855f7' },
   { id: 'sage', name: 'Sage', gender: 'male', role: 'Data Analyst', hair: '#10b981', outfit: '#059669', skin: '#fde68a', deskId: 'desk-4', seatX: 380, seatY: 340, homeX: 380, homeY: 340, emoji: '📊', statusColor: '#10b981' },
   { id: 'byte', name: 'Brass', gender: 'male', role: 'DevOps', hair: '#3b82f6', outfit: '#1d4ed8', skin: '#fef08a', deskId: 'desk-5', seatX: 660, seatY: 420, homeX: 660, homeY: 420, emoji: '⚙️', statusColor: '#f59e0b' },

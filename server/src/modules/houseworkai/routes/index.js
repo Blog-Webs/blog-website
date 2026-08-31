@@ -13,4 +13,8 @@ router.get('/agents', ctrl.getAgents);
 // No auth required — public multi-agent AI endpoint
 router.post('/message', ctrl.processMessage);
 
+// POST /api/housework-ai/agent-chat
+// Body: { agentId: string, message: string }
+router.post('/agent-chat', ctrl.processDirectAgentMessage);
+
 module.exports = router;
