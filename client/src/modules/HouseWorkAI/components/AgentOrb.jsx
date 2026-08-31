@@ -66,7 +66,7 @@ export default function AgentOrb() {
   const animFrameRef = useRef(null);
   const timeRef = useRef(0);
   const modeRef = useRef('idle');
-  const { orbMode } = useHouseWork();
+  const { orbMode, isListening, startListening, stopListening, interimTranscript, voiceError } = useHouseWork();
 
   // Keep modeRef in sync so the draw loop always has the latest mode
   useEffect(() => { modeRef.current = orbMode; }, [orbMode]);
@@ -228,28 +228,51 @@ export default function AgentOrb() {
   const cfg = MODE_CONFIG[orbMode] || MODE_CONFIG.idle;
 
   return (
-    <div className="flex flex-col items-center gap-4 select-none">
-      {/* Canvas */}
-      <div className="relative cursor-crosshair group">
+    <div className="flex flex-col items-center gap-3 select-none">
+      {/* Canvas - Click to toggle Voice Recognition */}
+      <div
+        onClick={() => (isListening ? stopListening() : startListening())}
+        className="relative cursor-pointer group hover:scale-105 transition-transform duration-300"
+        title={isListening ? 'Click to stop listening' : 'Click to speak to Voice Assistant'}
+      >
         <canvas
           ref={canvasRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          className="block transition-transform duration-300"
+          className="block"
         />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full backdrop-blur-[1px]">
+          <span className="text-[10px] font-mono font-bold text-white px-3.5 py-1.5 rounded-full bg-blue-600/80 shadow-lg border border-blue-400/40">
+            {isListening ? '⏹️ Stop Listening' : '🎙️ Tap to Speak'}
+          </span>
+        </div>
       </div>
 
-      {/* Status indicator */}
-      <div
-        className="flex items-center gap-2 text-[11px] font-mono font-bold tracking-[0.15em] transition-colors duration-500"
-        style={{ color: cfg.coreColor }}
-      >
-        <span
-          className={orbMode !== 'idle' ? 'animate-pulse' : ''}
-          style={{ textShadow: `0 0 10px ${cfg.coreColor}88` }}
+      {/* Status indicator & live speech display */}
+      <div className="flex flex-col items-center gap-1.5 text-center max-w-xs">
+        <div
+          className="flex items-center gap-2 text-[11px] font-mono font-bold tracking-[0.15em] transition-colors duration-500"
+          style={{ color: cfg.coreColor }}
         >
-          {MODE_LABEL[orbMode]}
-        </span>
+          <span
+            className={orbMode !== 'idle' ? 'animate-pulse' : ''}
+            style={{ textShadow: `0 0 10px ${cfg.coreColor}88` }}
+          >
+            {MODE_LABEL[orbMode]}
+          </span>
+        </div>
+
+        {interimTranscript && (
+          <p className="text-xs text-pink-300 font-mono italic px-3 py-1 rounded-full bg-pink-950/40 border border-pink-500/30 animate-pulse">
+            "{interimTranscript}"
+          </p>
+        )}
+
+        {voiceError && (
+          <p className="text-[10px] text-amber-400 font-mono px-3 py-1 rounded-xl bg-amber-950/40 border border-amber-500/30">
+            ⚠️ {voiceError}
+          </p>
+        )}
       </div>
     </div>
   );

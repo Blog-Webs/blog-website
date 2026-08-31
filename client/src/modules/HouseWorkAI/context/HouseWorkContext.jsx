@@ -244,35 +244,92 @@ export function HouseWorkProvider({ children }) {
     }
   }, [setAgentWorking, speak]);
 
-  // ── Voice input ───────────────────────────────────────────────────────
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [voiceError, setVoiceError]               = useState(null);
+
+  // ── Voice input (Speech-to-Text) ──────────────────────────────────────
   const startListening = useCallback(() => {
+    setVoiceError(null);
+    setInterimTranscript('');
+
+    if (typeof window === 'undefined') return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
     if (!SpeechRecognition) {
-      alert('Voice input requires Google Chrome or Microsoft Edge.');
+      setVoiceError('Voice input requires Google Chrome, Microsoft Edge, or Safari.');
       return;
     }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
 
-    recognition.onstart  = () => { setIsListening(true); setOrbMode('listening'); };
-    recognition.onend    = () => { setIsListening(false); setOrbMode('idle'); };
-    recognition.onerror  = () => { setIsListening(false); setOrbMode('idle'); };
-    recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      recognition.stop();
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (_) {}
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setOrbMode('listening');
+      };
+
+      recognition.onresult = (e) => {
+        let finalText = '';
+        let interimText = '';
+
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) {
+            finalText += e.results[i][0].transcript;
+          } else {
+            interimText += e.results[i][0].transcript;
+          }
+        }
+
+        if (interimText) {
+          setInterimTranscript(interimText);
+        }
+
+        if (finalText.trim()) {
+          setInterimTranscript(finalText.trim());
+          setIsListening(false);
+          setOrbMode('idle');
+          sendMessage(finalText.trim());
+          setTimeout(() => setInterimTranscript(''), 2000);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        console.warn('[SpeechRecognition] Error:', e.error);
+        setIsListening(false);
+        setOrbMode('idle');
+        if (e.error === 'not-allowed') {
+          setVoiceError('Microphone permission blocked. Please allow microphone access in browser address bar.');
+        } else if (e.error !== 'no-speech') {
+          setVoiceError(`Voice input error: ${e.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setOrbMode('idle');
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('[SpeechRecognition] Exception:', err);
       setIsListening(false);
       setOrbMode('idle');
-      sendMessage(transcript);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
+      setVoiceError('Could not start voice recognition.');
+    }
   }, [sendMessage]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_) {}
+    }
     setIsListening(false);
     setOrbMode('idle');
   }, []);
@@ -311,6 +368,7 @@ export function HouseWorkProvider({ children }) {
   return (
     <HouseWorkContext.Provider value={{
       messages, agents, isThinking, isSpeaking, isListening, orbMode, aiAvailable,
+      interimTranscript, voiceError,
       sendMessage, sendDirectAgentMessage, speak, startListening, stopListening,
     }}>
       {children}
