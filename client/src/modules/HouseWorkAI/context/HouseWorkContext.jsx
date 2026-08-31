@@ -342,7 +342,7 @@ export function HouseWorkProvider({ children }) {
   const [voiceError, setVoiceError]               = useState(null);
 
   // ── Voice input (Speech-to-Text) ──────────────────────────────────────
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     setVoiceError(null);
     setInterimTranscript('');
 
@@ -354,6 +354,22 @@ export function HouseWorkProvider({ children }) {
       return;
     }
 
+    // Step 1: Explicitly check hardware mic permission via getUserMedia to unlock Chrome speech engine
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Release hardware mic track so SpeechRecognition can access it
+        stream.getTracks().forEach(t => t.stop());
+      } catch (micErr) {
+        console.warn('[Microphone] getUserMedia check failed:', micErr);
+        if (micErr.name === 'NotAllowedError' || micErr.name === 'PermissionDeniedError') {
+          setVoiceError('Microphone access denied. Please click the lock icon in browser address bar and set Microphone to Allow.');
+          return;
+        }
+      }
+    }
+
+    // Step 2: Now start SpeechRecognition safely
     try {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (_) {}
@@ -398,9 +414,19 @@ export function HouseWorkProvider({ children }) {
         console.warn('[SpeechRecognition] Error:', e.error);
         setIsListening(false);
         setOrbMode('idle');
-        if (e.error === 'not-allowed') {
-          setVoiceError('Microphone permission blocked. Please allow microphone access in browser address bar.');
-        } else if (e.error !== 'no-speech') {
+
+        // Do not block on 'no-speech' or transient 'aborted'
+        if (e.error === 'no-speech' || e.error === 'aborted') {
+          return;
+        }
+
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          setVoiceError('Speech recognition service busy or interrupted. Tap the mic button again to speak.');
+        } else if (e.error === 'audio-capture') {
+          setVoiceError('No microphone detected on your device.');
+        } else if (e.error === 'network') {
+          setVoiceError('Speech recognition network error. Please check your connection.');
+        } else {
           setVoiceError(`Voice input error: ${e.error}`);
         }
       };
@@ -416,7 +442,7 @@ export function HouseWorkProvider({ children }) {
       console.warn('[SpeechRecognition] Exception:', err);
       setIsListening(false);
       setOrbMode('idle');
-      setVoiceError('Could not start voice recognition.');
+      setVoiceError('Could not start speech recognition.');
     }
   }, [sendMessage]);
 
