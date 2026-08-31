@@ -4,11 +4,19 @@
 let io;
 const connectedSockets = new Set();
 
-const initSocket = (server, corsOrigins) => {
+const { isAllowedOrigin } = require('../config/cors');
+
+const initSocket = (server) => {
   const { Server } = require('socket.io');
   io = new Server(server, {
     cors: {
-      origin: corsOrigins,
+      origin: (origin, callback) => {
+        if (isAllowedOrigin(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
     },
   });

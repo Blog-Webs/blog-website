@@ -37,30 +37,22 @@ app.use(compression());
 
 app.set('trust proxy', 1);
 
-// Supports one or more comma-separated origins, e.g.
-// CLIENT_URL=https://httptechnex.vercel.app,https://httptechnex-git-main.vercel.app
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const { isAllowedOrigin } = require('./config/cors');
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow no-origin requests (server-to-server, curl, health checks)
-      if (!origin || allowedOrigins.includes(origin) || origin.includes('localhost')) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
-        console.warn(
-          `[CORS] Blocked request from origin "${origin}". ` +
-          `Allowed origins: ${allowedOrigins.join(', ')}. ` +
-          'If this should be allowed, add it to CLIENT_URL on the server (comma-separated).'
-        );
-        callback(new Error('Not allowed by CORS'));
+        console.warn(`[CORS] Blocked request from origin "${origin}".`);
+        callback(null, false);
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
 app.use(express.json({ limit: '2mb' }));
