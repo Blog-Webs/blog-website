@@ -22,11 +22,92 @@ const API_BASE = (() => {
   return '/api';
 })();
 
+async function generateClientAiFallback(userMessage) {
+  const apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY)
+    ? import.meta.env.VITE_GEMINI_API_KEY
+    : null;
+
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are an AI multi-agent office team coordinator. 
+The user submitted this prompt: "${userMessage}"
+
+Analyze the request and delegate work to appropriate team members from:
+- Aria (Project Manager)
+- Dev (Lead Engineer)
+- Pixel (UI Designer)
+- Sage (Data Analyst)
+- Nova (QA Engineer)
+- Byte (DevOps Engineer)
+
+Return ONLY a raw JSON object (no markdown, no backticks) with this structure:
+{
+  "assignments": [
+    { "agentId": "dev", "isPrimary": true, "response": "Specific 2-3 sentence response addressing '${userMessage}' as Dev" },
+    { "agentId": "pixel", "isPrimary": false, "response": "Specific 1-2 sentence supporting response addressing '${userMessage}' as Pixel" }
+  ],
+  "coordinatorSummary": "The team is working together on ${userMessage}..."
+}`
+            }]
+          }]
+        })
+      }
+    );
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) return null;
+
+    const cleanedJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleanedJson);
+    if (parsed.assignments && parsed.coordinatorSummary) {
+      return {
+        assignments: parsed.assignments,
+        coordinatorSummary: parsed.coordinatorSummary,
+        aiAvailable: true,
+      };
+    }
+  } catch (err) {
+    console.warn('[Client Gemini Fallback] Error:', err.message);
+  }
+  return null;
+}
+
 async function callBackend(message) {
-  const res = await axios.post(`${API_BASE}/housework-ai/message`, { message }, {
-    timeout: 30000,
-  });
-  return res.data;
+  const targets = [
+    API_BASE,
+    'http://localhost:5000/api',
+    '/api',
+  ];
+  const uniqueTargets = Array.from(new Set(targets.filter(Boolean)));
+
+  for (const base of uniqueTargets) {
+    try {
+      const url = base.endsWith('/') ? base.slice(0, -1) : base;
+      const res = await axios.post(`${url}/housework-ai/message`, { message }, { timeout: 10000 });
+      if (res.data && res.data.assignments) {
+        return res.data;
+      }
+    } catch (_) {}
+  }
+
+  // If backend endpoints failed, use direct Gemini client fallback
+  const clientAi = await generateClientAiFallback(message);
+  if (clientAi) {
+    return clientAi;
+  }
+
+  throw new Error('Backend server and client AI fallback both unavailable.');
 }
 
 async function callBackendDirectAgent(agentId, message) {
@@ -200,15 +281,28 @@ export function HouseWorkProvider({ children }) {
       speak(coordinatorText);
 
     } catch (err) {
-      console.warn('[HouseWorkAI] Running simulated multi-agent fallback:', err.message);
+      console.warn('[HouseWorkAI] Running dynamic multi-agent fallback for prompt:', text);
       setAiAvailable(false);
 
-      // Fallback: Dispatch simulated multi-agent execution out-of-the-box
+      const lower = text.toLowerCase();
+      let mainAgent = 'dev';
+      if (lower.includes('design') || lower.includes('ui') || lower.includes('color')) mainAgent = 'pixel';
+      else if (lower.includes('data') || lower.includes('report') || lower.includes('metric')) mainAgent = 'sage';
+      else if (lower.includes('test') || lower.includes('qa')) mainAgent = 'nova';
+      else if (lower.includes('deploy') || lower.includes('cloud')) mainAgent = 'byte';
+      else if (lower.includes('plan') || lower.includes('sprint')) mainAgent = 'aria';
+
       const simAssignments = [
-        { agentId: 'aria', isPrimary: true, response: 'Organizing sprint tasks and coordinating team assignments.' },
-        { agentId: 'dev', isPrimary: false, response: 'Analyzing code requirements and implementing full-stack solution.' },
-        { agentId: 'pixel', isPrimary: false, response: 'Crafting responsive UI layouts and modern color tokens.' },
-        { agentId: 'sage', isPrimary: false, response: 'Querying data metrics and preparing performance analytics.' },
+        {
+          agentId: mainAgent,
+          isPrimary: true,
+          response: `I'm analyzing your request: "${text}". Working on the implementation and solution right now.`,
+        },
+        {
+          agentId: 'aria',
+          isPrimary: false,
+          response: `Coordinating sprint roadmap for "${text.length > 35 ? text.slice(0, 32) + '...' : text}".`,
+        },
       ];
 
       const taskShort = text.length > 60 ? text.slice(0, 57) + '…' : text;
@@ -233,7 +327,7 @@ export function HouseWorkProvider({ children }) {
       const coordinatorMsg = {
         id: Date.now() + 200,
         role: 'ai',
-        text: `The Stonic multi-agent team is on it! ${simAssignments.length} agents are collaborating simultaneously on your request.`,
+        text: `The team is working together on: "${text.length > 50 ? text.slice(0, 47) + '...' : text}". ${simAssignments.length} agents assigned.`,
         timestamp: new Date(Date.now() + 300),
         assignedAgents: simAssignments.map(a => a.agentId),
       };

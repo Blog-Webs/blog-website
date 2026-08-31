@@ -155,6 +155,7 @@ function ThinkingBubble() {
 export default function ConversationPanel() {
   const {
     messages, agents, isThinking, isListening, isSpeaking, aiAvailable,
+    interimTranscript, voiceError,
     sendMessage, speak, startListening, stopListening,
   } = useHouseWork();
 
@@ -168,6 +169,13 @@ export default function ConversationPanel() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isThinking]);
+
+  // Sync speech-to-text transcript into input box in real time
+  useEffect(() => {
+    if (interimTranscript) {
+      setInput(interimTranscript);
+    }
+  }, [interimTranscript]);
 
   const handleSend = () => {
     const t = input.trim();
@@ -243,27 +251,41 @@ export default function ConversationPanel() {
         </div>
       </div>
 
-      {/* Voice status */}
+      {/* Voice status & Errors */}
+      {voiceError && (
+        <div className="mx-3 mb-2 py-1.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-mono shrink-0">
+          ⚠️ {voiceError}
+        </div>
+      )}
+
       {(isListening || isSpeaking) && (
-        <div className={`mx-3 mb-2 py-1.5 rounded-xl text-center text-[11px] font-semibold shrink-0 ${
+        <div className={`mx-3 mb-2 py-1.5 px-3 rounded-xl text-center text-[11px] font-semibold shrink-0 ${
           isListening
-            ? 'bg-pink-500/12 border border-pink-500/20 text-pink-400'
-            : 'bg-emerald-500/12 border border-emerald-500/20 text-emerald-400'
+            ? 'bg-pink-500/15 border border-pink-500/30 text-pink-300 animate-pulse'
+            : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
         }`}>
-          {isListening ? '🎙️ Listening… speak now' : '🔊 AI coordinator speaking…'}
+          {isListening ? (
+            <span>🎙️ Listening… {interimTranscript ? `"${interimTranscript}"` : 'speak now'}</span>
+          ) : (
+            <span>🔊 AI coordinator speaking…</span>
+          )}
         </div>
       )}
 
       {/* Input */}
       <div className="px-3 pb-3 shrink-0 space-y-2">
         <div className="flex gap-2 items-end">
-          <button onClick={() => isListening ? stopListening() : startListening()}
+          <button
+            type="button"
+            onClick={() => (isListening ? stopListening() : startListening())}
+            title={isListening ? 'Stop listening' : 'Click to speak question'}
             className={`p-2.5 rounded-xl transition-all shrink-0 ${
               isListening
-                ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/40 animate-pulse'
-                : 'bg-white/6 text-white/50 hover:bg-white/12 hover:text-white border border-white/8'
-            }`}>
-            {isListening ? <MicOff size={15} /> : <Mic size={15} />}
+                ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/50 animate-pulse ring-2 ring-pink-300'
+                : 'bg-white/6 text-white/70 hover:bg-white/12 hover:text-white border border-white/10'
+            }`}
+          >
+            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
           </button>
 
           <textarea
