@@ -1,305 +1,371 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useHouseWork } from '../context/HouseWorkContext';
-import { Sparkles, MessageSquare, Coffee, Cpu, Users, Activity, X, Send, Play } from 'lucide-react';
+import { Play, Pause, FastForward, UserCheck, Armchair, Coffee, Send, Sparkles, MessageSquare, ChevronRight, X } from 'lucide-react';
 
-// Room Zones with coordinate boundaries & pixel aesthetics
-const ROOM_ZONES = [
-  { id: 'reception', label: 'Reception & Entrance', icon: '🏛️', color: '#8B5CF6', x: '5%', y: '10%', width: '28%', height: '38%', agentIds: ['aria'] },
-  { id: 'dev', label: 'Engineering Hub', icon: '💻', color: '#3B82F6', x: '36%', y: '10%', width: '38%', height: '38%', agentIds: ['dev', 'nova'] },
-  { id: 'design', label: 'Design Studio', icon: '🎨', color: '#EC4899', x: '77%', y: '10%', width: '18%', height: '38%', agentIds: ['pixel'] },
-  { id: 'analytics', label: 'Analytics Lab', icon: '📊', color: '#10B981', x: '5%', y: '52%', width: '28%', height: '42%', agentIds: ['sage'] },
-  { id: 'meeting', label: 'Conference Table', icon: '🧠', color: '#F59E0B', x: '36%', y: '52%', width: '38%', height: '42%', agentIds: [] },
-  { id: 'server', label: 'Server & DevOps', icon: '⚙️', color: '#6366F1', x: '77%', y: '52%', width: '18%', height: '42%', agentIds: ['byte'] },
+// Male & Female Pixel Avatars Definition with distinct hair, outfit colors, and initial seat positions
+const EMPLOYEES = [
+  { id: 'aria', name: 'Alice', gender: 'female', role: 'Project Manager', hair: '#f97316', outfit: '#8b5cf6', skin: '#fed7aa', deskId: 'desk-0', seatX: 220, seatY: 180, homeX: 220, homeY: 180, emoji: '👩‍💼', statusColor: '#eab308' },
+  { id: 'dev', name: 'Bob', gender: 'male', role: 'Lead Dev', hair: '#f59e0b', outfit: '#3b82f6', skin: '#fde68a', deskId: 'desk-1', seatX: 380, seatY: 180, homeX: 380, homeY: 180, emoji: '👨‍💻', statusColor: '#06b6d4' },
+  { id: 'carol', name: 'Carol', gender: 'female', role: 'Research AI', hair: '#ef4444', outfit: '#ec4899', skin: '#fecdd3', deskId: 'desk-2', seatX: 540, seatY: 180, homeX: 540, homeY: 180, emoji: '👩‍🔬', statusColor: '#ef4444' },
+  { id: 'pixel', name: 'Pixel', gender: 'female', role: 'UI Designer', hair: '#a855f7', outfit: '#d946ef', skin: '#fed7aa', deskId: 'desk-3', seatX: 220, seatY: 340, homeX: 220, homeY: 340, emoji: '🎨', statusColor: '#a855f7' },
+  { id: 'sage', name: 'Sage', gender: 'male', role: 'Data Analyst', hair: '#10b981', outfit: '#059669', skin: '#fde68a', deskId: 'desk-4', seatX: 380, seatY: 340, homeX: 380, homeY: 340, emoji: '📊', statusColor: '#10b981' },
+  { id: 'byte', name: 'Brass', gender: 'male', role: 'DevOps', hair: '#3b82f6', outfit: '#1d4ed8', skin: '#fef08a', deskId: 'desk-5', seatX: 660, seatY: 420, homeX: 660, homeY: 420, emoji: '⚙️', statusColor: '#f59e0b' },
 ];
 
-// Ambient employee dialog generator for live persona banter
-const AMBIENT_BANTER = {
-  aria: ["Checking sprint milestones...", "Team, let's align on Q3 goals!", "Timeline looks solid."],
-  dev: ["Refactoring backend API routes...", "Writing clean unit test suite.", "Caching database query results!"],
-  pixel: ["Polishing dark glassmorphism tokens!", "Designing responsive components.", "Figma mockup updated!"],
-  sage: ["Analyzing user retention graphs...", "Querying dataset metrics.", "Generating statistical report."],
-  nova: ["Executing 142 edge-case tests!", "Security audit clean.", "All integration tests green!"],
-  byte: ["Scaling Kubernetes pod cluster...", "CI/CD deployment pipeline green.", "Monitoring 99.99% uptime."],
-};
+// Target waypoints in office for continuous walking simulation
+const WAYPOINTS = [
+  { label: 'Water Cooler', x: 480, y: 430 },
+  { label: 'Whiteboard', x: 380, y: 80 },
+  { label: 'Bob\'s Desk', x: 380, y: 230 },
+  { label: 'Lounge Couch', x: 120, y: 420 },
+  { label: 'Carol\'s Desk', x: 540, y: 230 },
+  { label: 'Alice\'s Office', x: 220, y: 230 },
+];
+
+// Work research prompts floating overhead
+const WORK_PROMPTS = [
+  "Provide a detailed research report on the latest advancements in AI perception...",
+  "Refactoring distributed state store and optimizing cache TTL...",
+  "Designing 2D isometric pixel components with custom color palettes...",
+  "Analyzing user retention metrics and generating diagnostic charts...",
+  "Running 140 regression tests for API authentication pipeline...",
+];
 
 export default function OfficeSimulation() {
   const { agents, sendMessage } = useHouseWork();
-  const [selectedAgent, setSelectedAgent] = useState(null);
-  const [directMsg, setDirectMsg] = useState('');
-  const [directLogs, setDirectLogs] = useState({});
-  const [activeSpeech, setActiveSpeech] = useState({ agentId: 'aria', text: 'Welcome to the live multi-agent office!' });
-  const [roomMode, setRoomMode] = useState('working'); // working | coffee | meeting
+  const [employees, setEmployees] = useState(EMPLOYEES.map(emp => ({
+    ...emp,
+    currentX: emp.homeX,
+    currentY: emp.homeY,
+    targetX: emp.homeX,
+    targetY: emp.homeY,
+    isSeated: true,
+    isWalking: false,
+    isTyping: true,
+    speechText: null,
+    overheadIcon: null, // '❓' | '💡' | '⚙️' | '☕'
+  })));
 
-  // Periodically cycle ambient speech bubbles for living Minecraft/Stonic office vibe
+  const [simSpeed, setSimSpeed] = useState(1); // 1x or 2x
+  const [selectedEmp, setSelectedEmp] = useState(null);
+  const [customTaskInput, setCustomTaskInput] = useState('');
+  const [taskSpeechBubble, setTaskSpeechBubble] = useState({
+    empId: 'carol',
+    text: "Provide a detailed research report on the latest advancements in current public perception of AI...",
+  });
+
+  // Continuous Game Movement Engine (Workers walking between desks)
   useEffect(() => {
-    const timer = setInterval(() => {
-      const agentKeys = Object.keys(AMBIENT_BANTER);
-      const randomAgent = agentKeys[Math.floor(Math.random() * agentKeys.length)];
-      const banters = AMBIENT_BANTER[randomAgent];
-      const randomText = banters[Math.floor(Math.random() * banters.length)];
-      setActiveSpeech({ agentId: randomAgent, text: randomText });
-    }, 4500);
-    return () => clearInterval(timer);
+    const intervalTime = 2000 / simSpeed;
+    const moveTimer = setInterval(() => {
+      setEmployees(prev => {
+        return prev.map(emp => {
+          // 35% chance a worker stands up and walks to another desk/waypoint
+          if (emp.isSeated && Math.random() < 0.35) {
+            const wp = WAYPOINTS[Math.floor(Math.random() * WAYPOINTS.length)];
+            const iconOptions = ['❓', '💡', '⚙️', '☕', '📝'];
+            const randomIcon = iconOptions[Math.floor(Math.random() * iconOptions.length)];
+            return {
+              ...emp,
+              isSeated: false,
+              isWalking: true,
+              isTyping: false,
+              targetX: wp.x,
+              targetY: wp.y,
+              overheadIcon: randomIcon,
+              speechText: Math.random() < 0.5 ? `Heading to ${wp.label}...` : null,
+            };
+          }
+
+          // If walking towards target, update coordinates step-by-step
+          if (emp.isWalking) {
+            const dx = emp.targetX - emp.currentX;
+            const dy = emp.targetY - emp.currentY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 15) {
+              // Reached target waypoint -> stay briefly then return home
+              if (emp.targetX === emp.homeX && emp.targetY === emp.homeY) {
+                return {
+                  ...emp,
+                  currentX: emp.homeX,
+                  currentY: emp.homeY,
+                  isWalking: false,
+                  isSeated: true,
+                  isTyping: true,
+                  overheadIcon: null,
+                  speechText: null,
+                };
+              } else {
+                // At destination, sit/interact briefly then walk back home
+                return {
+                  ...emp,
+                  currentX: emp.targetX,
+                  currentY: emp.targetY,
+                  targetX: emp.homeX,
+                  targetY: emp.homeY,
+                  speechText: `Discussing with team at ${WAYPOINTS.find(w => w.x === emp.targetX)?.label || 'desk'}!`,
+                };
+              }
+            } else {
+              const speed = 8 * simSpeed;
+              return {
+                ...emp,
+                currentX: emp.currentX + (dx / dist) * speed,
+                currentY: emp.currentY + (dy / dist) * speed,
+              };
+            }
+          }
+
+          return emp;
+        });
+      });
+    }, intervalTime);
+
+    return () => clearInterval(moveTimer);
+  }, [simSpeed]);
+
+  // Periodic speech bubble updates
+  useEffect(() => {
+    const speechTimer = setInterval(() => {
+      const activePrompts = WORK_PROMPTS;
+      const prompt = activePrompts[Math.floor(Math.random() * activePrompts.length)];
+      const empIds = ['aria', 'dev', 'carol', 'pixel', 'sage', 'byte'];
+      const randomEmp = empIds[Math.floor(Math.random() * empIds.length)];
+
+      setTaskSpeechBubble({
+        empId: randomEmp,
+        text: prompt,
+      });
+    }, 6000);
+
+    return () => clearInterval(speechTimer);
   }, []);
 
-  const agentMap = Object.fromEntries(agents.map(a => [a.id, a]));
-  const workingCount = agents.filter(a => a.status === 'working').length;
+  const seatedCount = employees.filter(e => e.isSeated).length;
+  const busyCount = employees.filter(e => e.isTyping || e.isWalking).length;
 
-  const handleSendDirectMessage = (e) => {
+  const handleSendPrompt = (e) => {
     e.preventDefault();
-    if (!directMsg.trim() || !selectedAgent) return;
+    if (!customTaskInput.trim()) return;
 
-    const userText = directMsg.trim();
-    const agentId = selectedAgent.id;
+    const text = customTaskInput.trim();
+    setTaskSpeechBubble({ empId: 'carol', text });
+    setCustomTaskInput('');
 
-    // Add to direct logs for this agent
-    const newLogs = [
-      ...(directLogs[agentId] || []),
-      { sender: 'user', text: userText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-    ];
+    // Trigger workers to move & collaborate
+    setEmployees(prev => prev.map((emp, i) => ({
+      ...emp,
+      isSeated: false,
+      isWalking: true,
+      targetX: WAYPOINTS[i % WAYPOINTS.length].x,
+      targetY: WAYPOINTS[i % WAYPOINTS.length].y,
+      speechText: `Working on: ${text.slice(0, 30)}...`,
+    })));
 
-    setDirectLogs({ ...directLogs, [agentId]: newLogs });
-    setDirectMsg('');
-
-    // Simulate agent direct response (works offline without GEMINI_API_KEY)
-    setTimeout(() => {
-      const responses = AMBIENT_BANTER[agentId] || ["On it! Working on your direct request."];
-      const botText = `${responses[Math.floor(Math.random() * responses.length)]} I'm focusing on your task right away.`;
-
-      setDirectLogs(prev => ({
-        ...prev,
-        [agentId]: [
-          ...(prev[agentId] || []),
-          { sender: 'agent', text: botText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-        ]
-      }));
-
-      // Also trigger state working animation
-      if (sendMessage) {
-        sendMessage(`[Direct Task to ${selectedAgent.name}]: ${userText}`);
-      }
-    }, 800);
+    if (sendMessage) sendMessage(text);
   };
 
   return (
-    <div className="relative bg-[#060a14] rounded-3xl border border-blue-500/20 overflow-hidden shadow-2xl flex flex-col">
-      {/* ── Top Header Control Bar ────────────────────────────────────────── */}
-      <div className="px-5 py-3 border-b border-white/10 bg-[#090f1f]/90 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 z-20">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-xs shadow-red-500/50" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/80 shadow-xs shadow-amber-500/50" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/80 shadow-xs shadow-emerald-500/50" />
-          </div>
-          <span className="text-xs font-mono font-bold text-blue-400 tracking-wider flex items-center gap-1.5">
-            <Cpu size={14} className="animate-spin-slow" /> STONIC MULTI-AGENT OFFICE SIMULATION
+    <div className="relative bg-[#1e232a] rounded-3xl border-4 border-[#2d3440] overflow-hidden shadow-2xl flex flex-col font-sans select-none">
+      {/* ── Top Employee Status Bar (Matching Stonicai.com Top Bar) ───────── */}
+      <div className="px-4 py-2.5 bg-[#252b35] border-b-2 border-[#15191e] flex items-center justify-between overflow-x-auto gap-3">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-widest font-mono flex items-center gap-1">
+            <Sparkles size={14} /> StonicAI.com Game Simulation
           </span>
         </div>
 
-        {/* Live Simulation Mode Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setRoomMode('working')}
-            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 ${
-              roomMode === 'working' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
-            }`}
-          >
-            <Activity size={12} /> Work Mode
-          </button>
-          <button
-            onClick={() => setRoomMode('coffee')}
-            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 ${
-              roomMode === 'coffee' ? 'bg-amber-600 text-white shadow-md shadow-amber-500/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
-            }`}
-          >
-            <Coffee size={12} /> Coffee Lounge
-          </button>
-          <button
-            onClick={() => setRoomMode('meeting')}
-            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 ${
-              roomMode === 'meeting' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
-            }`}
-          >
-            <Users size={12} /> All-Hands Meeting
-          </button>
+        {/* Top Avatar Chips (Alice 🟡, Bob 🔵, Carol 🔴) */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {employees.map(emp => (
+            <div
+              key={emp.id}
+              onClick={() => setSelectedEmp(emp)}
+              className={`px-3 py-1 rounded-xl bg-[#1a1f26] border-2 cursor-pointer transition-all flex items-center gap-2 shrink-0 ${
+                selectedEmp?.id === emp.id ? 'border-amber-400 bg-amber-500/20' : 'border-[#333c4a] hover:border-blue-400'
+              }`}
+            >
+              {/* Pixel Head Avatar */}
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shadow-xs relative"
+                style={{ backgroundColor: emp.outfit, color: '#fff' }}
+              >
+                {emp.name[0]}
+                <span
+                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-black"
+                  style={{ backgroundColor: emp.statusColor }}
+                />
+              </div>
+              <span className="text-xs font-bold text-slate-200 font-mono">{emp.name}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── Main Isometric Minecraft/Habbo Room Canvas ─────────────────────── */}
-      <div className="relative w-full h-[520px] bg-[#050811] overflow-hidden select-none">
-        {/* Isometric Pixel Grid Pattern */}
+      {/* ── Main Top-Down Pixel Art Game Canvas Room ───────────────────────── */}
+      <div className="relative w-full h-[580px] bg-[#3a4454] overflow-hidden">
+        {/* Tiled Pixel Floor (Grey Tiles matching screenshot) */}
         <div
-          className="absolute inset-0 opacity-[0.12]"
+          className="absolute inset-0 opacity-40"
           style={{
             backgroundImage: `
-              linear-gradient(30deg, #3b82f6 1px, transparent 1px),
-              linear-gradient(150deg, #3b82f6 1px, transparent 1px)
+              linear-gradient(to right, #2c3440 2px, transparent 2px),
+              linear-gradient(to bottom, #2c3440 2px, transparent 2px)
             `,
-            backgroundSize: '40px 24px',
+            backgroundSize: '40px 40px',
           }}
         />
 
-        {/* Room Floor Zones */}
-        {ROOM_ZONES.map((zone) => (
-          <div
-            key={zone.id}
-            className="absolute rounded-2xl border transition-all duration-700 p-3 flex flex-col justify-between"
-            style={{
-              left: zone.x,
-              top: zone.y,
-              width: zone.width,
-              height: zone.height,
-              backgroundColor: `${zone.color}08`,
-              borderColor: `${zone.color}25`,
-              boxShadow: `inset 0 0 20px ${zone.color}08, 0 8px 32px rgba(0,0,0,0.4)`,
-            }}
-          >
-            {/* Zone Label */}
-            <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm">{zone.icon}</span>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white/80" style={{ color: zone.color }}>
-                  {zone.label}
-                </span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: zone.color }} />
-            </div>
-
-            {/* Pixel Furniture Details inside room */}
-            {zone.id === 'reception' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-24 h-10 rounded-lg bg-violet-950/60 border border-violet-500/30 flex items-center justify-center text-[10px] text-violet-300 font-mono">
-                  🏛️ Reception Desk
-                </div>
-              </div>
-            )}
-            {zone.id === 'dev' && (
-              <div className="flex-1 grid grid-cols-2 gap-2 items-center justify-items-center">
-                <div className="w-20 h-10 rounded-lg bg-blue-950/60 border border-blue-500/30 flex items-center justify-center text-[9px] text-blue-300 font-mono">
-                  🖥️ Workstation 1
-                </div>
-                <div className="w-20 h-10 rounded-lg bg-blue-950/60 border border-blue-500/30 flex items-center justify-center text-[9px] text-blue-300 font-mono">
-                  🖥️ Workstation 2
-                </div>
-              </div>
-            )}
-            {zone.id === 'design' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-16 h-12 rounded-lg bg-pink-950/60 border border-pink-500/30 flex items-center justify-center text-[9px] text-pink-300 font-mono text-center">
-                  🎨 Canvas Table
-                </div>
-              </div>
-            )}
-            {zone.id === 'analytics' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-20 h-10 rounded-lg bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-[9px] text-emerald-300 font-mono">
-                  📊 Metrics Desk
-                </div>
-              </div>
-            )}
-            {zone.id === 'meeting' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-32 h-14 rounded-2xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-center text-[10px] text-amber-300 font-mono">
-                  🧠 Conference Table
-                </div>
-              </div>
-            )}
-            {zone.id === 'server' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-16 h-12 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex flex-col items-center justify-center text-[9px] text-indigo-300 font-mono">
-                  ⚙️ Rack 101
-                  <div className="flex gap-1 mt-1">
-                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="w-1 h-1 rounded-full bg-blue-400 animate-ping" />
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Top Wall Shelves & Dashboards (matching screenshot) */}
+        <div className="absolute top-0 left-0 right-0 h-[64px] bg-[#272e38] border-b-4 border-[#181d24] flex items-center justify-around px-8">
+          <div className="w-24 h-10 bg-[#1a2027] border-2 border-[#3f4b5c] rounded flex items-center justify-center text-[10px] text-slate-300 font-mono">
+            🖥️ Server Monitor
           </div>
-        ))}
-
-        {/* Coffee Lounge Station */}
-        <div className="absolute left-[5%] top-[86%] w-[28%] h-[12%] rounded-xl border border-amber-500/20 bg-amber-950/20 flex items-center justify-between px-3">
-          <span className="text-[10px] font-mono text-amber-300 flex items-center gap-1.5">
-            <Coffee size={12} /> Espresso Machine & Watercooler
-          </span>
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <div className="w-32 h-10 bg-[#1a2027] border-2 border-[#3f4b5c] rounded flex flex-col items-center justify-center text-[9px] text-blue-300 font-mono">
+            📊 Sales Metrics Graph
+            <div className="w-20 h-1 bg-blue-500 rounded mt-1" />
+          </div>
+          <div className="w-24 h-10 bg-[#1a2027] border-2 border-[#3f4b5c] rounded flex items-center justify-center text-[10px] text-emerald-300 font-mono">
+            🌱 Plant Shelf
+          </div>
+          <div className="w-28 h-10 bg-[#1a2027] border-2 border-[#3f4b5c] rounded flex items-center justify-center text-[9px] text-amber-300 font-mono">
+            📋 Project Roadmap
+          </div>
         </div>
 
-        {/* ── Live Pixel Personas (Minecraft/Habbo Personas) ───────────────── */}
-        {agents.map((agent, index) => {
-          const isWorking = agent.status === 'working';
-          const isSelected = selectedAgent?.id === agent.id;
-          const isSpeechActive = activeSpeech.agentId === agent.id;
+        {/* Wall Whiteboard (Top Middle) */}
+        <div className="absolute top-[12px] left-1/2 -translate-x-1/2 w-48 h-10 bg-[#f8fafc] border-2 border-[#94a3b8] rounded shadow-md flex items-center justify-center text-[9px] text-slate-800 font-mono font-bold">
+          📌 STONIC AI OFFICE PLAN
+        </div>
 
-          // Compute character positioning depending on roomMode
-          let posStyle = {};
-          if (roomMode === 'coffee') {
-            // All walk over to Coffee Lounge
-            posStyle = { left: `${10 + index * 4}%`, top: '80%' };
-          } else if (roomMode === 'meeting') {
-            // Gather around central conference table
-            const meetingCoords = [
-              { left: '40%', top: '55%' },
-              { left: '48%', top: '55%' },
-              { left: '56%', top: '55%' },
-              { left: '40%', top: '75%' },
-              { left: '48%', top: '75%' },
-              { left: '56%', top: '75%' },
-            ];
-            posStyle = meetingCoords[index % meetingCoords.length];
-          } else {
-            // Default Work Mode coordinates per agent
-            const defaultCoords = {
-              aria: { left: '14%', top: '22%' },
-              dev: { left: '42%', top: '22%' },
-              nova: { left: '58%', top: '22%' },
-              pixel: { left: '82%', top: '22%' },
-              sage: { left: '14%', top: '65%' },
-              byte: { left: '82%', top: '65%' },
-            };
-            posStyle = defaultCoords[agent.id] || { left: `${20 + index * 12}%`, top: '40%' };
-          }
+        {/* ── CUBICLE DESK ROWS (Matching Screenshot Layout) ───────────────── */}
+        {/* Row 1 Cubicles (3 Desks Facing Forward) */}
+        <div className="absolute top-[140px] left-[140px] right-[140px] h-[100px] bg-[#2d3542] border-2 border-[#1e242d] rounded-lg grid grid-cols-3 gap-4 px-6 items-center">
+          {[0, 1, 2].map(idx => (
+            <div key={idx} className="h-[76px] bg-[#434e60] border-2 border-[#1e242d] rounded p-2 flex flex-col justify-between relative shadow-md">
+              <div className="flex justify-between items-center">
+                <div className="w-7 h-5 bg-[#0f172a] border border-[#38bdf8] rounded flex items-center justify-center text-[8px] text-cyan-300">
+                  💻
+                </div>
+                <div className="w-4 h-3 bg-[#64748b] rounded" />
+              </div>
+              <div className="text-[8px] font-mono text-slate-300">Desk #{idx + 1}</div>
+              {/* Blue Office Chair */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-4 bg-[#2563eb] border border-[#1d4ed8] rounded-t-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* Row 2 Cubicles (3 Desks Facing Row 1) */}
+        <div className="absolute top-[300px] left-[140px] right-[140px] h-[100px] bg-[#2d3542] border-2 border-[#1e242d] rounded-lg grid grid-cols-3 gap-4 px-6 items-center">
+          {[3, 4, 5].map(idx => (
+            <div key={idx} className="h-[76px] bg-[#434e60] border-2 border-[#1e242d] rounded p-2 flex flex-col justify-between relative shadow-md">
+              <div className="flex justify-between items-center">
+                <div className="w-7 h-5 bg-[#0f172a] border border-[#38bdf8] rounded flex items-center justify-center text-[8px] text-cyan-300">
+                  💻
+                </div>
+                <div className="w-4 h-3 bg-[#64748b] rounded" />
+              </div>
+              <div className="text-[8px] font-mono text-slate-300">Desk #{idx + 1}</div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-4 bg-[#2563eb] border border-[#1d4ed8] rounded-t-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* Office Furniture Extras: Yellow Door, Lounge Couch, Water Cooler, Plants */}
+        <div className="absolute top-[280px] left-[450px] w-10 h-16 bg-[#eab308] border-2 border-[#854d0e] rounded-sm flex items-center justify-center font-bold text-amber-950 text-xs shadow-md">
+          🚪
+        </div>
+        <div className="absolute top-[420px] left-[40px] w-32 h-14 bg-[#1e293b] border-2 border-[#475569] rounded-xl flex items-center justify-center text-xs text-slate-300 font-mono shadow-lg">
+          🛋️ Lounge Couch
+        </div>
+        <div className="absolute top-[410px] left-[460px] w-12 h-16 bg-[#0284c7] border-2 border-[#0369a1] rounded flex flex-col items-center justify-center text-xs text-white shadow-md">
+          🚰
+          <span className="text-[8px]">Water</span>
+        </div>
+        <div className="absolute top-[440px] left-[20px] text-lg">🪴</div>
+        <div className="absolute top-[440px] left-[720px] text-lg">🪴</div>
+
+        {/* Boss Private Desk (Bottom Right Room) */}
+        <div className="absolute top-[400px] left-[600px] w-36 h-20 bg-[#334155] border-2 border-[#1e293b] rounded-xl p-2 flex flex-col justify-between shadow-xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-bold text-amber-400 font-mono">Brass Executive</span>
+            <div className="w-6 h-4 bg-[#0284c7] rounded border border-white/20" />
+          </div>
+          <div className="w-8 h-4 bg-[#b91c1c] border border-red-900 rounded-t-lg self-center" />
+        </div>
+
+        {/* ── OVERHEAD PIXEL SPEECH BUBBLE (Matching Stonicai.com Image Popup) ── */}
+        {taskSpeechBubble && (
+          <div
+            className="absolute z-50 transition-all duration-700 pointer-events-none"
+            style={{
+              left: employees.find(e => e.id === taskSpeechBubble.empId)?.currentX || 380,
+              top: (employees.find(e => e.id === taskSpeechBubble.empId)?.currentY || 200) - 75,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="bg-[#f8fafc] text-slate-900 px-4 py-2.5 rounded-2xl border-4 border-[#0f172a] shadow-2xl max-w-xs text-xs font-mono font-medium leading-tight relative">
+              {taskSpeechBubble.text}
+              {/* Speech bubble arrow pointer */}
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-[12px] border-t-[#0f172a]" />
+            </div>
+          </div>
+        )}
+
+        {/* ── WORKERS ANIMATED IN GAME ROOM ─────────────────────────────────── */}
+        {employees.map(emp => {
+          const isSelected = selectedEmp?.id === emp.id;
 
           return (
             <div
-              key={agent.id}
-              onClick={() => setSelectedAgent(agent)}
-              className="absolute transition-all duration-1000 ease-in-out cursor-pointer group z-30"
-              style={{ ...posStyle, transform: 'translate(-50%, -50%)' }}
+              key={emp.id}
+              onClick={() => setSelectedEmp(emp)}
+              className="absolute z-40 transition-all duration-700 ease-linear cursor-pointer group"
+              style={{
+                left: `${emp.currentX}px`,
+                top: `${emp.currentY}px`,
+                transform: 'translate(-50%, -50%)',
+              }}
             >
-              {/* Floating Live Speech Bubble */}
-              {(isSpeechActive || isWorking || agent.currentTask) && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 rounded-xl bg-zinc-900/90 border border-white/20 text-[10px] font-mono text-white shadow-xl animate-bounce z-40 flex items-center gap-1">
-                  <span>{agent.emoji}</span>
-                  <span>{agent.currentTask ? agent.currentTask : isSpeechActive ? activeSpeech.text : 'Working...'}</span>
+              {/* Overhead Icon Popup (❓ 💡 ⚙️ ☕) */}
+              {emp.overheadIcon && (
+                <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-sm bg-white/90 rounded-full px-1 py-0.5 shadow border border-black animate-bounce">
+                  {emp.overheadIcon}
                 </div>
               )}
 
-              {/* Minecraft Pixel Body Container */}
-              <div className="relative flex flex-col items-center">
-                {/* Status Dot Ring */}
+              {/* Pixel Character Persona (Male & Female with distinct hair & outfit) */}
+              <div className="flex flex-col items-center">
+                {/* Character Head & Hair */}
                 <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                    isSelected ? 'ring-2 ring-white scale-110' : ''
-                  }`}
-                  style={{
-                    backgroundColor: `${agent.color}25`,
-                    border: `2px solid ${agent.color}`,
-                    boxShadow: isWorking ? `0 0 25px ${agent.color}` : `0 0 10px ${agent.color}40`,
-                  }}
+                  className="w-7 h-7 rounded-lg border-2 border-black relative flex items-center justify-center shadow-md transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: emp.skin }}
                 >
-                  {/* Persona Sprite Avatar */}
-                  <span className="text-2xl animate-bounce" style={{ animationDuration: isWorking ? '0.6s' : '2s' }}>
-                    {agent.emoji}
-                  </span>
+                  {/* Hair Style */}
+                  <div
+                    className="absolute -top-1 left-0 right-0 h-3 rounded-t-md border-t border-black"
+                    style={{ backgroundColor: emp.hair }}
+                  />
+                  {/* Eyes */}
+                  <div className="flex gap-1.5 mt-1 z-10">
+                    <div className="w-1 h-1.5 bg-black rounded-full" />
+                    <div className="w-1 h-1.5 bg-black rounded-full" />
+                  </div>
                 </div>
 
-                {/* Overhead Name & Role Tag */}
-                <div className="mt-1 px-2 py-0.5 rounded-full bg-zinc-950/80 border border-white/10 flex items-center gap-1 shadow-md">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isWorking ? '#fbbf24' : '#10b981' }} />
-                  <span className="text-[10px] font-mono font-bold text-white">{agent.name}</span>
-                  <span className="text-[8px] font-mono text-white/50">({agent.role})</span>
+                {/* Character Torso Outfit */}
+                <div
+                  className="w-6 h-4 rounded-b-md border-x-2 border-b-2 border-black mt-[-2px] flex items-center justify-center text-[8px] font-bold text-white shadow-xs"
+                  style={{ backgroundColor: emp.outfit }}
+                >
+                  💻
+                </div>
+
+                {/* Overhead Name Label below feet */}
+                <div className="mt-1 px-1.5 py-0.5 rounded bg-black/80 text-[8px] font-mono font-bold text-white shadow">
+                  {emp.name}
                 </div>
               </div>
             </div>
@@ -307,80 +373,91 @@ export default function OfficeSimulation() {
         })}
       </div>
 
-      {/* ── Footer Live Room Activity Ticker ─────────────────────────────── */}
-      <div className="px-5 py-2.5 border-t border-white/10 bg-[#090f1f]/80 backdrop-blur-md flex items-center justify-between z-20">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest">Team Status:</span>
-          <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            {workingCount > 0 ? `${workingCount} Agents Collaborating` : '6 Agents Idle & Ready'}
-          </span>
+      {/* ── Bottom Control & Seat Status Bar (Matching Stonicai.com Bottom Bar) ── */}
+      <div className="px-4 py-3 bg-[#252b35] border-t-2 border-[#15191e] flex flex-wrap items-center justify-between gap-3 z-20">
+        {/* Seat Counters */}
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-xl bg-[#1a1f26] border border-[#333c4a] text-xs font-mono font-bold text-slate-200 flex items-center gap-1.5">
+            <Armchair size={13} className="text-blue-400" /> {seatedCount}/6 seat
+          </div>
+          <div className="px-3 py-1 rounded-xl bg-[#1a1f26] border border-[#333c4a] text-xs font-mono font-bold text-amber-400 flex items-center gap-1.5">
+            <UserCheck size={13} /> {busyCount}/6 busy
+          </div>
+          {/* Speed Toggle */}
+          <button
+            onClick={() => setSimSpeed(prev => prev === 1 ? 2 : 1)}
+            className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1 border ${
+              simSpeed === 2 ? 'bg-amber-500 text-black border-amber-400' : 'bg-[#1a1f26] text-slate-300 border-[#333c4a]'
+            }`}
+          >
+            <FastForward size={13} /> {simSpeed}x Speed
+          </button>
         </div>
-        <span className="text-[10px] font-mono text-blue-400/70">
-          💡 Click any employee persona to chat directly
-        </span>
+
+        {/* Bottom Research Prompt Form */}
+        <form onSubmit={handleSendPrompt} className="flex-1 max-w-md flex gap-2">
+          <input
+            type="text"
+            value={customTaskInput}
+            onChange={e => setCustomTaskInput(e.target.value)}
+            placeholder="Assign research task to pixel team..."
+            className="flex-1 bg-[#15191e] border border-[#333c4a] rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 font-mono"
+          />
+          <button
+            type="submit"
+            disabled={!customTaskInput.trim()}
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-xl font-mono text-xs font-bold shadow-md flex items-center gap-1"
+          >
+            <Send size={12} /> Assign
+          </button>
+        </form>
       </div>
 
-      {/* ── Persona Direct Chat Drawer Modal ("Talk to Employee") ─────────── */}
-      {selectedAgent && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end animate-mac-fade-in">
-          <div className="w-full max-w-sm bg-[#0a101d] border-l border-white/10 p-5 flex flex-col justify-between shadow-2xl h-full">
-            {/* Drawer Header */}
+      {/* ── Employee Detail Persona Modal Drawer ───────────────────────────── */}
+      {selectedEmp && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-xs z-50 flex justify-end animate-mac-fade-in">
+          <div className="w-80 bg-[#1e242d] border-l-4 border-[#0f172a] p-4 flex flex-col justify-between shadow-2xl h-full font-mono text-white">
             <div>
-              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-lg" style={{ backgroundColor: `${selectedAgent.color}30`, border: `1px solid ${selectedAgent.color}` }}>
-                    {selectedAgent.emoji}
+              <div className="flex items-center justify-between border-b border-slate-700 pb-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-9 h-9 rounded-lg border-2 border-black flex items-center justify-center font-bold text-lg"
+                    style={{ backgroundColor: selectedEmp.skin }}
+                  >
+                    {selectedEmp.emoji}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      {selectedAgent.name}
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono">{selectedAgent.role}</span>
-                    </h3>
-                    <p className="text-[10px] text-white/40 font-mono">Status: {selectedAgent.status.toUpperCase()}</p>
+                    <h3 className="text-sm font-bold">{selectedEmp.name}</h3>
+                    <p className="text-[10px] text-amber-400">{selectedEmp.role}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedAgent(null)} className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
+                <button onClick={() => setSelectedEmp(null)} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white">
                   <X size={16} />
                 </button>
               </div>
 
-              {/* Chat Message Logs with Persona */}
-              <div className="h-[320px] overflow-y-auto space-y-2.5 pr-1 text-xs">
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-white/80 leading-relaxed font-mono">
-                  👋 Hi! I'm {selectedAgent.name}, your {selectedAgent.role}. Tell me what you'd like me to work on or ask me any question!
+              <div className="space-y-2 text-xs text-slate-300">
+                <div className="p-2 rounded bg-[#15191e] border border-slate-700">
+                  <span className="text-[10px] text-slate-400">Gender:</span> {selectedEmp.gender}
                 </div>
-
-                {(directLogs[selectedAgent.id] || []).map((log, i) => (
-                  <div key={i} className={`flex flex-col ${log.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`p-3 rounded-2xl max-w-[85%] font-mono leading-relaxed ${
-                      log.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-zinc-200 border border-white/10'
-                    }`}>
-                      {log.text}
-                    </div>
-                    <span className="text-[9px] text-white/30 font-mono mt-0.5 px-1">{log.timestamp}</span>
-                  </div>
-                ))}
+                <div className="p-2 rounded bg-[#15191e] border border-slate-700">
+                  <span className="text-[10px] text-slate-400">Status:</span> {selectedEmp.isWalking ? 'Walking to target...' : 'Seated & Typing on Laptop'}
+                </div>
+                <div className="p-2 rounded bg-[#15191e] border border-slate-700">
+                  <span className="text-[10px] text-slate-400">Current Task:</span>
+                  <p className="text-[11px] text-cyan-300 mt-1 leading-snug">
+                    {taskSpeechBubble.text}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Direct Input Form */}
-            <form onSubmit={handleSendDirectMessage} className="flex gap-2 pt-3 border-t border-white/10">
-              <input
-                type="text"
-                value={directMsg}
-                onChange={e => setDirectMsg(e.target.value)}
-                placeholder={`Talk to ${selectedAgent.name}...`}
-                className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-blue-500 font-mono"
-              />
-              <button
-                type="submit"
-                disabled={!directMsg.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-xl font-mono text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1"
-              >
-                <Send size={12} />
-              </button>
-            </form>
+            <button
+              onClick={() => setSelectedEmp(null)}
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold font-mono"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
