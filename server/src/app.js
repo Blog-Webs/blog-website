@@ -143,7 +143,7 @@ app.use((err, req, res, next) => {
 });
 
 // ── Render Free-Tier Keep-Alive Warmup ──────────────────────────────────────
-if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+if (process.env.RENDER && !process.env.VERCEL) {
   const https = require('https');
   setInterval(() => {
     https.get('https://httptechnex.onrender.com/api/health', (res) => {
