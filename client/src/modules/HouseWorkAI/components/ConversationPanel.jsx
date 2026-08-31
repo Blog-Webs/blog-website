@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Send, Bot, User as UserIcon, Zap, AlertTriangle } from 'lucide-react';
+import { Mic, MicOff, Send, Bot, User as UserIcon, Zap, AlertTriangle, Volume2 } from 'lucide-react';
 import { useHouseWork } from '../context/HouseWorkContext';
 import { AGENTS } from '../context/HouseWorkContext';
 
@@ -34,7 +34,7 @@ function UserBubble({ msg }) {
   );
 }
 
-function AgentBubble({ msg }) {
+function AgentBubble({ msg, onSpeak }) {
   const agent = AGENT_MAP[msg.agentId];
   if (!agent) return null;
   return (
@@ -48,7 +48,7 @@ function AgentBubble({ msg }) {
         {agent.emoji}
       </div>
       <div className="max-w-[85%] flex flex-col">
-        {/* Agent name + role */}
+        {/* Agent name + role + speaker */}
         <div className="flex items-center gap-1.5 mb-1">
           <span className="text-[10px] font-bold" style={{ color: agent.color }}>{agent.name}</span>
           {msg.isPrimary && (
@@ -58,6 +58,15 @@ function AgentBubble({ msg }) {
             </span>
           )}
           <span className="text-[9px] text-white/30">{agent.role}</span>
+          {onSpeak && (
+            <button
+              onClick={() => onSpeak(msg.text)}
+              title="Speak message"
+              className="ml-1 text-white/40 hover:text-white transition-colors p-0.5"
+            >
+              <Volume2 size={12} />
+            </button>
+          )}
         </div>
         <div
           className="px-3 py-2.5 text-[12px] text-white/90 leading-relaxed rounded-xl rounded-tl-sm shadow-md"
@@ -73,7 +82,7 @@ function AgentBubble({ msg }) {
   );
 }
 
-function AIBubble({ msg }) {
+function AIBubble({ msg, onSpeak }) {
   return (
     <div className="flex items-end gap-2">
       <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-violet-500 flex items-center justify-center shrink-0 mb-4 shadow-lg shadow-blue-500/20">
@@ -103,9 +112,20 @@ function AIBubble({ msg }) {
           {msg.isError && <AlertTriangle size={12} className="inline mr-1.5 text-red-400" />}
           {msg.text}
         </div>
-        <span className="text-[9px] text-white/20 mt-1 font-mono">
-          {msg.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[9px] text-white/20 font-mono">
+            {msg.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {onSpeak && (
+            <button
+              onClick={() => onSpeak(msg.text)}
+              title="Speak message"
+              className="text-white/40 hover:text-white transition-colors p-0.5 flex items-center gap-1 text-[9px] font-mono"
+            >
+              <Volume2 size={12} /> Listen
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -135,7 +155,7 @@ function ThinkingBubble() {
 export default function ConversationPanel() {
   const {
     messages, agents, isThinking, isListening, isSpeaking, aiAvailable,
-    sendMessage, startListening, stopListening,
+    sendMessage, speak, startListening, stopListening,
   } = useHouseWork();
 
   const [input, setInput] = useState('');
@@ -159,8 +179,8 @@ export default function ConversationPanel() {
 
   const renderMessage = (msg) => {
     if (msg.role === 'user')  return <UserBubble  key={msg.id} msg={msg} />;
-    if (msg.role === 'agent') return <AgentBubble key={msg.id} msg={msg} />;
-    return                           <AIBubble    key={msg.id} msg={msg} />;
+    if (msg.role === 'agent') return <AgentBubble key={msg.id} msg={msg} onSpeak={speak} />;
+    return                           <AIBubble    key={msg.id} msg={msg} onSpeak={speak} />;
   };
 
   return (

@@ -62,35 +62,67 @@ export function HouseWorkProvider({ children }) {
 
   // ── Voice Output ──────────────────────────────────────────────────────
   const speak = useCallback((text) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate  = 1.05;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
+    try {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
-    const trySetVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v =>
-        v.name.includes('Samantha') ||
-        v.name.includes('Karen') ||
-        v.name.includes('Google UK English Female') ||
-        v.name.includes('Zira') ||
-        (v.lang === 'en-US' && !v.name.toLowerCase().includes('male'))
-      );
-      if (preferred) utterance.voice = preferred;
-    };
-    trySetVoice();
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.addEventListener('voiceschanged', trySetVoice, { once: true });
+      // Clean up markdown formatting symbols so voice reads naturally
+      const cleanText = (text || '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // remove bold
+        .replace(/\*([^*]+)\*/g, '$1')     // remove italic
+        .replace(/`([^`]+)`/g, '$1')       // remove inline code
+        .replace(/#+\s+/g, '')             // remove headers
+        .replace(/\n+/g, ' ')              // replace newlines with space
+        .trim();
+
+      if (!cleanText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      const trySetVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          const preferred = voices.find(v =>
+            v.lang.startsWith('en') && (
+              v.name.includes('Google') ||
+              v.name.includes('Natural') ||
+              v.name.includes('Samantha') ||
+              v.name.includes('Zira') ||
+              v.name.includes('Karen') ||
+              (v.name.toLowerCase().includes('female') && !v.name.toLowerCase().includes('male'))
+            )
+          ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+
+          if (preferred) utterance.voice = preferred;
+        }
+      };
+
+      trySetVoice();
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.addEventListener('voiceschanged', trySetVoice, { once: true });
+      }
+
+      utterance.onstart = () => { setIsSpeaking(true); setOrbMode('speaking'); };
+      utterance.onend   = () => { setIsSpeaking(false); setOrbMode('idle'); };
+      utterance.onerror = (e) => {
+        console.warn('[SpeechSynthesis] Error:', e);
+        setIsSpeaking(false);
+        setOrbMode('idle');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('[SpeechSynthesis] Exception:', err);
+      setIsSpeaking(false);
+      setOrbMode('idle');
     }
-
-    utterance.onstart = () => { setIsSpeaking(true); setOrbMode('speaking'); };
-    utterance.onend   = () => { setIsSpeaking(false); setOrbMode('idle'); };
-    utterance.onerror = () => { setIsSpeaking(false); setOrbMode('idle'); };
-
-    window.speechSynthesis.speak(utterance);
   }, []);
 
   // ── Set an agent working ──────────────────────────────────────────────
