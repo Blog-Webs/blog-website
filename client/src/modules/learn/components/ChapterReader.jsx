@@ -108,7 +108,29 @@ const ChapterReader = ({ chapterData, subjectName, topicName, locked, onToggleSt
         ) : (
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
-            components={{ code: CodeBlock }}
+            components={{
+              code: CodeBlock,
+              h1: ({ children }) => {
+                const text = Array.isArray(children) ? children.join('') : String(children || '');
+                const id = text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+                return <h1 id={id} data-id={id} className="font-display font-bold text-4xl text-white mt-12 mb-6 scroll-mt-24">{children}</h1>;
+              },
+              h2: ({ children }) => {
+                const text = Array.isArray(children) ? children.join('') : String(children || '');
+                const id = text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+                return <h2 id={id} data-id={id} className="font-display font-bold text-3xl text-white mt-12 mb-6 scroll-mt-24">{children}</h2>;
+              },
+              h3: ({ children }) => {
+                const text = Array.isArray(children) ? children.join('') : String(children || '');
+                const id = text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+                return <h3 id={id} data-id={id} className="font-display font-bold text-2xl text-white mt-10 mb-4 scroll-mt-24">{children}</h3>;
+              },
+              h4: ({ children }) => {
+                const text = Array.isArray(children) ? children.join('') : String(children || '');
+                const id = text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+                return <h4 id={id} data-id={id} className="font-display font-bold text-xl text-white mt-8 mb-3 scroll-mt-24">{children}</h4>;
+              },
+            }}
           >
             {chapter.content}
           </ReactMarkdown>

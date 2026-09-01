@@ -37,7 +37,7 @@ const StickyTableOfContents = ({ headings = [], activeHeadingId, onHeadingClick 
                       fontWeight: isActive ? 600 : 400,
                     }}
                   >
-                    <span className="group-hover:text-white transition-colors">{heading.text}</span>
+                    <span className="group-hover:text-white transition-colors">{heading.text || heading.title || heading.id}</span>
                   </button>
                 </li>
               );

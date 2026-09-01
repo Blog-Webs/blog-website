@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Plus, Trash2, Pencil, ChevronRight, ChevronDown, Undo2,
-  Image as ImageIcon, Loader2, X, Lock, Unlock, Search, Save, Bell, Moon, Eye, Type, Clock
+  Image as ImageIcon, Loader2, X, Lock, Unlock, Search, Save, Bell, Moon, Eye, Type, Clock,
+  Sparkles, Wand2, FileText, Code2
 } from 'lucide-react';
 import { contentApi } from '../../learn/api/content';
 import { adminApi } from '../api/admin';
@@ -78,6 +79,66 @@ const AdminContentStudio = () => {
   const [chapterLoaded, setChapterLoaded] = useState(false);
   
   const [tagInput, setTagInput] = useState('');
+
+  // AI Generator & Auto-Format State
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [rawPasteText, setRawPasteText] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [editorMode, setEditorMode] = useState('visual');
+
+  const handleGenerateAI = async () => {
+    if (!aiPrompt.trim() && !chapter.title.trim()) {
+      alert('Please enter an AI prompt or chapter title.');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data } = await adminApi.generateAIContent({
+        prompt: aiPrompt,
+        topicTitle: chapter.title,
+        subjectName: breadcrumb?.subjectName || ''
+      });
+      setChapter((c) => ({
+        ...c,
+        content: data.content,
+        headings: data.headings || [],
+        estimatedMinutes: data.estimatedMinutes || 10,
+        contentBlocks: null
+      }));
+      setEditorMode('markdown');
+      setShowAIModal(false);
+      setAiPrompt('');
+      showToast('✨ AI Content generated & formatted with headings!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to generate AI content.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAutoFormatPaste = async () => {
+    if (!rawPasteText.trim()) return;
+    setAiLoading(true);
+    try {
+      const { data } = await adminApi.formatAIContent({ rawText: rawPasteText });
+      setChapter((c) => ({
+        ...c,
+        content: data.content,
+        headings: data.headings || [],
+        contentBlocks: null
+      }));
+      setEditorMode('markdown');
+      setShowPasteModal(false);
+      setRawPasteText('');
+      showToast('✨ Paste auto-formatted & headings extracted!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to format content.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const wordCount = chapter.content ? chapter.content.trim().split(/\s+/).filter(Boolean).length : 0;
   const readTime = Math.max(1, Math.round(wordCount / 200));
@@ -366,19 +427,76 @@ const AdminContentStudio = () => {
                 placeholder="Chapter title"
                 className="w-full text-4xl font-bold mb-6 outline-none bg-transparent placeholder-[#4C5363] text-white"
               />
-              
-              <div className="mb-6 pb-6 border-b border-[#1C202B]">
-                <BlockEditor
-                  editorKey={isEditingChapter ? id : 'new'}
-                  initialContent={chapter.contentBlocks}
-                  onChange={handleEditorChange}
-                  onUploadImage={async (file) => {
-                    const { data } = await blogApi.uploadImage(file);
-                    return data.url;
-                  }}
-                  minHeight="50vh"
-                />
+
+              {/* AI Assistant & Formatting Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6 p-3 bg-[#111113] border border-[#2D3342] rounded-xl">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAIModal(true)}
+                    className="flex items-center gap-2 px-3.5 py-1.5 bg-[#4375FF]/15 border border-[#4375FF]/30 text-[#4375FF] hover:bg-[#4375FF]/25 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                  >
+                    <Sparkles size={14} />
+                    AI Generate Chapter
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPasteModal(true)}
+                    className="flex items-center gap-2 px-3.5 py-1.5 bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#A78BFA] hover:bg-[#8B5CF6]/25 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                  >
+                    <Wand2 size={14} />
+                    ✨ Auto-Format Paste
+                  </button>
+                </div>
+
+                {/* Editor Mode Selector */}
+                <div className="flex items-center gap-1 p-1 bg-[#161B22] rounded-lg border border-[#2D3342]">
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('visual')}
+                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                      editorMode === 'visual' ? 'bg-[#4375FF] text-white shadow-sm' : 'text-[#8B949E] hover:text-white'
+                    }`}
+                  >
+                    <FileText size={13} /> Visual Editor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('markdown')}
+                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                      editorMode === 'markdown' ? 'bg-[#4375FF] text-white shadow-sm' : 'text-[#8B949E] hover:text-white'
+                    }`}
+                  >
+                    <Code2 size={13} /> Raw Markdown
+                  </button>
+                </div>
               </div>
+              
+              {editorMode === 'visual' ? (
+                <div className="mb-6 pb-6 border-b border-[#1C202B]">
+                  <BlockEditor
+                    editorKey={isEditingChapter ? id : 'new'}
+                    initialContent={chapter.contentBlocks}
+                    onChange={handleEditorChange}
+                    onUploadImage={async (file) => {
+                      const { data } = await blogApi.uploadImage(file);
+                      return data.url;
+                    }}
+                    minHeight="50vh"
+                  />
+                </div>
+              ) : (
+                <div className="mb-6 pb-6 border-b border-[#1C202B]">
+                  <textarea
+                    value={chapter.content}
+                    onChange={(e) => setChapter(c => ({ ...c, content: e.target.value }))}
+                    placeholder="Enter Markdown content with headings (## Title, ### Subtitle) and ```code``` blocks..."
+                    rows={20}
+                    className="w-full bg-[#111113] border border-[#2D3342] text-sm text-white font-mono rounded-xl p-5 outline-none focus:border-[#4375FF] resize-y shadow-sm leading-relaxed"
+                  />
+                </div>
+              )}
 
               {/* Recently Modified Chapters (Matches mockup) */}
               {activeSubjectId && chapters[activeSubjectId] && chapters[activeSubjectId].length > 0 && (
@@ -512,6 +630,92 @@ const AdminContentStudio = () => {
 
           </div>
         </aside>
+      )}
+
+      {/* ── AI GENERATION MODAL ── */}
+      {showAIModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111113] border border-[#2D3342] rounded-2xl w-full max-w-xl p-6 shadow-2xl flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#2D3342] pb-4">
+              <div className="flex items-center gap-2 text-[#4375FF]">
+                <Sparkles size={20} />
+                <h3 className="font-bold text-lg text-white">Generate Chapter Content with AI</h3>
+              </div>
+              <button onClick={() => setShowAIModal(false)} className="text-[#8B949E] hover:text-white p-1">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider block mb-2">Topic or Custom Prompt</label>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder={`Describe the topic or chapter details (e.g. "Detailed guide on Spring Boot REST APIs with Spring Data JPA code snippets in Java"). Default topic: "${chapter.title || 'Selected Topic'}"`}
+                rows={4}
+                className="w-full bg-[#161B22] border border-[#2D3342] text-sm text-white rounded-xl p-3.5 outline-none focus:border-[#4375FF] resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#2D3342]">
+              <button onClick={() => setShowAIModal(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#8B949E] hover:text-white">
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerateAI}
+                disabled={aiLoading}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#4375FF] hover:bg-[#3460E0] text-white text-sm font-semibold transition-all shadow-lg"
+              >
+                {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                {aiLoading ? 'Generating...' : 'Generate with AI'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AUTO-FORMAT PASTE MODAL ── */}
+      {showPasteModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111113] border border-[#2D3342] rounded-2xl w-full max-w-2xl p-6 shadow-2xl flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#2D3342] pb-4">
+              <div className="flex items-center gap-2 text-[#A78BFA]">
+                <Wand2 size={20} />
+                <h3 className="font-bold text-lg text-white">✨ Auto-Format Pasted Content</h3>
+              </div>
+              <button onClick={() => setShowPasteModal(false)} className="text-[#8B949E] hover:text-white p-1">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <p className="text-xs text-[#8B949E] mb-3">
+                Paste any raw article, notes, or copied text below. Our auto-formatter will align headings (##, ###), clean up code blocks, and extract the Table of Contents automatically!
+              </p>
+              <textarea
+                value={rawPasteText}
+                onChange={(e) => setRawPasteText(e.target.value)}
+                placeholder="Paste your raw text or unformatted content here..."
+                rows={10}
+                className="w-full bg-[#161B22] border border-[#2D3342] text-sm text-white font-mono rounded-xl p-3.5 outline-none focus:border-[#8B5CF6] resize-none leading-relaxed"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#2D3342]">
+              <button onClick={() => setShowPasteModal(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#8B949E] hover:text-white">
+                Cancel
+              </button>
+              <button
+                onClick={handleAutoFormatPaste}
+                disabled={aiLoading || !rawPasteText.trim()}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white text-sm font-semibold transition-all shadow-lg disabled:opacity-50"
+              >
+                {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
+                {aiLoading ? 'Formatting...' : 'Auto-Format & Extract Headings'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && <UndoToast message={toast.message} onUndo={toast.onUndo} onDismiss={dismissToast} />}

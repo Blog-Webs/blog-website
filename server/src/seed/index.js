@@ -1,7 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const connectDB = require('../config/db');
-const { mkSlug } = require('./helpers');
+const { mkSlug, extractHeadings } = require('./helpers');
 const { Subject, Chapter, Blog, User } = require('../models');
 
 const dsa = require('./content/dsa');
@@ -41,6 +41,7 @@ const seedSubjectTree = async (subjectData) => {
           title: chapData.title,
           slug: chapSlug,
           content: chapData.content,
+          headings: extractHeadings(chapData.content),
           codeSnippets: chapData.codeSnippets || [],
           isFreePreview: !!chapData.isFreePreview,
           estimatedMinutes: chapData.estimatedMinutes || 10,

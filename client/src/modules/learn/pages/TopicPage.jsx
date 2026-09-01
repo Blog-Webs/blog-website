@@ -117,7 +117,27 @@ const TopicPage = () => {
     contentApi.getChapterContent(activeChapterId).then(({ data }) => setChapterData({ ...data, locked: false }));
   };
 
-  const headings = chapterData?.chapter?.headings || [];
+  const headings = useMemo(() => {
+    if (chapterData?.chapter?.headings && chapterData.chapter.headings.length > 0) {
+      return chapterData.chapter.headings;
+    }
+    const content = chapterData?.chapter?.content;
+    if (!content) return [];
+    
+    const extracted = [];
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const match = line.match(/^(#{1,4})\s+(.+)$/);
+      if (match) {
+        const level = match[1].length;
+        const title = match[2].trim().replace(/[*_~`]/g, '');
+        const id = title.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+        extracted.push({ id, title, level });
+      }
+    }
+    return extracted;
+  }, [chapterData]);
+
   const activeHeadingId = useScrollSpy(headings, scrollRef);
   const progress = useReadingProgress(scrollRef);
 

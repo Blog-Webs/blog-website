@@ -75,6 +75,22 @@ const deleteSubject = async (req, res) => {
 };
 
 
+const autoExtractHeadings = (content) => {
+  if (!content) return [];
+  const headings = [];
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const match = line.match(/^(#{1,4})\s+(.+)$/);
+    if (match) {
+      const level = match[1].length;
+      const title = match[2].trim().replace(/[*_~`]/g, '');
+      const id = slugify(title, { lower: true, strict: true });
+      headings.push({ id, text: title, title, level });
+    }
+  }
+  return headings;
+};
+
 // ---------- Chapters ----------
 const createChapter = async (req, res) => {
   const {
@@ -87,10 +103,14 @@ const createChapter = async (req, res) => {
   }
 
   const slug = slugify(title, { lower: true, strict: true });
+  const parsedHeadings = (Array.isArray(headings) && headings.length > 0)
+    ? headings
+    : autoExtractHeadings(content);
+
   const chapter = await Chapter.create({
     subject, chapterNumber, title, slug, content,
     contentBlocks: contentBlocks || null,
-    headings: Array.isArray(headings) ? headings : [],
+    headings: parsedHeadings,
     codeSnippets, isFreePreview, estimatedMinutes, order, externalLinks,
   });
   
@@ -123,9 +143,16 @@ const updateChapter = async (req, res) => {
     chapter.title = title;
     chapter.slug = slugify(title, { lower: true, strict: true });
   }
-  if (content !== undefined) chapter.content = content;
+  if (content !== undefined) {
+    chapter.content = content;
+    chapter.headings = (Array.isArray(headings) && headings.length > 0)
+      ? headings
+      : autoExtractHeadings(content);
+  } else if (headings !== undefined) {
+    chapter.headings = Array.isArray(headings) ? headings : [];
+  }
+
   if (contentBlocks !== undefined) chapter.contentBlocks = contentBlocks;
-  if (headings !== undefined) chapter.headings = Array.isArray(headings) ? headings : [];
   if (codeSnippets !== undefined) chapter.codeSnippets = codeSnippets;
   if (isFreePreview !== undefined) chapter.isFreePreview = isFreePreview;
   if (estimatedMinutes !== undefined) chapter.estimatedMinutes = estimatedMinutes;
@@ -182,8 +209,126 @@ const deleteIconOption = async (req, res) => {
   res.json({ message: 'Icon option deleted.' });
 };
 
+// ---------- AI Content Generator & Auto-Formatter ----------
+const generateAIContent = async (req, res) => {
+  const { prompt, topicTitle, subjectName } = req.body;
+  if (!prompt && !topicTitle) {
+    return res.status(400).json({ message: 'Prompt or topic title is required.' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
+  const topic = topicTitle || prompt;
+
+  if (apiKey) {
+    try {
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const systemPrompt = `You are an expert technical content writer and software engineering educator for HttpTechNex.
+Generate a structured, in-depth, beautifully formatted educational chapter in Markdown format about: "${topic}" in subject: "${subjectName || 'Computer Science'}".
+
+Format Requirements:
+1. Include a single main H2 heading for each section (e.g. ## Introduction, ## Core Mechanics, ## Code Example, ## Key Takeaways).
+2. Use H3 headings (e.g. ### Subtopic) for sub-sections.
+3. Wrap code snippets in triple backtick fences specifying the exact language (e.g. \`\`\`java, \`\`\`js, \`\`\`sql).
+4. Use clear paragraphs, bold key terms, and bullet points.
+5. Provide realistic, runnable code examples with comments.
+
+Do NOT include an H1 heading (the chapter title will be set separately). Start directly with an introduction paragraph or H2 heading.`;
+
+      const result = await model.generateContent(systemPrompt);
+      const text = result.response.text();
+      const headings = autoExtractHeadings(text);
+
+      return res.json({ content: text, headings, estimatedMinutes: Math.max(5, Math.round(text.split(/\s+/).length / 200)) });
+    } catch (err) {
+      console.warn('Gemini API call failed, falling back to rule-based AI generator:', err.message);
+    }
+  }
+
+  const generatedText = `## Overview & Core Concepts
+
+${topic} is an essential foundation in modern software development. Understanding its underlying mechanics allows engineers to write performant, scalable, and maintainable applications.
+
+### Key Objectives
+- Master the fundamental syntax and architectural principles of **${topic}**.
+- Learn best practices, error handling, and performance optimization techniques.
+- Apply practical, production-ready code patterns.
+
+## Deep Dive & Architectural Mechanics
+
+When building enterprise systems, **${topic}** provides the structural framework necessary for decoupling components and managing runtime state cleanly.
+
+### Core Execution Flow
+1. **Initialization**: Setting up runtime configurations and dependencies.
+2. **Execution**: Processing state transformations and operational pipelines.
+3. **Resource Cleanup**: Ensuring memory and connection handles are cleanly disposed of.
+
+\`\`\`java
+// Practical Code Implementation for ${topic}
+public class DemoService {
+    public static void main(String[] args) {
+        System.out.println("Executing demonstration for: ${topic}");
+    }
+}
+\`\`\`
+
+## Key Takeaways
+- Always enforce clean separation of concerns.
+- Monitor memory footprint and asymptotic execution complexity.
+- Test edge cases thoroughly before deploying to production.`;
+
+  const headings = autoExtractHeadings(generatedText);
+  res.json({ content: generatedText, headings, estimatedMinutes: 10 });
+};
+
+const formatAIContent = async (req, res) => {
+  const { rawText } = req.body;
+  if (!rawText) return res.status(400).json({ message: 'rawText is required.' });
+
+  let lines = rawText.split(/\r?\n/);
+  let formattedLines = [];
+  let inCodeBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) {
+      formattedLines.push('');
+      continue;
+    }
+
+    if (line.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      formattedLines.push(line);
+      continue;
+    }
+
+    if (inCodeBlock) {
+      formattedLines.push(lines[i]);
+      continue;
+    }
+
+    if (line.match(/^#+\s+/)) {
+      formattedLines.push(line);
+    } else if (line.match(/^[A-Z0-9\s:,-]{3,50}:$/) || line.match(/^(Overview|Introduction|Core Concepts|Key Features|Implementation|Conclusion|Summary|Syntax|Example|Prerequisites|Architecture)$/i)) {
+      const headingText = line.replace(/:$/, '').trim();
+      formattedLines.push(`\n## ${headingText}\n`);
+    } else if (line.match(/^[A-Z0-9\s:,-]{3,40}$/) && i < lines.length - 1 && lines[i+1].trim() === '') {
+      formattedLines.push(`\n### ${line}\n`);
+    } else {
+      formattedLines.push(line);
+    }
+  }
+
+  const formatted = formattedLines.join('\n').replace(/\n{3,}/g, '\n\n');
+  const headings = autoExtractHeadings(formatted);
+  res.json({ content: formatted, headings });
+};
+
 module.exports = {
   createSubject, updateSubject, deleteSubject,
   createChapter, updateChapter, deleteChapter,
   getIconOptions, createIconOption, updateIconOption, deleteIconOption,
+  generateAIContent, formatAIContent,
 };

@@ -15,9 +15,11 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
     filename = parts[1];
   }
 
-  if (inline) {
+  const isInline = inline || (!className && !String(children).includes('\n'));
+
+  if (isInline) {
     return (
-      <code className="bg-[#1f1f22] text-[#abc4ff] px-1.5 py-0.5 rounded text-[0.875em]" {...props}>
+      <code className="bg-[#1f1f22] text-[#abc4ff] px-1.5 py-0.5 rounded text-[0.875em] font-mono border border-white/5" {...props}>
         {children}
       </code>
     );

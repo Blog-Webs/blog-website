@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   createSubject, updateSubject, deleteSubject,
   createChapter, updateChapter, deleteChapter,
-  getIconOptions, createIconOption, updateIconOption, deleteIconOption
+  getIconOptions, createIconOption, updateIconOption, deleteIconOption,
+  generateAIContent, formatAIContent
 } = require('./adminContentController');
 const { requireAdmin } = require('../../middleware/auth');
 
@@ -16,6 +17,9 @@ router.delete('/subjects/:id', deleteSubject);
 router.post('/chapters', createChapter);
 router.patch('/chapters/:id', updateChapter);
 router.delete('/chapters/:id', deleteChapter);
+
+router.post('/ai-generate', generateAIContent);
+router.post('/ai-format', formatAIContent);
 
 router.get('/icons', getIconOptions);
 router.post('/icons', createIconOption);

@@ -7,7 +7,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const mongoose = require('mongoose');
 const connectDB = require('../config/db');
-const { mkSlug } = require('./helpers');
+const { mkSlug, extractHeadings } = require('./helpers');
 const { Subject, Chapter } = require('../models');
 const DomainConfig = require('../modules/roadmap/models/DomainConfig');
 
@@ -66,6 +66,7 @@ async function seedJava() {
           title: chapData.title,
           slug: chapSlug,
           content: chapData.content,
+          headings: extractHeadings(chapData.content),
           codeSnippets: chapData.codeSnippets || [],
           isFreePreview: !!chapData.isFreePreview,
           estimatedMinutes: chapData.estimatedMinutes || 15,
