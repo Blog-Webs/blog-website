@@ -39,6 +39,8 @@ const AdminStudentOSUsers = lazy(() => import('./modules/admin/pages/AdminStuden
 const StudentOSRoutes = lazy(() => import('./modules/StudentOS/routes/StudentOSRoutes'));
 // HouseWorkAI — multi-agent office simulation
 const HouseWorkAIRoutes = lazy(() => import('./modules/HouseWorkAI/routes/HouseWorkAIRoutes'));
+// AI Developer Office — live AI-agent software development simulation
+const AIOfficeRoutes = lazy(() => import('./modules/AIOffice/routes/AIOfficeRoutes'));
 
 const PageFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
@@ -98,6 +100,9 @@ function App() {
 
         {/* HouseWorkAI — Multi-agent office simulation, isolated module */}
         <Route path="/housework-ai/*" element={<HouseWorkAIRoutes />} />
+
+        {/* AI Developer Office — Live AI-agent software development simulation */}
+        <Route path="/ai-office/*" element={<AIOfficeRoutes />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

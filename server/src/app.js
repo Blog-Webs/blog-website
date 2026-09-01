@@ -113,6 +113,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/coding', codingRoutes);
 // ── HouseWorkAI Multi-Agent Engine ───────────────────────────────────────────
 app.use('/api/housework-ai', houseWorkAIRoutes);
+// ── AI Developer Office (Simulated Multi-Agent Platform) ─────────────────────
+const aiOfficeRoutes = require('./modules/aioffice/routes/aiOfficeRoutes');
+app.use('/api/ai-office', aiOfficeRoutes);
+
 // ── AI Roadmap Engine (new, additive) ────────────────────────────────────────
 const roadmapRoutes = require('./modules/roadmap/routes/index');
 app.use('/api/roadmap', roadmapRoutes);

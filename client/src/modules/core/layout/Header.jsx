@@ -141,6 +141,18 @@ const Header = () => {
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
           <NavLink
+            to="/ai-office"
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
+                isActive ? 'text-indigo-400 font-bold' : 'text-indigo-400/70 font-semibold hover:text-indigo-400'
+              }`
+            }
+          >
+            <Cpu size={11} />
+            AI Office
+            <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 leading-none font-bold">LIVE</span>
+          </NavLink>
+          <NavLink
             to="/housework-ai"
             className={({ isActive }) =>
               `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
@@ -287,6 +299,16 @@ const Header = () => {
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
+          <NavLink to="/ai-office" onClick={() => setMobileOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
+                isActive ? 'text-indigo-400 font-bold' : 'text-indigo-400/70 font-semibold hover:text-indigo-400'
+              }`
+            }
+          >
+            <Cpu size={11} /> AI Office
+            <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 leading-none">LIVE</span>
+          </NavLink>
           <NavLink to="/housework-ai" onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${
