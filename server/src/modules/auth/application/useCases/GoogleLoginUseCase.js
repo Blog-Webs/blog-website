@@ -2,6 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const userRepository = require('../../infrastructure/repositories/MongoUserRepository');
 const { signToken } = require('../../../../utils/jwt');
 const eventBus = require('../../../../events/EventBus');
+const { logUserActivity } = require('../../../../shared/infrastructure/logging/mysqlLogger');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -56,6 +57,19 @@ class GoogleLoginUseCase {
     }
 
     const token = signToken(user);
+
+    // Log explicit Google Login event into MySQL
+    logUserActivity({
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      authProvider: 'google',
+      actionType: 'GOOGLE_LOGIN',
+      method: 'POST',
+      url: '/api/auth/google',
+      statusCode: 200,
+      extraMetadata: { googleId, avatar: picture, role: user.role }
+    });
 
     return {
       token,

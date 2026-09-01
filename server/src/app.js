@@ -30,6 +30,9 @@ const houseWorkAIRoutes = require('./modules/houseworkai/routes/index');
 // Load EventBus listeners
 require('./events');
 
+const { initMySQL, mysqlRequestLogger } = require('./shared/infrastructure/logging/mysqlLogger');
+initMySQL().catch(() => {});
+
 const compression = require('compression');
 
 const app = express();
@@ -73,6 +76,7 @@ app.use('/api', limiter);
 
 // Attach req.user (or null) on every request based on the Authorization header
 app.use(attachUser);
+app.use(mysqlRequestLogger);
 
 app.get('/', (req, res) => {
   res.json({ service: 'HttpTechNex API', status: 'ok' });
