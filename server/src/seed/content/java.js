@@ -1,18 +1,20 @@
-// Java & Advanced Java content tree. Structured exactly to cover Java Basics, OOPs, Advanced OOPs, and Spring Boot.
-// Used by server/src/seed/index.js to seed the database.
+// Java & Advanced Java content tree.
+// Structured to cover Java Basics, OOPs, Collections, Stream API, Multithreading, JVM Memory, and Spring Boot Enterprise Microservices.
 
 const java = {
   subject: {
     name: 'Java & Advanced Java',
-    description: 'Master Java fundamentals, Object-Oriented Programming (OOP), Stream API, Multithreading, and Spring Boot development.',
+    description: 'Master Java fundamentals, Object-Oriented Programming (OOP), Collections Framework, Stream API, Multithreading, JVM Memory Tuning, and Spring Boot Microservices.',
     icon: 'coffee',
     color: '#FFB454',
     order: 2,
+    hasRoadmap: true,
+    hasCheatsheet: true,
   },
   topics: [
     {
-      name: 'Java Basics',
-      description: 'Syntax, variables, data types, loops, strings, arrays, and space/time complexity analysis.',
+      name: 'Java Basics & Environment',
+      description: 'JVM, JRE, JDK, Bytecode execution, Primitive data types, Control Flow, and Array structures.',
       order: 1,
       difficulty: 'beginner',
       estimatedMinutes: 30,
@@ -21,101 +23,92 @@ const java = {
           name: 'Deep Analysis',
           chapters: [
             {
-              title: 'Syntax, Variables, Data Types & Loops',
+              title: 'Java Architecture (JVM, JRE, JDK) & Syntax',
               isFreePreview: true,
-              estimatedMinutes: 12,
-              content: `Java is a strongly-typed, class-based programming language designed to have as few implementation dependencies as possible. The core philosophy of "Write Once, Run Anywhere" (WORA) is achieved by compiling Java code into platform-independent bytecode, which is executed by the Java Virtual Machine (JVM).
+              estimatedMinutes: 15,
+              content: `Java is a strongly-typed, class-based programming language designed to follow the philosophy of "Write Once, Run Anywhere" (WORA).
 
-### Syntax & Variables
-Every Java program must contain at least one class wrapper and a main method as the entry point:
+### The Java Execution Pipeline: JDK vs JRE vs JVM
+- **JDK (Java Development Kit)**: The complete software development environment containing tools (compiler \`javac\`, debugger \`jdb\`, archiver \`jar\`) and the JRE.
+- **JRE (Java Runtime Environment)**: Provides the class libraries (rt.jar / Java modules) and the JVM necessary to run Java applications.
+- **JVM (Java Virtual Machine)**: An abstract computing machine that executes compiled Java **Bytecode** (\`.class\` files). Converts bytecode into machine-specific native instructions using the **JIT (Just-In-Time) Compiler**.
+
+### Standard Java Entrypoint Syntax
+Every standalone Java program requires a main method inside a class:
 \`\`\`java
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        System.out.println("Welcome to Java & Advanced Java on HttpTechNex!");
     }
 }
 \`\`\`
-Variables in Java are containers for storing data values. Being strongly-typed, every variable must have a declared type:
-- **Local variables**: Declared inside methods.
-- **Instance variables**: Declared inside a class but outside any method.
-- **Static variables**: Declared with the 'static' keyword, shared across all instances of the class.
 
-### Primitive & Reference Data Types
-Java data types are split into two categories:
-1. **Primitve Types**: Store simple values. There are 8 primitives:
-   - Integer types: \`byte\` (1 byte), \`short\` (2 bytes), \`int\` (4 bytes), \`long\` (8 bytes).
-   - Floating-point types: \`float\` (4 bytes), \`double\` (8 bytes).
-   - Character type: \`char\` (2 bytes, supports Unicode).
-   - Boolean type: \`boolean\` (\`true\` / \`false\`).
-2. **Reference Types**: Store references to memory addresses where the actual objects live (e.g., Classes, Interfaces, Arrays, Strings).
-
-### Control Flow & Loops
-Java provides standard control flow statements:
-- **if-else / switch**: For conditional branching.
-- **for loop**: Best when the number of iterations is known.
-- **while loop**: Repeats a statement while a condition remains true.
-- **do-while loop**: Similar to while, but guarantees at least one execution.
-- **Enhanced for-each loop**: Used exclusively to loop through elements in an array or collection.`,
+### Primitive vs Reference Types
+1. **Primitives (Stored directly in Stack memory)**:
+   - \`byte\` (8 bits), \`short\` (16 bits), \`int\` (32 bits), \`long\` (64 bits).
+   - \`float\` (32 bits), \`double\` (64 bits).
+   - \`char\` (16-bit Unicode).
+   - \`boolean\` (\`true\` / \`false\`).
+2. **Reference Types (Stored in Heap memory with references on Stack)**:
+   - Objects, Arrays, Interfaces, and Strings.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Primitive vs reference types and loops comparison',
-                  code: `int primitiveNum = 42; // primitive
-String referenceStr = "Java Basics"; // reference
+                  caption: 'Primitive variables and System output in Java',
+                  code: `public class PrimitiveDemo {
+    public static void main(String[] args) {
+        int studentCount = 1250;
+        double passPercentage = 94.5;
+        char grade = 'A';
+        boolean isActive = true;
 
-// Enhanced for loop over an array
-int[] numbers = {1, 2, 3, 4, 5};
-for (int num : numbers) {
-    System.out.println("Value: " + num);
+        System.out.printf("Count: %d, Rate: %.1f%%, Grade: %c, Active: %b%n",
+            studentCount, passPercentage, grade, isActive);
+    }
 }`
                 }
               ],
               externalLinks: [
-                { label: 'Java Variables & Types', url: 'https://www.geeksforgeeks.org/variables-in-java/', source: 'geeksforgeeks' }
+                { label: 'JDK JRE JVM Differences', url: 'https://www.geeksforgeeks.org/difference-between-jdk-jre-and-jvm/', source: 'geeksforgeeks' }
               ]
             },
             {
-              title: 'Strings, Arrays & Time/Space Complexity',
-              isFreePreview: false,
+              title: 'Variables, Data Types & Control Flow',
+              isFreePreview: true,
               estimatedMinutes: 15,
-              content: `### Java Arrays
-An array is a contiguous block of memory holding elements of the same data type. Arrays are objects in Java, are zero-indexed, and have a fixed length determined at instantiation:
-\`\`\`java
-int[] numbers = new int[5]; // initialized with default values (0)
-int[] initializedArr = {10, 20, 30, 40};
-System.out.println(initializedArr.length); // 4
-\`\`\`
+              content: `### Control Flow Statements
+Java provides structured flow controls:
+- **Branching**: \`if-else if-else\`, \`switch\` expressions (including enhanced switch yield statements in modern Java 17+).
+- **Iteration**: \`for\` loops, \`while\` loops, \`do-while\` loops, and enhanced \`for-each\` loops.
 
-### Java Strings
-Strings represent a sequence of characters. In Java, Strings are **immutable** — once created, their values cannot be changed. Any modification returns a new String object.
-- **String Pool**: A special storage area in the Java Heap memory. If a string literal is created, the JVM checks the String Pool first to reuse existing instances, optimizing memory.
-- **StringBuilder & StringBuffer**: Mutable sequences of characters. Use \`StringBuilder\` for single-threaded operations (as it is not synchronized, making it faster) and \`StringBuffer\` for multi-threaded thread-safe operations.
-
-### Time & Space Complexity
-Understanding algorithmic efficiency is key to writing scalable Java code.
-- **Time Complexity**: Measures how execution time scales with input size $N$, expressed using Big-O notation.
-  - $O(1)$ - Constant time (e.g., accessing an array index).
-  - $O(\log N)$ - Logarithmic time (e.g., Binary Search).
-  - $O(N)$ - Linear time (e.g., traversing an array or string).
-  - $O(N \log N)$ - Merge/Quick sort.
-  - $O(N^2)$ - Quadratic time (e.g., nested loops).
-- **Space Complexity**: Measures auxiliary memory footprint scaling with input size $N$. Creating a new array of size $N$ requires $O(N)$ auxiliary space.`,
+### Java Arrays & Strings
+- **Arrays**: Fixed-length contiguous memory collections.
+- **String Pool**: Java maintains an internal **String Constant Pool** inside Heap memory. String literals are cached to minimize memory overhead. Because Strings are immutable, modifying a String creates a new object in memory.
+- **StringBuilder**: Use \`StringBuilder\` for mutable, high-performance string concatenation in single-threaded logic.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Efficient string manipulation using StringBuilder',
-                  code: `// Inefficient: creates multiple string instances in the pool
-String s = "";
-for(int i = 0; i < 100; i++) s += i;
-
-// Efficient: modifies the same internal char array, O(N) time
-StringBuilder sb = new StringBuilder();
-for(int i = 0; i < 100; i++) sb.append(i);
-String result = sb.toString();`
+                  caption: 'Enhanced switch statement & StringBuilder usage',
+                  code: `public class ControlFlowDemo {
+    public static void main(String[] args) {
+        String day = "MONDAY";
+        
+        // Modern Java switch expression
+        String type = switch (day) {
+            case "SATURDAY", "SUNDAY" -> "Weekend";
+            default -> "Workday";
+        };
+        
+        // High-performance string manipulation
+        StringBuilder sb = new StringBuilder();
+        sb.append("Day: ").append(day).append(" is a ").append(type);
+        System.out.println(sb.toString());
+    }
+}`
                 }
               ],
               externalLinks: [
-                { label: 'Java String Immutability', url: 'https://www.geeksforgeeks.org/oops-object-oriented-programming/', source: 'geeksforgeeks' }
+                { label: 'Java Strings & Memory', url: 'https://www.geeksforgeeks.org/string-concatenation-in-java/', source: 'geeksforgeeks' }
               ]
             }
           ]
@@ -123,53 +116,61 @@ String result = sb.toString();`
       ]
     },
     {
-      name: 'OOPs Concepts',
-      description: 'Object-Oriented Programming pillars: Classes, Objects, Inheritance, Encapsulation, Polymorphism, and Abstraction.',
+      name: 'Object-Oriented Programming (OOPs)',
+      description: 'The 4 Pillars: Encapsulation, Inheritance, Polymorphism, Abstraction, Abstract Classes & Interfaces.',
       order: 2,
       difficulty: 'beginner',
-      estimatedMinutes: 35,
+      estimatedMinutes: 40,
       tracks: [
         {
           name: 'Deep Analysis',
           chapters: [
             {
-              title: 'The 4 Pillars of OOPs',
+              title: 'The 4 Pillars of OOPs in Java',
               isFreePreview: true,
-              estimatedMinutes: 15,
-              content: `Object-Oriented Programming (OOP) is a programming paradigm based on the concept of "objects", which contain data (fields/attributes) and code (methods/behaviors).
+              estimatedMinutes: 20,
+              content: `Object-Oriented Programming (OOP) is centered around modular, reusable software design built on classes and objects.
 
-### Classes and Objects
-- **Class**: A blueprint or template from which individual objects are created. It defines variables and methods.
-- **Object**: A concrete instance of a class. It occupies physical memory.
+### 1. Encapsulation
+Hiding internal object state behind \`private\` fields and exposing controlled access via \`public\` getters and setters.
 
-### The 4 Pillars:
-1. **Inheritance**: The mechanism where a subclass inherits fields and methods from a superclass (parent), promoting code reuse. Java uses the \`extends\` keyword and supports single class inheritance.
-2. **Encapsulation**: Bundling variables and methods within a single class, and hiding internal implementation details using access modifiers (\`private\`, \`protected\`, \`public\`). Access is controlled via public getter and setter methods.
-3. **Polymorphism**: The ability of an object to take on many forms.
-   - *Compile-time (Static) Polymorphism*: Method Overloading (same method name, different parameter lists, resolved at compile-time).
-   - *Runtime (Dynamic) Polymorphism*: Method Overriding (subclass redefines a superclass method, resolved at runtime based on the actual object instance).
-4. **Abstraction**: Hiding complex details and showing only essential interfaces. Achieved using **Abstract Classes** (can have abstract & concrete methods, instance variables) and **Interfaces** (pure contracts, supports multiple inheritance, default methods since Java 8).`,
+### 2. Inheritance
+A subclass inherits attributes and behavior from a parent class using the \`extends\` keyword. Promotes code reuse.
+
+### 3. Polymorphism
+- **Compile-time Polymorphism**: Method Overloading (same method name, different signature/parameter list).
+- **Runtime Polymorphism**: Method Overriding (subclass redefines parent method with \`@Override\`).
+
+### 4. Abstraction
+Hiding complex implementation details and showing only essential public features through interfaces and abstract classes.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Pillars of OOP implemented cleanly in Java code',
-                  code: `// 1. Abstraction (Interface)
-interface Animal {
-    void makeSound(); // abstract method
+                  caption: 'Clean OOP implementation in Java',
+                  code: `// Encapsulated Base Class
+class BankAccount {
+    private String accountNumber;
+    private double balance;
+
+    public BankAccount(String accNo, double balance) {
+        this.accountNumber = accNo;
+        this.balance = balance;
+    }
+
+    public double getBalance() { return balance; }
+    
+    public void deposit(double amount) {
+        if (amount > 0) this.balance += amount;
+    }
 }
 
-// 2. Inheritance
-class Dog implements Animal {
-    // 3. Encapsulation
-    private String name;
+// Subclass inheriting BankAccount
+class SavingsAccount extends BankAccount {
+    private double interestRate;
 
-    public Dog(String name) { this.name = name; }
-    public String getName() { return name; }
-
-    // 4. Polymorphism (Overriding)
-    @Override
-    public void makeSound() {
-        System.out.println(name + " says: Woof!");
+    public SavingsAccount(String accNo, double balance, double rate) {
+        super(accNo, balance);
+        this.interestRate = rate;
     }
 }`
                 }
@@ -179,39 +180,44 @@ class Dog implements Animal {
               ]
             },
             {
-              title: 'OOP Implementation Practice',
+              title: 'Interfaces, Abstract Classes & SOLID Principles',
               isFreePreview: false,
-              estimatedMinutes: 12,
-              content: `### Interface vs Abstract Class
-Choosing between interfaces and abstract classes determines code flexibility:
-- Use an **Abstract Class** when classes share a common identity ("is-a" relationship) and need to inherit fields and constructor states.
-- Use an **Interface** when classes share a behavioral contract ("can-do" relationship) across completely unrelated class trees.
+              estimatedMinutes: 20,
+              content: `### Abstract Classes vs Interfaces
+- **Abstract Class**: Can contain state (instance variables), constructors, concrete methods, and abstract methods. A class can extend only **one** abstract class.
+- **Interface**: Pure behavioral contract. Supports default and static methods (since Java 8) and private methods (since Java 9). A class can implement **multiple** interfaces.
 
-### Access Modifiers Matrix
-- \`private\`: Visible within the class only.
-- \`default\` (no modifier): Visible within the package.
-- \`protected\`: Visible within package and subclasses.
-- \`public\`: Visible everywhere.`,
+### SOLID Principles Overview
+- **S**: Single Responsibility Principle
+- **O**: Open/Closed Principle
+- **L**: Liskov Substitution Principle
+- **I**: Interface Segregation Principle
+- **D**: Dependency Inversion Principle`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Abstract class with implementation inheritance',
-                  code: `abstract class Employee {
-    protected String name;
-    protected double baseSalary;
+                  caption: 'Interface with default methods & contract implementation',
+                  code: `interface PaymentProcessor {
+    boolean processPayment(double amount);
 
-    public Employee(String name, double salary) {
-        this.name = name;
-        this.baseSalary = salary;
+    // Default method (Java 8+)
+    default void logTransaction(double amount) {
+        System.out.println("Transaction processed for amount: $" + amount);
     }
-    
-    // Abstract method to be overridden by subclasses
-    abstract double calculateSalary();
+}
+
+class StripeProcessor implements PaymentProcessor {
+    @Override
+    public boolean processPayment(double amount) {
+        System.out.println("Processing via Stripe API...");
+        logTransaction(amount);
+        return true;
+    }
 }`
                 }
               ],
               externalLinks: [
-                { label: 'Interfaces in Java', url: 'https://www.geeksforgeeks.org/interfaces-in-java/', source: 'geeksforgeeks' }
+                { label: 'Abstract Class vs Interface', url: 'https://www.geeksforgeeks.org/difference-between-abstract-class-and-interface-in-java/', source: 'geeksforgeeks' }
               ]
             }
           ]
@@ -219,93 +225,95 @@ Choosing between interfaces and abstract classes determines code flexibility:
       ]
     },
     {
-      name: 'Advanced OOPs',
-      description: 'Comparable & Comparator, Java Stream API, Multithreading, Concurrency, and Thread Pool Executors.',
+      name: 'Java Collections Framework',
+      description: 'List, Set, Map, Queue, ArrayList vs LinkedList, and HashMap internal hashing mechanics.',
       order: 3,
-      difficulty: 'advanced',
+      difficulty: 'intermediate',
       estimatedMinutes: 45,
       tracks: [
         {
           name: 'Deep Analysis',
           chapters: [
             {
-              title: 'Comparable, Comparator & Java Stream API',
+              title: 'Lists, Sets & Queues in Java Collections',
               isFreePreview: true,
-              estimatedMinutes: 15,
-              content: `### Comparable vs Comparator
-Java provides two interfaces to sort collections of custom objects:
-1. **Comparable**: Defines the *natural sorting order* of a class. The class must implement \`Comparable<T>\` and override the \`compareTo()\` method. (Alters the class definition itself).
-2. **Comparator**: Defines a *custom sorting order*. Implemented outside the target class as a separate comparator class or lambda expression, overriding the \`compare()\` method. Useful when sorting objects in multiple different ways.
+              estimatedMinutes: 20,
+              content: `The Java Collections Framework (\`java.util\`) provides a unified architecture for managing groups of objects.
 
-### Java Stream API (Introduced in Java 8)
-Streams represent a pipeline of computational steps through which collection elements flow. They do not store data, nor do they modify the original source.
-- **Intermediate Operations**: Return a new stream, executed lazily (e.g., \`filter()\`, \`map()\`, \`sorted()\`).
-- **Terminal Operations**: Execute the pipeline to return a concrete result (e.g., \`collect()\`, \`forEach()\`, \`reduce()\`, \`count()\`).`,
+### Core Hierarchy
+- **List Interface (Ordered, duplicate elements allowed)**:
+  - \`ArrayList\`: Dynamic resizable array. $O(1)$ random access, $O(N)$ insertion/deletion in middle.
+  - \`LinkedList\`: Doubly-linked list implementation. $O(1)$ head/tail insertion, $O(N)$ random access.
+- **Set Interface (Unordered, unique elements only)**:
+  - \`HashSet\`: Backed by a HashMap. $O(1)$ average time lookup.
+  - \`TreeSet\`: Red-Black tree implementation. $O(\log N)$ sorted order iteration.
+- **Queue & Deque**: \`ArrayDeque\` and \`PriorityQueue\` for FIFO and min/max heap processing.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Custom sorting with Comparator and Stream transformations',
+                  caption: 'ArrayList vs HashSet usage',
                   code: `import java.util.*;
-import java.util.stream.*;
 
-class Student {
-    String name;
-    int score;
-    Student(String name, int score) { this.name = name; this.score = score; }
-}
+public class CollectionDemo {
+    public static void main(String[] args) {
+        // List retains order
+        List<String> list = new ArrayList<>();
+        list.add("Java");
+        list.add("Spring");
+        list.add("Java"); // duplicate allowed
 
-// Stream Pipeline: filters, sorts, and collects
-List<Student> students = Arrays.asList(new Student("Alice", 85), new Student("Bob", 95));
-List<String> honorsStudents = students.stream()
-    .filter(s -> s.score >= 90)
-    // Sort custom by score descending using Comparator lambda
-    .sorted((s1, s2) -> Integer.compare(s2.score, s1.score))
-    .map(s -> s.name)
-    .collect(Collectors.toList());`
+        // Set enforces uniqueness
+        Set<String> uniqueSet = new HashSet<>(list);
+        System.out.println("Unique elements: " + uniqueSet); // [Java, Spring]
+    }
+}`
                 }
               ],
               externalLinks: [
-                { label: 'Java Stream API Guide', url: 'https://www.geeksforgeeks.org/java-8-streams-tutorial/', source: 'geeksforgeeks' }
+                { label: 'Java Collections Framework', url: 'https://www.geeksforgeeks.org/collections-in-java-2/', source: 'geeksforgeeks' }
               ]
             },
             {
-              title: 'Multithreading, Concurrency & Thread Pool Executor',
+              title: 'HashMap Internals & Bucket Hashing Mechanics',
               isFreePreview: false,
-              estimatedMinutes: 18,
-              content: `### Multithreading Foundations
-Multithreading allows concurrent execution of multiple parts of a program. A thread is a lightweight subprocess.
-- Created by extending \`Thread\` or implementing \`Runnable\`. Implementing Runnable is preferred because Java only supports single class inheritance.
-- Always use \`thread.start()\` to execute concurrently. Calling \`thread.run()\` executes it synchronously on the caller thread.
+              estimatedMinutes: 25,
+              content: `### How HashMap Works Under the Hood
+A \`HashMap<K, V>\` stores key-value pairs using an array of **Buckets** (Node objects).
 
-### Concurrency Coordinates
-- **Synchronization**: Prevents thread interference and memory consistency errors. The \`synchronized\` keyword guarantees mutual exclusion.
-- **volatile**: Declares that a variable's value is read and written directly to main memory, ensuring changes are immediately visible to all threads.
-- **Atomic Variables**: Thread-safe single-variable update operations (e.g., \`AtomicInteger\`) using lock-free CPU instructions (Compare-and-Swap).
-
-### Thread Pool Executor
-Creating threads is expensive due to OS context switching. An \`ExecutorService\` manages a pool of reusable worker threads:
-- **Core Pool Size**: The minimum number of active threads kept in the pool.
-- **Max Pool Size**: The maximum number of threads allowed in the pool.
-- **Work Queue**: A queue holding tasks before they are executed. Fixed-size bounded queues (like \`ArrayBlockingQueue\`) prevent OutOfMemory issues under high load.`,
+1. **Hashing**: Calling \`key.hashCode()\` calculates a 32-bit integer hash code.
+2. **Bucket Index**: The bucket index is calculated via \`index = hash & (n - 1)\` where $n$ is bucket capacity.
+3. **Collision Handling**:
+   - If two keys produce the same bucket index, Java uses a **Singly Linked List** chain.
+   - **Treeification (Java 8+)**: When a bucket list length exceeds 8 elements (and array capacity $\ge 64$), the bucket transforms from a Linked List into a **Red-Black Tree**, reducing worst-case lookup from $O(N)$ to $O(\log N)$.
+4. **Resizing / Rehashing**: When capacity passes the load factor threshold ($0.75 \times \text{capacity}$), the table size doubles and elements are rehashed.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Creating and executing tasks with a ThreadPoolExecutor',
-                  code: `import java.util.concurrent.*;
+                  caption: 'Custom key implementation overriding hashCode() and equals()',
+                  code: `import java.util.Objects;
 
-// Create a thread pool with fixed 3 worker threads
-ExecutorService executor = Executors.newFixedThreadPool(3);
+class UserKey {
+    private final String userId;
 
-executor.submit(() -> {
-    System.out.println("Executing task concurrently on: " + Thread.currentThread().getName());
-});
+    public UserKey(String id) { this.userId = id; }
 
-// Always shutdown executors when done to prevent process leaks
-executor.shutdown();`
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserKey userKey = (UserKey) o;
+        return Objects.equals(userId, userKey.userId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId);
+    }
+}`
                 }
               ],
               externalLinks: [
-                { label: 'Java Concurrency Utilities', url: 'https://www.geeksforgeeks.org/multithreading-in-java/', source: 'geeksforgeeks' }
+                { label: 'HashMap Internal Mechanism', url: 'https://www.geeksforgeeks.org/internal-working-of-hashmap-java/', source: 'geeksforgeeks' }
               ]
             }
           ]
@@ -313,44 +321,222 @@ executor.shutdown();`
       ]
     },
     {
-      name: 'Spring Boot Framework',
-      description: 'Spring Boot Starters, REST APIs, Dependency Injection (DI), Maven/Gradle, and running Spring applications.',
+      name: 'Advanced Java Features & Stream API',
+      description: 'Lambda Expressions, Stream API, Optional, Generics, and Functional Interfaces.',
       order: 4,
       difficulty: 'advanced',
-      estimatedMinutes: 40,
+      estimatedMinutes: 50,
       tracks: [
         {
           name: 'Deep Analysis',
           chapters: [
             {
-              title: 'Starter Projects, Maven/Gradle & Dependency Injection',
+              title: 'Functional Interfaces & Lambda Expressions',
               isFreePreview: true,
-              estimatedMinutes: 15,
-              content: `### Spring Boot Starter Projects
-Spring Boot Starters are dependency descriptors that simplify build configurations. Instead of importing 15 different libraries for web APIs or database drivers, importing \`spring-boot-starter-web\` imports Tomcat, Spring MVC, Jackson, and core logging automatically.
+              estimatedMinutes: 20,
+              content: `### Functional Interfaces (Java 8+)
+A **Functional Interface** contains exactly one abstract method (annotated with \`@FunctionalInterface\`).
 
-### Build Automation: Maven vs Gradle
-Java projects use build managers to handle compilation, test execution, dependency resolution, and packaging (.JAR / .WAR):
-- **Maven**: Uses an XML configuration file (\`pom.xml\`) and standardized directory structures.
-- **Gradle**: Uses a Groovy/Kotlin domain-specific language (\`build.gradle\`), is task-based, and supports highly performant incremental builds.
+Standard Built-in Functional Interfaces (\`java.util.function\`):
+- **Predicate<T>**: Accepts $T$, returns \`boolean\` (\`test(T t)\`).
+- **Function<T, R>**: Accepts $T$, returns $R$ (\`apply(T t)\`).
+- **Consumer<T>**: Accepts $T$, returns \`void\` (\`accept(T t)\`).
+- **Supplier<T>**: Accepts nothing, returns $T$ (\`get()\`).
 
-### Dependency Injection (DI) & IoC
-- **Inversion of Control (IoC)**: The framework manages object instances and control flows instead of the application program doing it.
-- **Dependency Injection (DI)**: A design pattern where Spring automatically supplies dependent objects to a class.
-- **Beans**: Objects instantiated and managed by the Spring IoC Container.
-  - Declared using \`@Component\`, \`@Service\`, \`@Repository\`, or \`@Bean\`.
-  - Injected using Constructor Injection (highly recommended for thread-safety and easy testing), Setter Injection, or Field Injection (\`@Autowired\`).`,
+### Lambda Expressions
+Anonymous functions that provide inline implementations of functional interfaces:
+\`(parameters) -> { body }\``,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'Constructor injection (best practice) in a Spring Service',
-                  code: `@Service
-public class PaymentService {
-    private final PaymentRepository paymentRepository;
+                  caption: 'Lambda expressions with Predicate and Consumer',
+                  code: `import java.util.function.*;
 
-    // Spring automatically supplies the dependency bean at runtime
-    public PaymentService(PaymentRepository paymentRepository) {
-        this.paymentRepository = paymentRepository;
+public class LambdaDemo {
+    public static void main(String[] args) {
+        Predicate<Integer> isEven = num -> num % 2 == 0;
+        Consumer<String> printer = str -> System.out.println("Log: " + str);
+
+        if (isEven.test(42)) {
+            printer.accept("42 is an even number!");
+        }
+    }
+}`
+                }
+              ],
+              externalLinks: [
+                { label: 'Java Lambda Expressions', url: 'https://www.geeksforgeeks.org/lambda-expressions-java-8/', source: 'geeksforgeeks' }
+              ]
+            },
+            {
+              title: 'Java Stream API Operations & Pipelines',
+              isFreePreview: false,
+              estimatedMinutes: 25,
+              content: `### Stream Pipeline Mechanics
+A Stream is a sequence of elements supporting sequential and parallel aggregate operations.
+1. **Source**: Collection, Array, or I/O channel.
+2. **Intermediate Operations (Lazy evaluation)**:
+   - \`filter()\`, \`map()\`, \`flatMap()\`, \`sorted()\`, \`distinct()\`, \`peek()\`.
+3. **Terminal Operations (Triggers execution)**:
+   - \`collect()\`, \`forEach()\`, \`reduce()\`, \`findFirst()\`, \`count()\`.
+
+### Optional<T>
+Prevents \`NullPointerException\` by wrapping nullable values cleanly.`,
+              codeSnippets: [
+                {
+                  language: 'java',
+                  caption: 'Filtering, mapping, and collecting with Streams and Optional',
+                  code: `import java.util.*;
+import java.util.stream.*;
+
+public class StreamDemo {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "David");
+
+        List<String> result = names.stream()
+            .filter(name -> name.length() > 3)
+            .map(String::toUpperCase)
+            .sorted()
+            .collect(Collectors.toList());
+
+        System.out.println(result); // [ALICE, CHARLIE, DAVID]
+    }
+}`
+                }
+              ],
+              externalLinks: [
+                { label: 'Java Stream API Guide', url: 'https://www.geeksforgeeks.org/java-8-streams-tutorial/', source: 'geeksforgeeks' }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: 'Multithreading, Concurrency & JVM Memory',
+      description: 'Threads, Synchronization, Thread Pools, ExecutorService, Heap & Stack Memory, and Garbage Collection.',
+      order: 5,
+      difficulty: 'advanced',
+      estimatedMinutes: 55,
+      tracks: [
+        {
+          name: 'Deep Analysis',
+          chapters: [
+            {
+              title: 'Multithreading, Synchronization & Thread Pools',
+              isFreePreview: true,
+              estimatedMinutes: 25,
+              content: `### Multithreading Foundations
+Multithreading enables concurrent execution of CPU tasks within a process.
+- Implement \`Runnable\` or \`Callable<V>\` (preferred over extending \`Thread\`).
+- Call \`start()\` to launch a thread asynchronously on the OS level.
+
+### Concurrency Tools & Synchronization
+- **synchronized**: Mutex lock ensuring only one thread executes a code block at a time.
+- **volatile**: Enforces visibility by bypassing CPU L1/L2 caches and writing directly to main RAM memory.
+- **ExecutorService**: Manages worker thread pools efficiently (\`Executors.newFixedThreadPool(n)\`).`,
+              codeSnippets: [
+                {
+                  language: 'java',
+                  caption: 'Thread pool execution with ExecutorService',
+                  code: `import java.util.concurrent.*;
+
+public class ThreadPoolDemo {
+    public static void main(String[] args) {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        for (int i = 1; i <= 5; i++) {
+            final int taskId = i;
+            executor.submit(() -> {
+                System.out.println("Task " + taskId + " running on thread " + Thread.currentThread().getName());
+            });
+        }
+
+        executor.shutdown();
+    }
+}`
+                }
+              ],
+              externalLinks: [
+                { label: 'Java Multithreading', url: 'https://www.geeksforgeeks.org/multithreading-in-java/', source: 'geeksforgeeks' }
+              ]
+            },
+            {
+              title: 'JVM Memory Architecture & Garbage Collection',
+              isFreePreview: false,
+              estimatedMinutes: 25,
+              content: `### JVM Memory Structure
+1. **Heap Memory**: Shared across all threads. Stores objects, instance variables, and arrays. Divided into:
+   - **Young Generation**: Eden space, Survivor spaces S0 & S1.
+   - **Old Generation (Tenured)**: Long-surviving objects.
+2. **Stack Memory**: Thread-private. Stores method stack frames, primitive local variables, and object references.
+3. **Metaspace (Java 8+)**: Native memory storing class metadata.
+
+### Garbage Collection (GC) Algorithms
+GC automatically reclaims unreachable Heap memory:
+- **Serial / Parallel GC**: High-throughput stop-the-world collectors.
+- **G1 GC (Garbage-First)**: Divides heap into equal regions for predictable low-latency GC.
+- **ZGC / Shenandoah**: Ultra-low-latency garbage collectors with sub-millisecond pause times.`,
+              codeSnippets: [
+                {
+                  language: 'java',
+                  caption: 'Monitoring runtime memory usage in Java',
+                  code: `public class MemoryDemo {
+    public static void main(String[] args) {
+        Runtime runtime = Runtime.getRuntime();
+        long freeMemory = runtime.freeMemory() / (1024 * 1024);
+        long totalMemory = runtime.totalMemory() / (1024 * 1024);
+        
+        System.out.printf("Free Memory: %d MB, Total Memory: %d MB%n", freeMemory, totalMemory);
+    }
+}`
+                }
+              ],
+              externalLinks: [
+                { label: 'JVM Memory Model', url: 'https://www.geeksforgeeks.org/jvm-works-jvm-architecture/', source: 'geeksforgeeks' }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: 'Spring Boot & Enterprise Microservices',
+      description: 'Spring Boot Starters, Dependency Injection (DI/IoC), REST Controllers, Spring Data JPA & Hibernate.',
+      order: 6,
+      difficulty: 'advanced',
+      estimatedMinutes: 60,
+      tracks: [
+        {
+          name: 'Deep Analysis',
+          chapters: [
+            {
+              title: 'Spring IoC Container, Dependency Injection & Annotations',
+              isFreePreview: true,
+              estimatedMinutes: 25,
+              content: `### Spring Framework Core: IoC & DI
+- **Inversion of Control (IoC)**: Transferring control of object creation and lifecycle management to the Spring Container.
+- **Dependency Injection (DI)**: Injecting required dependencies into components automatically.
+  - **Constructor Injection** (Best practice): Immutable, clean, easy to mock unit tests.
+  - **Stereotype Annotations**: \`@Component\`, \`@Service\`, \`@Repository\`, \`@RestController\`, \`@Configuration\`, \`@Bean\`.`,
+              codeSnippets: [
+                {
+                  language: 'java',
+                  caption: 'Spring Service with Constructor Injection',
+                  code: `import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+
+    // Constructor Injection (autowired by Spring automatically)
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }`
                 }
@@ -360,42 +546,61 @@ public class PaymentService {
               ]
             },
             {
-              title: 'REST APIs & Running Spring Boot Applications',
+              title: 'Building RESTful Microservices with Spring Boot & Spring Data JPA',
               isFreePreview: false,
-              estimatedMinutes: 15,
-              content: `### Building REST APIs
-Spring Boot makes it simple to map HTTP web routes using annotations:
-- \`@RestController\`: Combination of \`@Controller\` and \`@ResponseBody\`. Specifies that return values are serialized directly into HTTP response bodies (JSON).
-- \`@RequestMapping\`, \`@GetMapping\`, \`@PostMapping\`, etc.: Map URLs to controller handler methods.
-- \`@RequestBody\`: Deserializes incoming HTTP request JSON payloads into Java objects.
-- \`@PathVariable\` / \`@RequestParam\`: Extract segments of URL paths or query parameters.
+              estimatedMinutes: 35,
+              content: `### Building REST Web Services
+Spring Boot simplifies REST API endpoints using Jackson serialization:
+- \`@RestController\` & \`@RequestMapping("/api/v1/users")\`
+- \`@GetMapping\`, \`@PostMapping\`, \`@PutMapping\`, \`@DeleteMapping\`
+- \`@PathVariable\`, \`@RequestParam\`, \`@Valid @RequestBody\`
 
-### How to Import and Run Spring Boot apps
-1. **Importing**:
-   - Open your IDE (IntelliJ IDEA, Eclipse, or VS Code).
-   - Choose "Import Project" or "Open Folder", select the directory containing \`pom.xml\` or \`build.gradle\`, and let the IDE resolve dependencies.
-2. **Running**:
-   - Run via IDE: Click the play button next to the class annotated with \`@SpringBootApplication\` (containing the \`main\` entry point).
-   - Run via CLI (Maven): Execute \`./mvnw spring-boot:run\` or compile into an executable jar via \`./mvnw clean package\` and run it using \`java -jar target/app.jar\`.
-   - Run via CLI (Gradle): Execute \`./gradlew bootRun\`.`,
+### Spring Data JPA & Hibernate ORM
+Spring Data JPA provides generic repository interfaces (\`JpaRepository<T, ID>\`) that generate database SQL queries automatically without boilerplate code.`,
               codeSnippets: [
                 {
                   language: 'java',
-                  caption: 'A simple REST controller in Spring Boot',
-                  code: `@RestController
+                  caption: 'Spring Boot REST Controller and JPA Repository',
+                  code: `import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "products")
+class Product {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private double price;
+
+    public Product() {}
+    public Product(String name, double price) { this.name = name; this.price = price; }
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+}
+
+interface ProductRepository extends JpaRepository<Product, Long> {}
+
+@RestController
 @RequestMapping("/api/v1/products")
-public class ProductController {
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
-        Product product = new Product(id, "Java Book", 29.99);
-        return ResponseEntity.ok(product); // returns JSON
+class ProductController {
+    private final ProductRepository repository;
+
+    public ProductController(ProductRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllProducts() {
+        return ResponseEntity.ok(repository.findAll());
     }
 }`
                 }
               ],
               externalLinks: [
-                { label: 'Build REST API with Spring Boot', url: 'https://www.geeksforgeeks.org/spring-boot-rest-controller/', source: 'other' }
+                { label: 'Spring Boot REST Controller', url: 'https://www.geeksforgeeks.org/spring-boot-rest-controller/', source: 'other' }
               ]
             }
           ]

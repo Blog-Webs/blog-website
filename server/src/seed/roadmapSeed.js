@@ -35,7 +35,26 @@ const DOMAINS = [
     industryKeywords: ['SDE', 'FAANG', 'startup', 'full-stack', 'backend'],
   },
   {
-    key: 'engineering.it', displayName: 'Information Technology', parentDomain: 'engineering', icon: '🌐', sortOrder: 2,
+    key: 'engineering.java_developer', displayName: 'Java Backend & Enterprise Developer', parentDomain: 'engineering', icon: '☕', sortOrder: 2,
+    careerGoals: [
+      { key: 'java_backend_developer', label: 'Java Backend Developer', roadmapType: 'placement', prioritySkills: ['java_basics', 'java_oops', 'java_collections', 'spring_boot', 'sql'] },
+      { key: 'enterprise_architect', label: 'Enterprise Java Architect', roadmapType: 'skill', prioritySkills: ['spring_boot', 'microservices', 'multithreading', 'system_design'] },
+      { key: 'spring_boot_engineer', label: 'Spring Boot Specialist', roadmapType: 'certification', prioritySkills: ['spring_boot', 'spring_data_jpa', 'rest_apis'] },
+    ],
+    requiredSkills: [
+      { key: 'java_basics', label: 'Java Basics & JVM Architecture', category: 'core', assessable: true, proficiencyThreshold: 70 },
+      { key: 'java_oops', label: 'Object-Oriented Programming (OOPs)', category: 'core', assessable: true, proficiencyThreshold: 75 },
+      { key: 'java_collections', label: 'Java Collections Framework', category: 'core', assessable: true, proficiencyThreshold: 70 },
+      { key: 'stream_api', label: 'Java Stream API & Lambdas', category: 'core', assessable: true, proficiencyThreshold: 65 },
+      { key: 'multithreading', label: 'Multithreading & Concurrency', category: 'advanced', assessable: true, proficiencyThreshold: 60 },
+      { key: 'spring_boot', label: 'Spring Boot Framework & DI', category: 'core', assessable: true, proficiencyThreshold: 70 },
+      { key: 'spring_data_jpa', label: 'Spring Data JPA & Hibernate', category: 'core', assessable: true, proficiencyThreshold: 65 },
+    ],
+    certifications: ['Oracle Certified Professional (OCP) Java SE', 'Spring Certified Professional'],
+    industryKeywords: ['Java', 'Spring Boot', 'Hibernate', 'Microservices', 'JVM', 'REST API'],
+  },
+  {
+    key: 'engineering.it', displayName: 'Information Technology', parentDomain: 'engineering', icon: '🌐', sortOrder: 3,
     careerGoals: [
       { key: 'it_manager', label: 'IT Manager', roadmapType: 'skill' },
       { key: 'network_engineer', label: 'Network Engineer', roadmapType: 'certification' },
