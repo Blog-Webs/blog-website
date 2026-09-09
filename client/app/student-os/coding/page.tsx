@@ -375,32 +375,32 @@ export default function VSCodeWorkbench() {
                 <div
                   onClick={() => toggleFolder(item.id)}
                   style={{ paddingLeft: `${depth * 12 + 8}px` }}
-                  className="group flex items-center justify-between py-1 px-2 rounded-lg hover:bg-zinc-900 text-zinc-300 hover:text-white cursor-pointer transition-colors text-xs font-medium"
+                  className="group flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 cursor-pointer transition-colors text-xs font-medium"
                 >
                   <div className="flex items-center gap-1.5 min-w-0 truncate">
-                    {isExpanded ? <ChevronDown size={14} className="text-zinc-500 shrink-0" /> : <ChevronRight size={14} className="text-zinc-500 shrink-0" />}
-                    {isExpanded ? <FolderOpen size={15} className="text-blue-400 shrink-0" /> : <Folder size={15} className="text-blue-400 shrink-0" />}
+                    {isExpanded ? <ChevronDown size={14} className="text-slate-400 shrink-0" /> : <ChevronRight size={14} className="text-slate-400 shrink-0" />}
+                    {isExpanded ? <FolderOpen size={15} className="text-blue-600 shrink-0" /> : <Folder size={15} className="text-blue-600 shrink-0" />}
                     <span className="truncate">{item.name}</span>
                   </div>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={e => handleStartCreate(item.id, 'file', e)}
-                      className="p-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-900"
                       title="New file in folder"
                     >
                       <FilePlus size={13} />
                     </button>
                     <button
                       onClick={e => handleStartCreate(item.id, 'folder', e)}
-                      className="p-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-900"
                       title="New sub-folder"
                     >
                       <FolderPlus size={13} />
                     </button>
                     <button
                       onClick={e => handleDeleteItem(item.id, e)}
-                      className="p-0.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400"
+                      className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
                       title="Delete folder"
                     >
                       <Trash2 size={13} />
@@ -410,8 +410,8 @@ export default function VSCodeWorkbench() {
 
                 {/* Inline Creation inside this folder */}
                 {createTargetParent === item.id && (
-                  <div style={{ paddingLeft: `${(depth + 1) * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-zinc-900/90 rounded border border-blue-500 my-0.5">
-                    {createType === 'folder' ? <Folder size={14} className="text-blue-400" /> : <FileCode size={14} className="text-emerald-400" />}
+                  <div style={{ paddingLeft: `${(depth + 1) * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
+                    {createType === 'folder' ? <Folder size={14} className="text-blue-600" /> : <FileCode size={14} className="text-blue-600" />}
                     <input
                       type="text"
                       autoFocus
@@ -422,10 +422,10 @@ export default function VSCodeWorkbench() {
                         if (e.key === 'Escape') setCreateTargetParent(undefined);
                       }}
                       placeholder={createType === 'folder' ? 'folder-name' : 'filename.ext'}
-                      className="w-full bg-transparent text-xs text-white focus:outline-none"
+                      className="w-full bg-transparent text-xs text-slate-900 focus:outline-none"
                     />
-                    <button onClick={handleConfirmCreate} className="text-emerald-400 hover:text-white"><Check size={12} /></button>
-                    <button onClick={() => setCreateTargetParent(undefined)} className="text-zinc-500 hover:text-white"><X size={12} /></button>
+                    <button onClick={handleConfirmCreate} className="text-blue-600 hover:text-blue-800"><Check size={12} /></button>
+                    <button onClick={() => setCreateTargetParent(undefined)} className="text-slate-400 hover:text-slate-700"><X size={12} /></button>
                   </div>
                 )}
 
@@ -440,20 +440,20 @@ export default function VSCodeWorkbench() {
                 key={item.id}
                 onClick={() => handleOpenFile(item.id)}
                 style={{ paddingLeft: `${depth * 12 + 8}px` }}
-                className={`group flex items-center justify-between py-1 px-2 rounded-lg cursor-pointer transition-all text-xs select-none ${
+                className={`group flex items-center justify-between py-1.5 px-2 rounded-lg cursor-pointer transition-all text-xs select-none ${
                   isActive
-                    ? 'bg-blue-600/20 text-white font-semibold border-l-2 border-blue-500'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                    ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-600 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 <div className="flex items-center gap-1.5 min-w-0 truncate">
-                  <FileCode size={14} className={isActive ? 'text-blue-400 shrink-0' : 'text-zinc-500 shrink-0'} />
+                  <FileCode size={14} className={isActive ? 'text-blue-600 shrink-0' : 'text-slate-400 shrink-0'} />
                   <span className="truncate">{item.name}</span>
                 </div>
 
                 <button
                   onClick={e => handleDeleteItem(item.id, e)}
-                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-opacity"
+                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-opacity"
                   title="Delete file"
                 >
                   <Trash2 size={13} />
@@ -465,8 +465,8 @@ export default function VSCodeWorkbench() {
 
         {/* Inline Creation at this parent level if selected */}
         {createTargetParent === parentId && (
-          <div style={{ paddingLeft: `${depth * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-zinc-900/90 rounded border border-blue-500 my-0.5">
-            {createType === 'folder' ? <Folder size={14} className="text-blue-400" /> : <FileCode size={14} className="text-emerald-400" />}
+          <div style={{ paddingLeft: `${depth * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
+            {createType === 'folder' ? <Folder size={14} className="text-blue-600" /> : <FileCode size={14} className="text-blue-600" />}
             <input
               type="text"
               autoFocus
@@ -477,10 +477,10 @@ export default function VSCodeWorkbench() {
                 if (e.key === 'Escape') setCreateTargetParent(undefined);
               }}
               placeholder={createType === 'folder' ? 'folder-name' : 'filename.ext'}
-              className="w-full bg-transparent text-xs text-white focus:outline-none"
+              className="w-full bg-transparent text-xs text-slate-900 focus:outline-none"
             />
-            <button onClick={handleConfirmCreate} className="text-emerald-400 hover:text-white"><Check size={12} /></button>
-            <button onClick={() => setCreateTargetParent(undefined)} className="text-zinc-500 hover:text-white"><X size={12} /></button>
+            <button onClick={handleConfirmCreate} className="text-blue-600 hover:text-blue-800"><Check size={12} /></button>
+            <button onClick={() => setCreateTargetParent(undefined)} className="text-slate-400 hover:text-slate-700"><X size={12} /></button>
           </div>
         )}
       </div>
@@ -490,35 +490,34 @@ export default function VSCodeWorkbench() {
   return (
     <div className="max-w-[1600px] mx-auto h-[calc(100vh-90px)] flex flex-col space-y-2">
       {/* Top VS Code Command Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-zinc-950/90 border border-zinc-800 rounded-2xl backdrop-blur-xl">
+      <div className="flex items-center justify-between px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
             <Code2 size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white tracking-tight">StudentOS Studio</span>
-              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 uppercase font-mono">
-                VS Code Tree Engine
+              <span className="text-sm font-bold text-slate-900 tracking-tight">StudentOS Studio</span>
+              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 uppercase font-mono bg-blue-50 text-blue-700 border-blue-200">
+                Compiler Sandbox
               </Badge>
             </div>
-            <p className="text-[11px] text-zinc-400">
-              Editing: <strong className="text-zinc-200">{activeFile?.name}</strong> ({activeFile?.language})
+            <p className="text-[11px] text-slate-500">
+              Editing: <strong className="text-slate-700">{activeFile?.name}</strong> ({activeFile?.language})
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <Badge className={`text-xs capitalize font-medium ${getFileBadgeColor(activeFile?.language || 'js')}`}>
+          <Badge className="text-xs capitalize font-medium bg-blue-50 text-blue-700 border-blue-200">
             {activeFile?.language || 'JavaScript'}
           </Badge>
 
           <Button
             onClick={handleRunCode}
             disabled={isRunning}
-            variant="apple"
             size="sm"
-            className="h-8 gap-1.5 px-4 font-semibold shadow-md shadow-blue-500/20"
+            className="h-8 gap-1.5 px-4 font-semibold shadow-md bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isRunning ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} className="fill-white" />}
             {isRunning ? 'Running...' : 'Run Code'}
@@ -529,29 +528,29 @@ export default function VSCodeWorkbench() {
       {/* Main IDE Grid */}
       <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
         {/* ── Left File Explorer (Nested VS Code Tree) ── */}
-        <div className="col-span-12 md:col-span-3 lg:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-800/80 bg-zinc-900/50">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <Layout size={14} className="text-blue-400" /> Explorer
+        <div className="col-span-12 md:col-span-3 lg:col-span-2 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200 bg-slate-50/80">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+              <Layout size={14} className="text-blue-600" /> Explorer
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={e => handleStartCreate(null, 'file', e)}
-                className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
                 title="New File at Root"
               >
                 <FilePlus size={14} />
               </button>
               <button
                 onClick={e => handleStartCreate(null, 'folder', e)}
-                className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
                 title="New Folder at Root"
               >
                 <FolderPlus size={14} />
               </button>
               <button
                 onClick={() => saveItemsState(DEFAULT_ITEMS)}
-                className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
                 title="Reset Default Workspaces"
               >
                 <RefreshCw size={12} />
@@ -566,9 +565,9 @@ export default function VSCodeWorkbench() {
         </div>
 
         {/* ── Middle Monaco Editor & Tab Bar ── */}
-        <div className="col-span-12 md:col-span-9 lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden">
+        <div className="col-span-12 md:col-span-9 lg:col-span-7 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
           {/* File Tabs Bar */}
-          <div className="flex items-center gap-1 px-2 pt-2 bg-zinc-900/40 border-b border-zinc-800 overflow-x-auto">
+          <div className="flex items-center gap-1 px-2 pt-2 bg-slate-100/70 border-b border-slate-200 overflow-x-auto">
             {openTabs.map((tabId) => {
               const file = items.find((f) => f.id === tabId);
               if (!file) return null;
@@ -579,15 +578,15 @@ export default function VSCodeWorkbench() {
                   onClick={() => setActiveFileId(tabId)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-t-xl text-xs cursor-pointer border-t border-x transition-all ${
                     isActive
-                      ? 'bg-zinc-950 border-zinc-800 text-white font-semibold border-b-transparent'
-                      : 'bg-zinc-900/60 border-transparent text-zinc-400 hover:text-zinc-200'
+                      ? 'bg-white border-slate-200 text-blue-700 font-semibold border-b-transparent shadow-xs'
+                      : 'bg-slate-200/50 border-transparent text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <FileCode size={13} className={isActive ? 'text-blue-400' : 'text-zinc-500'} />
+                  <FileCode size={13} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
                   <span>{file.name}</span>
                   <button
                     onClick={(e) => handleCloseTab(tabId, e)}
-                    className="p-0.5 rounded hover:bg-zinc-800 text-zinc-500 hover:text-white"
+                    className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700"
                   >
                     <X size={12} />
                   </button>
@@ -597,12 +596,12 @@ export default function VSCodeWorkbench() {
           </div>
 
           {/* Editor Container */}
-          <div className="flex-1 relative bg-zinc-950">
+          <div className="flex-1 relative bg-white">
             {activeFile ? (
               <MonacoEditor
                 height="100%"
                 language={activeFile.language}
-                theme="vs-dark"
+                theme="light"
                 value={activeFile.content}
                 onChange={handleCodeChange}
                 options={{
@@ -615,7 +614,7 @@ export default function VSCodeWorkbench() {
                 }}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs">
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs">
                 <FileCode size={36} className="mb-2 opacity-50" />
                 <p>No open files. Select a file from the explorer.</p>
               </div>
@@ -624,15 +623,15 @@ export default function VSCodeWorkbench() {
         </div>
 
         {/* ── Right Execution Output & Stdin Panel ── */}
-        <div className="col-span-12 lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+        <div className="col-span-12 lg:col-span-3 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/80">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTabPanel('output')}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${
                   activeTabPanel === 'output'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Terminal Output
@@ -641,8 +640,8 @@ export default function VSCodeWorkbench() {
                 onClick={() => setActiveTabPanel('stdin')}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${
                   activeTabPanel === 'stdin'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Standard Input
@@ -650,25 +649,25 @@ export default function VSCodeWorkbench() {
             </div>
 
             {execMeta && (
-              <Badge variant="secondary" className="text-[10px] py-0 font-mono">
+              <Badge variant="secondary" className="text-[10px] py-0 font-mono bg-blue-50 text-blue-700 border-blue-200">
                 {execMeta.time}
               </Badge>
             )}
           </div>
 
-          <div className="flex-1 p-3 font-mono text-xs overflow-y-auto bg-zinc-950">
+          <div className="flex-1 p-3 font-mono text-xs overflow-y-auto bg-slate-900 text-slate-100 rounded-b-2xl">
             {activeTabPanel === 'output' ? (
-              <pre className="text-zinc-300 whitespace-pre-wrap leading-relaxed">
+              <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed font-mono">
                 {output || 'Click "Run Code" above to compile & execute.'}
               </pre>
             ) : (
               <div className="space-y-2">
-                <label className="text-[10px] text-zinc-500 uppercase font-sans font-bold">Stdin Console Input</label>
+                <label className="text-[10px] text-slate-400 uppercase font-sans font-bold">Stdin Console Input</label>
                 <textarea
                   value={stdinInput}
                   onChange={e => setStdinInput(e.target.value)}
                   placeholder="Provide test inputs for program execution..."
-                  className="w-full h-40 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full h-40 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                 />
               </div>
             )}

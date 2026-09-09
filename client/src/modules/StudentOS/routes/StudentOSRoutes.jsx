@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
@@ -88,19 +88,19 @@ function StudentOSShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100 font-sans">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
       {/* Google Workspace Integration Banner */}
       {!isGoogleConnected && (
-        <div className="bg-gradient-to-r from-blue-900/60 via-indigo-900/40 to-zinc-950 border-b border-blue-500/20 px-4 py-2 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-50">
-          <div className="flex items-center gap-2 text-zinc-200 font-medium">
-            <Globe size={14} className="text-blue-400 shrink-0" />
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 border-b border-blue-200 px-4 py-2.5 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-50">
+          <div className="flex items-center gap-2 text-blue-950 font-medium">
+            <Globe size={14} className="text-blue-600 shrink-0" />
             <span>Connect your <strong>Google Workspace</strong> (Classroom, Drive, Gmail, Calendar) to sync real live data.</span>
           </div>
           <Button
             onClick={connectGoogleWorkspace}
-            variant="apple"
+            variant="default"
             size="sm"
-            className="h-7 text-[11px] px-3 gap-1 shrink-0"
+            className="h-7 text-[11px] px-3 gap-1 shrink-0 bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
           >
             <Sparkles size={12} /> Connect Google Account
           </Button>
@@ -108,31 +108,31 @@ function StudentOSShell({ children }) {
       )}
 
       {/* Top Header */}
-      <header className="sticky top-0 z-40 h-14 border-b border-zinc-800/80 bg-zinc-950/75 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between">
+      <header className="sticky top-0 z-40 h-14 border-b border-slate-200 bg-white/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+            className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
           >
             <Menu size={18} />
           </button>
 
           <Link to="/student-os" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Command size={14} />
             </div>
-            <span className="font-bold text-sm tracking-tight text-white font-sans">StudentOS</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50">
-              v2.0 API Connected
+            <span className="font-bold text-sm tracking-tight text-slate-900 font-sans">StudentOS</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+              v2.0 Connected
             </span>
           </Link>
         </div>
 
         {/* Center Search Bar */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-400 w-80 cursor-pointer hover:border-zinc-700 transition-colors">
-          <Search size={14} className="text-zinc-500" />
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs text-slate-500 w-80 cursor-pointer hover:border-blue-300 hover:bg-white transition-colors">
+          <Search size={14} className="text-slate-400" />
           <span className="flex-1">Search tasks, courses, code files...</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-400 border border-zinc-700 font-mono">
+          <kbd className="px-1.5 py-0.5 rounded bg-white text-[10px] text-slate-500 border border-slate-200 font-mono shadow-xs">
             ⌘K
           </kbd>
         </div>
@@ -140,25 +140,25 @@ function StudentOSShell({ children }) {
         {/* Status Bar */}
         <div className="flex items-center gap-3">
           {/* Daily Streak Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
-            <Flame size={13} className="text-amber-400 fill-amber-400 animate-pulse" />
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold shadow-xs">
+            <Flame size={13} className="text-blue-600 fill-blue-600 animate-pulse" />
             <span>{streakDays || 1} Day Streak</span>
           </div>
 
           {isGoogleConnected ? (
-            <Badge variant="success" className="hidden sm:flex items-center gap-1 text-[10px] py-1">
+            <Badge variant="success" className="hidden sm:flex items-center gap-1 text-[10px] py-1 bg-emerald-50 text-emerald-700 border-emerald-200">
               <CheckCircle2 size={11} /> {googleEmail || 'Google Connected'}
             </Badge>
           ) : (
-            <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-[10px] py-1 text-zinc-400">
-              <ShieldAlert size={11} className="text-amber-400" /> Standalone Mode
+            <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-[10px] py-1 text-slate-600 bg-slate-100 border-slate-200">
+              <ShieldAlert size={11} className="text-blue-600" /> Standalone Mode
             </Badge>
           )}
 
           {/* User Profile Pill -> Links directly to /student-os/profile */}
           <Link
             to="/student-os/profile"
-            className="flex items-center gap-2 pl-2 border-l border-zinc-800 hover:opacity-85 transition-opacity"
+            className="flex items-center gap-2 pl-2 border-l border-slate-200 hover:opacity-85 transition-opacity"
             title="Open Academic Profile"
           >
             {userAvatar ? (
@@ -168,11 +168,11 @@ function StudentOSShell({ children }) {
                 className="w-7 h-7 rounded-full object-cover border border-blue-500 shadow-sm"
               />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-sm">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
                 {avatarInitials}
               </div>
             )}
-            <span className="hidden sm:inline text-xs font-semibold text-zinc-200">{displayName}</span>
+            <span className="hidden sm:inline text-xs font-semibold text-slate-700">{displayName}</span>
           </Link>
         </div>
       </header>
@@ -180,17 +180,17 @@ function StudentOSShell({ children }) {
       <div className="flex-1 flex overflow-hidden">
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/40 z-30 lg:hidden backdrop-blur-xs"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Left Sidebar */}
-        <aside className={`fixed lg:static top-14 bottom-0 left-0 z-40 w-60 bg-zinc-950/90 border-r border-zinc-800/80 backdrop-blur-xl flex flex-col transition-transform duration-200 ${
+        <aside className={`fixed lg:static top-14 bottom-0 left-0 z-40 w-60 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
           <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1">
-            <div className="px-3 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Core Workspace
             </div>
             {MAIN_NAV.map((item) => {
@@ -202,17 +202,17 @@ function StudentOSShell({ children }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs border border-blue-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={15} className={active ? 'text-blue-600' : 'text-slate-400'} />
                   <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}
 
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Career & Roadmap
             </div>
             {CAREER_NAV.map((item) => {
@@ -224,17 +224,17 @@ function StudentOSShell({ children }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs border border-blue-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={15} className={active ? 'text-blue-600' : 'text-slate-400'} />
                   <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}
 
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Intelligence & Profile
             </div>
             {INTELLIGENCE_NAV.map((item) => {
@@ -246,13 +246,13 @@ function StudentOSShell({ children }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     active
-                      ? 'bg-zinc-800/90 text-white font-semibold shadow-sm border border-zinc-700/50'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs border border-blue-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  <item.icon size={15} className={active ? 'text-blue-400' : 'text-zinc-500'} />
+                  <item.icon size={15} className={active ? 'text-blue-600' : 'text-slate-400'} />
                   <span className="flex-1 truncate">{item.label}</span>
-                  {item.badge && <Badge variant="apple" className="py-0 text-[9px]">{item.badge}</Badge>}
+                  {item.badge && <Badge variant="apple" className="py-0 text-[9px] bg-blue-600 text-white border-0">{item.badge}</Badge>}
                 </Link>
               );
             })}
@@ -260,7 +260,7 @@ function StudentOSShell({ children }) {
         </aside>
 
         {/* Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#09090b]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
           {children}
         </main>
       </div>

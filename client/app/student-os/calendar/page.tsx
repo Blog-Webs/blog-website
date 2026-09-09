@@ -260,21 +260,21 @@ export default function CalendarPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <CalendarIcon className="text-emerald-400" /> Academic & Personal Calendar
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <CalendarIcon className="text-blue-600" /> Academic & Personal Calendar
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Interactive schedule manager integrated with national public holidays, exams, and personal milestones.
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start flex-wrap">
           {/* View switch buttons */}
-          <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveView('month')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                activeView === 'month' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
+                activeView === 'month' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <CalendarDays size={13} /> Month
@@ -282,7 +282,7 @@ export default function CalendarPage() {
             <button
               onClick={() => setActiveView('agenda')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                activeView === 'agenda' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
+                activeView === 'agenda' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <List size={13} /> Schedule List
@@ -290,16 +290,16 @@ export default function CalendarPage() {
           </div>
 
           <Button
-            variant={showHolidays ? 'secondary' : 'outline'}
+            variant="outline"
             size="sm"
             onClick={() => setShowHolidays(!showHolidays)}
-            className="text-xs gap-1.5 h-9"
+            className="text-xs gap-1.5 h-9 border-slate-200 text-slate-700 hover:bg-slate-100"
           >
-            <Flag size={13} className="text-amber-400" />
+            <Flag size={13} className="text-blue-600" />
             {showHolidays ? 'Holidays: ON' : 'Holidays: OFF'}
           </Button>
 
-          <Button onClick={() => openCreate()} variant="apple" size="sm" className="gap-2 h-9 shadow-md shadow-blue-500/20">
+          <Button onClick={() => openCreate()} size="sm" className="gap-2 h-9 shadow-md bg-blue-600 hover:bg-blue-700 text-white">
             <Plus size={16} /> Add Event
           </Button>
         </div>
@@ -308,24 +308,24 @@ export default function CalendarPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Grid View */}
         {activeView === 'month' ? (
-          <Card className="lg:col-span-2 p-6 space-y-4 bg-zinc-950 border-zinc-800 shadow-xl">
+          <div className="lg:col-span-2 p-6 space-y-4 bg-white border border-slate-200 rounded-3xl shadow-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white font-sans">{MONTHS[viewMonth]} {viewYear}</h2>
-                <Badge variant="secondary" className="text-[10px] py-0 font-mono">
-                  {events.length} Saved Events
+                <h2 className="text-xl font-bold text-slate-900 font-sans">{MONTHS[viewMonth]} {viewYear}</h2>
+                <Badge variant="secondary" className="text-[10px] py-0 font-mono bg-blue-50 text-blue-700 border-blue-200">
+                  {events.length} Events
                 </Badge>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft size={18} /></Button>
-                <Button variant="ghost" size="sm" onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }} className="text-xs">
+                <Button variant="ghost" size="icon" onClick={prevMonth} className="text-slate-600 hover:text-slate-900"><ChevronLeft size={18} /></Button>
+                <Button variant="ghost" size="sm" onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }} className="text-xs text-slate-700 hover:text-blue-600 font-semibold">
                   Today
                 </Button>
-                <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight size={18} /></Button>
+                <Button variant="ghost" size="icon" onClick={nextMonth} className="text-slate-600 hover:text-slate-900"><ChevronRight size={18} /></Button>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-zinc-400 border-b border-zinc-800 pb-2">
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500 border-b border-slate-100 pb-2 uppercase tracking-wider">
               {DAYS.map(d => <span key={d}>{d}</span>)}
             </div>
 
@@ -342,15 +342,15 @@ export default function CalendarPage() {
                     key={day}
                     className={`min-h-[75px] p-1.5 rounded-2xl border text-left transition-all flex flex-col gap-1 cursor-pointer overflow-hidden ${
                       isToday
-                        ? 'bg-blue-600/15 border-blue-500/60 shadow-md ring-1 ring-blue-500/30'
+                        ? 'bg-blue-50/80 border-blue-500 shadow-xs ring-1 ring-blue-500/20'
                         : dayHolidays.length > 0
-                        ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
-                        : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700'
+                        ? 'bg-sky-50/60 border-sky-200 hover:border-blue-400'
+                        : 'bg-slate-50/60 border-slate-200/80 hover:border-blue-300 hover:bg-white'
                     }`}
                     onClick={() => openCreate(dateKey)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`text-[11px] font-bold ${isToday ? 'text-blue-400 bg-blue-500/20 px-1.5 rounded-full' : 'text-zinc-400'}`}>
+                      <span className={`text-[11px] font-bold ${isToday ? 'text-blue-700 bg-blue-100 px-1.5 rounded-full' : 'text-slate-700'}`}>
                         {day}
                       </span>
                       {dayHolidays.length > 0 && (
@@ -362,7 +362,7 @@ export default function CalendarPage() {
                     {dayHolidays.map((h, hi) => (
                       <span
                         key={`h-${hi}`}
-                        className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold truncate border border-amber-500/30"
+                        className="text-[9px] px-1 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold truncate border border-sky-200"
                         title={h.title}
                       >
                         {h.icon} {h.title}
@@ -373,95 +373,95 @@ export default function CalendarPage() {
                     {dayEvents.slice(0, 2).map(e => (
                       <span
                         key={e.id}
-                        className="text-[9px] px-1 py-0.5 rounded font-medium truncate text-white shadow-xs"
-                        style={{ backgroundColor: getColorBg(e.colorId) + 'cc' }}
+                        className="text-[9px] px-1 py-0.5 rounded font-medium truncate text-white shadow-2xs"
+                        style={{ backgroundColor: getColorBg(e.colorId) }}
                         title={e.title}
                       >
                         {e.title}
                       </span>
                     ))}
                     {dayEvents.length > 2 && (
-                      <span className="text-[9px] text-zinc-500 font-mono">+{dayEvents.length - 2} more</span>
+                      <span className="text-[9px] text-slate-500 font-mono">+{dayEvents.length - 2} more</span>
                     )}
                   </div>
                 );
               })}
             </div>
-          </Card>
+          </div>
         ) : (
           /* Full Schedule Agenda View */
-          <Card className="lg:col-span-2 p-6 space-y-4 bg-zinc-950 border-zinc-800 shadow-xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <List size={18} className="text-blue-400" /> Complete Schedule Overview
+          <div className="lg:col-span-2 p-6 space-y-4 bg-white border border-slate-200 rounded-3xl shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <List size={18} className="text-blue-600" /> Complete Schedule Overview
               </h2>
               <div className="relative w-64">
-                <Search size={13} className="absolute left-3 top-2.5 text-zinc-500" />
+                <Search size={13} className="absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Filter events..."
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
             </div>
 
             <div className="space-y-3 max-h-[550px] overflow-y-auto pr-1">
               {filteredEvents.length === 0 && (
-                <p className="text-xs text-zinc-500 text-center py-12">No matching events found.</p>
+                <p className="text-xs text-slate-400 text-center py-12">No matching events found.</p>
               )}
 
               {filteredEvents.map(evt => (
-                <div key={evt.id} className="p-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 flex items-center justify-between gap-4 hover:border-zinc-700 transition-all">
+                <div key={evt.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-4 hover:border-blue-300 hover:bg-white transition-all shadow-2xs">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getColorBg(evt.colorId) }} />
                     <div>
-                      <h4 className="text-xs font-bold text-white">{evt.title}</h4>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">{formatEventDate(evt.start)} {evt.description ? `· ${evt.description}` : ''}</p>
+                      <h4 className="text-xs font-bold text-slate-900">{evt.title}</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{formatEventDate(evt.start)} {evt.description ? `· ${evt.description}` : ''}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => openEdit(evt)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white">
+                    <button onClick={() => openEdit(evt)} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900">
                       <Edit2 size={13} />
                     </button>
-                    <button onClick={() => handleDelete(evt.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-zinc-400 hover:text-red-400">
+                    <button onClick={() => handleDelete(evt.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600">
                       <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Upcoming Events & Holidays Feed */}
-        <Card className="p-6 space-y-4 bg-zinc-950 border-zinc-800 flex flex-col max-h-[640px] shadow-xl">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Clock size={15} className="text-emerald-400" /> Upcoming Feed
+        <div className="p-6 space-y-4 bg-white border border-slate-200 rounded-3xl flex flex-col max-h-[640px] shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Clock size={15} className="text-blue-600" /> Upcoming Feed
             </h3>
-            {loading && <RefreshCw size={13} className="animate-spin text-zinc-500" />}
+            {loading && <RefreshCw size={13} className="animate-spin text-blue-600" />}
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {/* Month holidays list */}
             {showHolidays && monthHolidays.length > 0 && (
               <div className="space-y-2 mb-4">
-                <p className="text-[10px] font-bold text-amber-400/90 uppercase tracking-widest flex items-center gap-1">
-                  <Flag size={11} /> {MONTHS[viewMonth]} Holidays & Observances
+                <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest flex items-center gap-1">
+                  <Flag size={11} className="text-blue-600" /> {MONTHS[viewMonth]} Holidays & Observances
                 </p>
                 {monthHolidays.map((h, idx) => (
-                  <div key={idx} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2">
+                  <div key={idx} className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-base shrink-0">{h.icon}</span>
                       <div className="truncate">
-                        <p className="text-xs font-bold text-amber-200 truncate">{h.title}</p>
-                        <p className="text-[10px] text-amber-400/80">{MONTHS[h.month]} {h.day}, {viewYear}</p>
+                        <p className="text-xs font-bold text-blue-900 truncate">{h.title}</p>
+                        <p className="text-[10px] text-blue-700/80">{MONTHS[h.month]} {h.day}, {viewYear}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-300 uppercase py-0">
+                    <Badge variant="outline" className="text-[9px] border-blue-300 text-blue-800 uppercase py-0 bg-white">
                       {h.type.replace('_', ' ')}
                     </Badge>
                   </div>
@@ -470,27 +470,27 @@ export default function CalendarPage() {
             )}
 
             {/* Custom Events */}
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1">
-              <CalendarDays size={11} /> Personal Events ({events.length})
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+              <CalendarDays size={11} className="text-blue-600" /> Personal Events ({events.length})
             </p>
 
             {events.length === 0 && !loading && (
-              <p className="text-xs text-zinc-500 py-6 text-center">
+              <p className="text-xs text-slate-400 py-6 text-center">
                 No personal events scheduled. Click "Add Event" to create one.
               </p>
             )}
 
             {events.map(evt => (
-              <div key={evt.id} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 space-y-1.5 group hover:border-zinc-700 transition-all">
+              <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 group hover:border-blue-300 hover:bg-white transition-all">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getColorBg(evt.colorId) }} />
-                    <p className="text-xs font-bold text-white truncate">{evt.title}</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{evt.title}</p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                     <button
                       onClick={() => openEdit(evt)}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                      className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-900"
                       title="Edit Event"
                     >
                       <Edit2 size={12} />
@@ -498,7 +498,7 @@ export default function CalendarPage() {
                     <button
                       onClick={() => handleDelete(evt.id)}
                       disabled={deletingId === evt.id}
-                      className="p-1 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400"
+                      className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
                       title="Delete Event"
                     >
                       {deletingId === evt.id ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
@@ -506,10 +506,10 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-zinc-400 pl-4.5">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pl-4.5">
                   <span>{formatEventDate(evt.start)}</span>
                   {evt.type && (
-                    <Badge variant="secondary" className="text-[9px] py-0 capitalize">
+                    <Badge variant="secondary" className="text-[9px] py-0 capitalize bg-slate-200/70 text-slate-700">
                       {evt.type}
                     </Badge>
                   )}
@@ -517,60 +517,64 @@ export default function CalendarPage() {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Create / Edit Event Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <Card className="max-w-md w-full border-zinc-800 bg-zinc-950 p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <h3 className="text-base font-bold text-white">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full border border-slate-200 bg-white rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
                 {editing ? 'Edit Event' : 'Create Event'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-zinc-400 hover:text-white">
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-700">
                 <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="text-xs text-zinc-400 font-medium block mb-1">Event Title *</label>
+                <label className="text-xs text-slate-600 font-medium block mb-1">Event Title *</label>
                 <Input
                   required
                   autoFocus
                   value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   placeholder="e.g. Distributed Systems Final Exam"
+                  className="bg-slate-50 border-slate-200 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400 font-medium block mb-1">Description / Location</label>
+                <label className="text-xs text-slate-600 font-medium block mb-1">Description / Location</label>
                 <Input
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="Optional notes or Zoom link"
+                  className="bg-slate-50 border-slate-200 focus:bg-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-zinc-400 font-medium block mb-1">Date *</label>
+                  <label className="text-xs text-slate-600 font-medium block mb-1">Date *</label>
                   <Input
                     required
                     type="date"
                     value={form.date}
                     onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    className="bg-slate-50 border-slate-200 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-400 font-medium block mb-1">Time</label>
+                  <label className="text-xs text-slate-600 font-medium block mb-1">Time</label>
                   <Input
                     type="time"
                     value={form.time}
                     disabled={form.allDay}
                     onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
+                    className="bg-slate-50 border-slate-200 focus:bg-white"
                   />
                 </div>
               </div>
@@ -581,15 +585,15 @@ export default function CalendarPage() {
                   id="allDayCheck"
                   checked={form.allDay}
                   onChange={e => setForm(f => ({ ...f, allDay: e.target.checked }))}
-                  className="rounded accent-blue-500"
+                  className="rounded accent-blue-600"
                 />
-                <label htmlFor="allDayCheck" className="text-xs text-zinc-300 cursor-pointer">
+                <label htmlFor="allDayCheck" className="text-xs text-slate-700 cursor-pointer">
                   All Day Event
                 </label>
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400 font-medium block mb-2">Category Color</label>
+                <label className="text-xs text-slate-600 font-medium block mb-2">Category Color</label>
                 <div className="flex items-center gap-3">
                   {EVENT_COLORS.map(c => (
                     <button
@@ -597,7 +601,7 @@ export default function CalendarPage() {
                       type="button"
                       onClick={() => setForm(f => ({ ...f, color: c.value }))}
                       className={`w-7 h-7 rounded-full transition-all ${
-                        form.color === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-950 scale-110' : 'opacity-70 hover:opacity-100'
+                        form.color === c.value ? 'ring-2 ring-blue-600 ring-offset-2 ring-offset-white scale-110' : 'opacity-70 hover:opacity-100'
                       }`}
                       style={{ backgroundColor: c.bg }}
                       title={c.label}
@@ -606,17 +610,17 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
-                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="text-slate-600 hover:text-slate-900">
                   Cancel
                 </Button>
-                <Button type="submit" variant="apple" disabled={saving}>
+                <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white">
                   {saving ? <RefreshCw size={14} className="animate-spin mr-1.5" /> : <Check size={14} className="mr-1.5" />}
                   {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Event'}
                 </Button>
               </div>
             </form>
-          </Card>
+          </div>
         </div>
       )}
     </div>

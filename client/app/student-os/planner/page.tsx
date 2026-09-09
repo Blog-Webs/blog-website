@@ -22,17 +22,17 @@ type Slot = {
 };
 
 const TAG_COLORS: Record<string, string> = {
-  Coding: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-  Academic: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  Project: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-  Career: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  Break: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  Coding: 'text-blue-700 bg-blue-50 border-blue-200',
+  Academic: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+  Project: 'text-sky-700 bg-sky-50 border-sky-200',
+  Career: 'text-amber-700 bg-amber-50 border-amber-200',
+  Break: 'text-emerald-700 bg-emerald-50 border-emerald-200',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: 'text-red-400',
-  medium: 'text-amber-400',
-  low: 'text-zinc-400',
+  high: 'text-red-600',
+  medium: 'text-amber-600',
+  low: 'text-slate-400',
 };
 
 function getTodayKey() {
@@ -120,18 +120,18 @@ export default function DailyPlannerPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <ClipboardList className="text-emerald-400" /> Daily Time-Block Planner
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <ClipboardList className="text-blue-600" /> Daily Time-Block Planner
             </h1>
-            <Badge variant="secondary" className="text-[10px] text-zinc-400 gap-1 font-mono">
+            <Badge variant="secondary" className="text-[10px] text-slate-600 bg-slate-100 border-slate-200 gap-1 font-mono">
               <Calendar size={11} /> {todayStr}
             </Badge>
           </div>
-          <p className="text-xs text-zinc-400">
-            24-hour persistent AI schedule derived from your active roadmap phase. Retained across browser reloads.
+          <p className="text-xs text-slate-500">
+            24-hour persistent AI schedule derived from your active roadmap phase.
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export default function DailyPlannerPage() {
             onClick={handleReset}
             variant="ghost"
             size="sm"
-            className="text-xs text-zinc-400 hover:text-red-400 gap-1.5 self-start"
+            className="text-xs text-slate-500 hover:text-red-600 gap-1.5 self-start rounded-xl"
           >
             <RotateCcw size={13} /> Reset Schedule
           </Button>
@@ -149,22 +149,24 @@ export default function DailyPlannerPage() {
 
       {/* Active Phase Banner */}
       {activePhase && (
-        <Card className="p-4 bg-blue-950/20 border-blue-500/30 flex items-center gap-4 shadow-md">
-          <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+        <Card className="p-4 bg-blue-50/60 border-blue-200 flex items-center gap-4 shadow-xs rounded-3xl">
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
             <Zap size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-blue-300 font-semibold uppercase tracking-wider">Active Target Phase</p>
-            <p className="text-sm font-bold text-white truncate">{activePhase.title}</p>
+            <p className="text-[11px] text-blue-700 font-bold uppercase tracking-wider">Active Target Phase</p>
+            <p className="text-sm font-bold text-slate-900 truncate">{activePhase.title}</p>
           </div>
-          <Badge variant="apple" className="text-[10px] shrink-0">In Progress</Badge>
+          <Badge className="text-[10px] shrink-0 bg-blue-600 text-white border-transparent font-semibold">
+            In Progress
+          </Badge>
         </Card>
       )}
 
       {/* Generation Controls */}
-      <Card className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 bg-zinc-950 border-zinc-800">
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 bg-white border-slate-200 rounded-3xl shadow-xs">
         <div className="flex items-center gap-3 flex-1">
-          <label className="text-xs text-zinc-400 font-medium whitespace-nowrap">Available Hours Today:</label>
+          <label className="text-xs text-slate-600 font-semibold whitespace-nowrap">Available Hours Today:</label>
           <div className="flex items-center gap-2">
             {[4, 6, 8, 10, 12].map(h => (
               <button
@@ -172,8 +174,8 @@ export default function DailyPlannerPage() {
                 onClick={() => setHoursInput(h)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                   hoursInput === h
-                    ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-xs'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-400 hover:bg-blue-50/50'
                 }`}
               >{h}h</button>
             ))}
@@ -183,8 +185,7 @@ export default function DailyPlannerPage() {
         <Button
           onClick={generatePlan}
           disabled={generating}
-          variant="apple"
-          className="gap-2 self-start sm:self-center"
+          className="gap-2 self-start sm:self-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs"
         >
           {generating ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
           {generating ? 'Generating Schedule...' : generated ? 'Regenerate Plan' : 'Generate Daily Plan'}
@@ -193,17 +194,17 @@ export default function DailyPlannerPage() {
 
       {/* Daily Progress Bar */}
       {generated && slots.length > 0 && (
-        <Card className="p-4 flex items-center gap-4 bg-zinc-950 border-zinc-800">
+        <Card className="p-5 flex items-center gap-4 bg-white border-slate-200 rounded-3xl shadow-xs">
           <div className="flex-1">
             <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                <Flame size={14} className="text-emerald-400" /> Daily Target Completion
+              <span className="text-slate-600 font-bold flex items-center gap-1.5">
+                <Flame size={14} className="text-blue-600" /> Daily Target Completion
               </span>
-              <span className="text-emerald-400 font-bold">{completedCount} of {slots.length} Tasks Done ({progress}%)</span>
+              <span className="text-blue-600 font-bold">{completedCount} of {slots.length} Tasks Done ({progress}%)</span>
             </div>
-            <div className="h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500 rounded-full transition-all duration-500"
+                className="h-full bg-blue-600 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -213,60 +214,62 @@ export default function DailyPlannerPage() {
 
       {/* Time Slots */}
       {!generated ? (
-        <Card className="p-12 text-center space-y-4 bg-zinc-950 border-zinc-800">
-          <ClipboardList size={40} className="text-zinc-600 mx-auto" />
-          <h2 className="text-base font-bold text-white">No Schedule Active for Today</h2>
-          <p className="text-zinc-400 text-xs max-w-md mx-auto leading-relaxed">
+        <Card className="p-12 text-center space-y-4 bg-white border-slate-200 rounded-3xl shadow-xs">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+            <ClipboardList size={32} />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">No Schedule Active for Today</h2>
+          <p className="text-slate-500 text-xs max-w-md mx-auto leading-relaxed">
             Click "Generate Daily Plan" above to create your smart time-blocked schedule tailored to your available study hours. Your plan will persist for 24 hours.
           </p>
         </Card>
       ) : (
-        <Card className="p-6 space-y-3 bg-zinc-950 border-zinc-800 shadow-xl">
+        <Card className="p-5 space-y-3 bg-white border-slate-200 shadow-xs rounded-3xl">
           {slots.map((slot, idx) => (
             <div
               key={idx}
               className={`p-4 rounded-2xl border flex items-center gap-4 transition-all cursor-pointer select-none ${
                 slot.completed
-                  ? 'bg-zinc-900/30 border-zinc-800/60 opacity-60'
-                  : 'bg-zinc-900/90 border-zinc-800 hover:border-emerald-500/40 hover:bg-zinc-900'
+                  ? 'bg-slate-50 border-slate-200/80 opacity-60'
+                  : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-xs'
               }`}
               onClick={() => toggleComplete(idx)}
             >
               {/* Checkbox */}
               <div className="shrink-0">
                 {slot.completed ? (
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40">
+                  <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-300">
                     <Check size={14} />
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-900 hover:border-zinc-500 transition-colors" />
+                  <div className="w-6 h-6 rounded-full border border-slate-300 bg-white hover:border-blue-500 transition-colors" />
                 )}
               </div>
 
               {/* Time Icon */}
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200">
                 <Clock size={14} />
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-emerald-400 font-semibold">{slot.time}</p>
-                <p className={`text-sm font-semibold mt-0.5 ${slot.completed ? 'line-through text-zinc-500' : 'text-white'}`}>
+                <p className="text-xs text-blue-600 font-bold">{slot.time}</p>
+                <p className={`text-sm font-bold mt-0.5 ${slot.completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                   {slot.title}
                 </p>
                 {slot.description && (
-                  <p className="text-xs text-zinc-400 mt-0.5 truncate">{slot.description}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{slot.description}</p>
                 )}
               </div>
 
               {/* Meta */}
               <div className="flex items-center gap-2 shrink-0">
                 {slot.priority && (
-                  <span className={`text-[10px] font-bold uppercase ${PRIORITY_COLORS[slot.priority] || 'text-zinc-500'}`}>
+                  <span className={`text-[10px] font-bold uppercase ${PRIORITY_COLORS[slot.priority] || 'text-slate-500'}`}>
                     {slot.priority}
                   </span>
                 )}
-                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${TAG_COLORS[slot.tag] || 'text-zinc-400 bg-zinc-800 border-zinc-700'}`}>
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${TAG_COLORS[slot.tag] || 'text-slate-600 bg-slate-100 border-slate-200'}`}>
                   {slot.tag}
                 </span>
               </div>

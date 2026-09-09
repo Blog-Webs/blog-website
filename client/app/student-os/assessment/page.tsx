@@ -12,12 +12,12 @@ import { useRoadmap } from '@/context/RoadmapContext';
 import api from '@/lib/api';
 
 const TOPICS = [
-  { key: 'aptitude', label: 'Aptitude & Reasoning', icon: '🧠', color: 'text-amber-400 border-amber-500/40 bg-amber-500/10' },
-  { key: 'dsa', label: 'Data Structures & Algorithms', icon: '⚙️', color: 'text-blue-400 border-blue-500/40 bg-blue-500/10' },
-  { key: 'os', label: 'Operating Systems', icon: '💻', color: 'text-purple-400 border-purple-500/40 bg-purple-500/10' },
-  { key: 'dbms', label: 'DBMS & SQL', icon: '🗄️', color: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/10' },
-  { key: 'system-design', label: 'System Design', icon: '🏗️', color: 'text-rose-400 border-rose-500/40 bg-rose-500/10' },
-  { key: 'web-dev', label: 'Web Development', icon: '🌐', color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' },
+  { key: 'aptitude', label: 'Aptitude & Reasoning', icon: '🧠', color: 'text-amber-700 border-amber-200 bg-amber-50' },
+  { key: 'dsa', label: 'Data Structures & Algorithms', icon: '⚙️', color: 'text-blue-700 border-blue-200 bg-blue-50' },
+  { key: 'os', label: 'Operating Systems', icon: '💻', color: 'text-indigo-700 border-indigo-200 bg-indigo-50' },
+  { key: 'dbms', label: 'DBMS & SQL', icon: '🗄️', color: 'text-sky-700 border-sky-200 bg-sky-50' },
+  { key: 'system-design', label: 'System Design', icon: '🏗️', color: 'text-rose-700 border-rose-200 bg-rose-50' },
+  { key: 'web-dev', label: 'Web Development', icon: '🌐', color: 'text-emerald-700 border-emerald-200 bg-emerald-50' },
 ];
 
 type Question = {
@@ -209,25 +209,25 @@ export default function AssessmentPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <Badge variant="apple" className="gap-1 px-3 py-1 mb-1">
-            <Brain size={13} /> AI Diagnostic Engine
+          <Badge className="gap-1 px-3 py-1 mb-1.5 bg-blue-50 text-blue-700 border-blue-200 text-xs font-semibold">
+            <Brain size={13} className="text-blue-600" /> AI Diagnostic Engine
           </Badge>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Skill Diagnostic & Assessment</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Skill Diagnostic & Assessment</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Test technical proficiency with AI-generated questions, deep performance reports, and persistent history.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-zinc-900/80 p-1 rounded-2xl border border-zinc-800 self-start">
+        <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start">
           <button
             onClick={() => setActiveTab('take')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'take'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Take Test
@@ -236,8 +236,8 @@ export default function AssessmentPage() {
             onClick={() => setActiveTab('history')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'history'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <History size={13} /> Past History ({testHistory.length})
@@ -252,7 +252,7 @@ export default function AssessmentPage() {
           {phase === 'select' && (
             <div className="space-y-6">
               <div>
-                <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-3">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-3">
                   Choose Subject Domain
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -260,10 +260,10 @@ export default function AssessmentPage() {
                     <button
                       key={topic.key}
                       onClick={() => setSelectedTopic(topic.key)}
-                      className={`p-4 rounded-2xl border text-left transition-all space-y-1.5 shadow-sm ${
+                      className={`p-4 rounded-3xl border text-left transition-all space-y-1.5 shadow-xs ${
                         selectedTopic === topic.key
-                          ? topic.color + ' ring-1 ring-white/20'
-                          : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+                          ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 text-blue-950'
+                          : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
                       <span className="text-2xl">{topic.icon}</span>
@@ -274,10 +274,10 @@ export default function AssessmentPage() {
               </div>
 
               {selectedTopic && (
-                <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-3xl space-y-6 shadow-xl">
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl space-y-6 shadow-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-zinc-400 font-semibold mb-2">Question Count</p>
+                      <p className="text-xs text-slate-600 font-semibold mb-2">Question Count</p>
                       <div className="flex gap-2">
                         {[5, 10, 15].map(n => (
                           <button
@@ -285,8 +285,8 @@ export default function AssessmentPage() {
                             onClick={() => setQuestionCount(n)}
                             className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all ${
                               questionCount === n
-                                ? 'bg-blue-500/20 border-blue-400 text-white shadow-sm'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                                ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-400 hover:bg-blue-50/50'
                             }`}
                           >{n} Qs</button>
                         ))}
@@ -294,7 +294,7 @@ export default function AssessmentPage() {
                     </div>
 
                     <div>
-                      <p className="text-xs text-zinc-400 font-semibold mb-2">Difficulty Level</p>
+                      <p className="text-xs text-slate-600 font-semibold mb-2">Difficulty Level</p>
                       <div className="flex gap-2">
                         {(['easy', 'medium', 'hard'] as const).map(d => (
                           <button
@@ -302,8 +302,8 @@ export default function AssessmentPage() {
                             onClick={() => setDifficulty(d)}
                             className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all capitalize ${
                               difficulty === d
-                                ? 'bg-blue-500/20 border-blue-400 text-white shadow-sm'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                                ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-400 hover:bg-blue-50/50'
                             }`}
                           >{d}</button>
                         ))}
@@ -314,9 +314,8 @@ export default function AssessmentPage() {
                   <Button
                     onClick={startTest}
                     disabled={generating}
-                    variant="apple"
                     size="lg"
-                    className="w-full gap-2 font-bold shadow-lg shadow-blue-500/20"
+                    className="w-full gap-2 font-bold shadow-xs bg-blue-600 hover:bg-blue-700 text-white rounded-2xl"
                   >
                     {generating ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
                     {generating ? 'Generating AI Diagnostic Questions...' : `Launch ${topicLabel} Test`}
@@ -328,34 +327,34 @@ export default function AssessmentPage() {
 
           {/* Interactive Quiz View */}
           {phase === 'quiz' && q && (
-            <Card className="p-8 space-y-6 bg-zinc-950 border-zinc-800 shadow-2xl">
-              <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-zinc-800 pb-3">
-                <span className="font-mono">Question {currentIdx + 1} of {questions.length}</span>
+            <Card className="p-8 space-y-6 bg-white border-slate-200 shadow-xs rounded-3xl">
+              <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-3">
+                <span className="font-mono font-medium">Question {currentIdx + 1} of {questions.length}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">{q.category || topicLabel}</Badge>
-                  <Badge variant="outline" className="text-[10px] capitalize border-zinc-700">{difficulty}</Badge>
+                  <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-700 border-slate-200">{q.category || topicLabel}</Badge>
+                  <Badge variant="outline" className="text-[10px] capitalize border-slate-200 text-slate-600">{difficulty}</Badge>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300"
+                  className="h-full bg-blue-600 transition-all duration-300"
                   style={{ width: `${((currentIdx) / questions.length) * 100}%` }}
                 />
               </div>
 
-              <h2 className="text-base font-semibold text-white leading-relaxed">{q.question}</h2>
+              <h2 className="text-base font-bold text-slate-900 leading-relaxed">{q.question}</h2>
 
               <div className="space-y-3">
                 {q.options.map((opt, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedOpt(i)}
-                    className={`w-full p-4 rounded-2xl text-left text-xs font-medium border transition-all ${
+                    className={`w-full p-4 rounded-2xl text-left text-xs font-semibold border transition-all ${
                       selectedOpt === i
-                        ? 'bg-blue-600/20 border-blue-400 text-white shadow-md'
-                        : 'bg-zinc-900/90 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                        ? 'bg-blue-50 border-blue-600 text-blue-900 ring-1 ring-blue-500/20 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-white'
                     }`}
                   >
                     {opt}
@@ -366,9 +365,8 @@ export default function AssessmentPage() {
               <Button
                 onClick={handleNext}
                 disabled={selectedOpt === null}
-                variant="apple"
                 size="lg"
-                className="w-full gap-2 font-bold shadow-lg"
+                className="w-full gap-2 font-bold shadow-xs bg-blue-600 hover:bg-blue-700 text-white rounded-2xl"
               >
                 {currentIdx + 1 === questions.length ? 'Submit & Generate Diagnostic Report' : 'Next Question'}{' '}
                 <ChevronRight size={16} />
@@ -380,27 +378,29 @@ export default function AssessmentPage() {
           {phase === 'report' && currentReport && (
             <div className="space-y-6">
               {/* Score Hero Card with Circular Ring */}
-              <Card className="p-8 bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-800 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+              <Card className="p-8 bg-white border-slate-200 shadow-xs rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="space-y-2 text-center md:text-left">
-                  <Badge variant={currentReport.percentage >= 70 ? 'success' : 'destructive'} className="text-xs uppercase">
+                  <Badge className={`text-xs uppercase font-bold ${
+                    currentReport.percentage >= 70 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
                     {currentReport.percentage >= 70 ? 'Proficient / Passed' : 'Needs Review'}
                   </Badge>
-                  <h2 className="text-2xl font-extrabold text-white">Diagnostic Score Analysis</h2>
-                  <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
-                    Topic: <strong className="text-zinc-200">{currentReport.topic}</strong> · Completed on {currentReport.date}
+                  <h2 className="text-2xl font-black text-slate-900">Diagnostic Score Analysis</h2>
+                  <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                    Topic: <strong className="text-slate-800">{currentReport.topic}</strong> · Completed on {currentReport.date}
                   </p>
                 </div>
 
                 {/* Score Ring */}
                 <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="#27272a" strokeWidth="8" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="8" />
                     <circle
                       cx="50"
                       cy="50"
                       r="40"
                       fill="none"
-                      stroke={currentReport.percentage >= 70 ? '#22c55e' : '#f59e0b'}
+                      stroke={currentReport.percentage >= 70 ? '#16a34a' : '#2563eb'}
                       strokeWidth="8"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 40}`}
@@ -409,37 +409,37 @@ export default function AssessmentPage() {
                     />
                   </svg>
                   <div className="absolute text-center">
-                    <span className="text-2xl font-extrabold text-white font-mono">{currentReport.score}/{currentReport.total}</span>
-                    <p className="text-[10px] text-zinc-400">{currentReport.percentage}%</p>
+                    <span className="text-2xl font-black text-slate-900 font-mono">{currentReport.score}/{currentReport.total}</span>
+                    <p className="text-[10px] text-slate-500 font-bold">{currentReport.percentage}%</p>
                   </div>
                 </div>
               </Card>
 
               {/* AI Written Evaluation */}
-              <Card className="p-6 bg-zinc-950 border-zinc-800 space-y-3 shadow-lg">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Sparkles size={16} className="text-blue-400" /> AI Academic Performance Assessment
+              <Card className="p-6 bg-white border-slate-200 space-y-3 shadow-xs rounded-3xl">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Sparkles size={16} className="text-blue-600" /> AI Academic Performance Assessment
                 </h3>
-                <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-sans">
+                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">
                   {currentReport.reportText}
                 </p>
               </Card>
 
               {/* Mistake Review Accordion */}
               {currentReport.wrongQuestions.length > 0 && (
-                <Card className="p-6 bg-zinc-950 border-zinc-800 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                <Card className="p-6 bg-white border-slate-200 space-y-3 rounded-3xl shadow-xs">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-600 uppercase tracking-wider">
                     <AlertCircle size={15} /> Weak Areas & Missed Questions ({currentReport.wrongQuestions.length})
                   </div>
                   <div className="space-y-3 pt-2">
                     {currentReport.wrongQuestions.map((wq, i) => (
-                      <div key={i} className="p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
-                        <p className="text-xs font-bold text-white leading-relaxed">{i + 1}. {wq.question}</p>
-                        <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <div key={i} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <p className="text-xs font-bold text-slate-900 leading-relaxed">{i + 1}. {wq.question}</p>
+                        <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
                           <CheckCircle2 size={13} /> Correct Answer: {wq.correct}
                         </p>
                         {wq.explanation && (
-                          <p className="text-[11px] text-zinc-400 pt-1 border-t border-zinc-800/60">
+                          <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-200">
                             <strong>Note:</strong> {wq.explanation}
                           </p>
                         )}
@@ -450,10 +450,10 @@ export default function AssessmentPage() {
               )}
 
               <div className="flex gap-3">
-                <Button onClick={reset} variant="apple" className="flex-1 gap-2">
+                <Button onClick={reset} className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs">
                   <RotateCcw size={14} /> Take Another Test
                 </Button>
-                <Button onClick={() => setActiveTab('history')} variant="secondary" className="flex-1">
+                <Button onClick={() => setActiveTab('history')} variant="outline" className="flex-1 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl">
                   View Past History
                 </Button>
               </div>
@@ -467,8 +467,8 @@ export default function AssessmentPage() {
         <div className="space-y-4">
           {testHistory.length > 0 && (
             <div className="flex items-center justify-between px-1">
-              <p className="text-xs text-zinc-400 font-semibold">
-                Saved Attempts: <strong className="text-white">{testHistory.length}</strong> · Average Score: <strong className="text-emerald-400">{Math.round(testHistory.reduce((acc, curr) => acc + curr.percentage, 0) / testHistory.length)}%</strong>
+              <p className="text-xs text-slate-500 font-semibold">
+                Saved Attempts: <strong className="text-slate-900">{testHistory.length}</strong> · Average Score: <strong className="text-emerald-600">{Math.round(testHistory.reduce((acc, curr) => acc + curr.percentage, 0) / testHistory.length)}%</strong>
               </p>
               <Button
                 variant="ghost"
@@ -478,7 +478,7 @@ export default function AssessmentPage() {
                     saveHistory([]);
                   }
                 }}
-                className="text-xs text-zinc-500 hover:text-red-400 h-7 px-2"
+                className="text-xs text-slate-500 hover:text-red-600 h-7 px-2 rounded-lg"
               >
                 Clear History
               </Button>
@@ -486,13 +486,15 @@ export default function AssessmentPage() {
           )}
 
           {testHistory.length === 0 ? (
-            <Card className="p-12 text-center space-y-3 bg-zinc-950 border-zinc-800">
-              <History size={40} className="text-zinc-600 mx-auto" />
-              <h2 className="text-base font-bold text-white">No Previous Test History</h2>
-              <p className="text-zinc-400 text-xs">
+            <Card className="p-12 text-center space-y-3 bg-white border-slate-200 rounded-3xl shadow-xs">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                <History size={32} />
+              </div>
+              <h2 className="text-base font-bold text-slate-900">No Previous Test History</h2>
+              <p className="text-slate-500 text-xs">
                 Your past diagnostic attempts, score ring reports, and mistake reviews will automatically be saved here.
               </p>
-              <Button onClick={() => setActiveTab('take')} variant="apple" className="gap-1.5 mt-2">
+              <Button onClick={() => setActiveTab('take')} className="gap-1.5 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
                 Start First Test
               </Button>
             </Card>
@@ -503,58 +505,60 @@ export default function AssessmentPage() {
                 return (
                   <Card
                     key={att.id}
-                    className="p-5 bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all space-y-3 shadow-md"
+                    className="p-5 bg-white border-slate-200 hover:border-slate-300 transition-all space-y-3 shadow-xs rounded-3xl"
                   >
                     <div
                       className="flex items-center justify-between gap-4 cursor-pointer select-none"
                       onClick={() => setExpandedHistoryId(isExpanded ? null : att.id)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-bold text-xs ${
-                          att.percentage >= 70 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-mono font-bold text-xs ${
+                          att.percentage >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
                           {att.percentage}%
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-bold text-white">{att.topic}</h3>
-                            <Badge variant="secondary" className="text-[10px] py-0 capitalize">{att.difficulty}</Badge>
+                            <h3 className="text-sm font-bold text-slate-900">{att.topic}</h3>
+                            <Badge variant="secondary" className="text-[10px] py-0 capitalize bg-slate-100 text-slate-600 border-slate-200">{att.difficulty}</Badge>
                           </div>
-                          <p className="text-xs text-zinc-400 mt-0.5">
-                            Score: <strong className="text-zinc-200">{att.score}/{att.total}</strong> · {att.date}
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Score: <strong className="text-slate-700">{att.score}/{att.total}</strong> · {att.date}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Badge variant={att.percentage >= 70 ? 'success' : 'destructive'} className="text-[10px]">
+                        <Badge className={`text-[10px] font-bold ${
+                          att.percentage >= 70 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
                           {att.percentage >= 70 ? 'Passed' : 'Needs Review'}
                         </Badge>
-                        {isExpanded ? <ChevronUp size={16} className="text-blue-400" /> : <ChevronDown size={16} className="text-zinc-500" />}
+                        {isExpanded ? <ChevronUp size={16} className="text-blue-600" /> : <ChevronDown size={16} className="text-slate-400" />}
                       </div>
                     </div>
 
                     {/* Detailed Review Dropdown */}
                     {isExpanded && (
-                      <div className="pt-3 border-t border-zinc-800 space-y-4">
-                        <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                      <div className="pt-3 border-t border-slate-100 space-y-4">
+                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
                           {att.reportText}
                         </div>
 
                         {att.wrongQuestions.length > 0 ? (
                           <div className="space-y-2">
-                            <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
                               Missed Questions & Correct Answers:
                             </p>
                             {att.wrongQuestions.map((wq, wi) => (
-                              <div key={wi} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs space-y-1">
-                                <p className="text-white font-medium">{wi + 1}. {wq.question}</p>
-                                <p className="text-emerald-400 font-semibold">Correct: {wq.correct}</p>
+                              <div key={wi} className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
+                                <p className="text-slate-900 font-bold">{wi + 1}. {wq.question}</p>
+                                <p className="text-emerald-600 font-semibold">Correct: {wq.correct}</p>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                          <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
                             <CheckCircle2 size={13} /> Perfect score! No missed questions on this attempt.
                           </p>
                         )}
