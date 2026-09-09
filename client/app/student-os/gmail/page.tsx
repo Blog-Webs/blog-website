@@ -38,7 +38,7 @@ function classifyEmail(sender: string, subject: string, snippet: string): 'gener
 
 const CATEGORY_TABS: { key: string; label: string; icon: any; color: string }[] = [
   { key: 'all', label: 'All Inboxes', icon: Inbox, color: 'text-blue-600' },
-  { key: 'general', label: 'General', icon: Mail, color: 'text-slate-600' },
+  { key: 'general', label: 'General', icon: Mail, color: 'text-gray-600' },
   { key: 'placement', label: 'Placement & Jobs', icon: Briefcase, color: 'text-emerald-600' },
   { key: 'faculty', label: 'Faculty & Academic', icon: GraduationCap, color: 'text-blue-600' },
   { key: 'ads', label: 'Ads & Promotions', icon: Megaphone, color: 'text-amber-600' },
@@ -123,13 +123,13 @@ export default function GmailPage() {
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
       case 'placement':
-        return <Badge className="text-[9px] py-0 bg-emerald-50 text-emerald-700 border-emerald-200">Placement</Badge>;
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Placement</span>;
       case 'faculty':
-        return <Badge className="text-[9px] py-0 bg-blue-50 text-blue-700 border-blue-200">Academic</Badge>;
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-medium">Academic</span>;
       case 'ads':
-        return <Badge className="text-[9px] py-0 bg-amber-50 text-amber-700 border-amber-200">Promotion</Badge>;
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 font-medium">Promotion</span>;
       default:
-        return <Badge variant="secondary" className="text-[9px] py-0 text-slate-600 bg-slate-100">General</Badge>;
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded-md text-gray-600 bg-gray-100 border border-gray-200 font-medium">General</span>;
     }
   };
 
@@ -143,23 +143,27 @@ export default function GmailPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-5xl mx-auto space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Mail className="text-blue-600" /> Academic Gmail Hub
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+            <Mail className="text-blue-600" size={20} /> Academic Gmail Hub
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-gray-500 mt-0.5">
             Smart inbox filtered by category with inline AI summarization and instant preview.
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={fetchEmails} disabled={loading} className="text-slate-600 hover:text-slate-900">
-          <RefreshCw size={16} className={loading ? 'animate-spin text-blue-600' : ''} />
-        </Button>
+        <button 
+          onClick={fetchEmails} 
+          disabled={loading} 
+          className="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 text-xs transition-colors self-start"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin text-blue-600' : ''} />
+        </button>
       </div>
 
       {/* Category Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {CATEGORY_TABS.map(tab => {
           const count = getCategoryCount(tab.key);
           const isActive = activeCategory === tab.key;
@@ -168,15 +172,15 @@ export default function GmailPage() {
             <button
               key={tab.key}
               onClick={() => setActiveCategory(tab.key)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                 isActive
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-slate-900'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <Icon size={14} className={isActive ? 'text-white' : tab.color} />
+              <Icon size={13} className={isActive ? 'text-white' : tab.color} />
               <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>
                 {count}
               </span>
             </button>
@@ -185,101 +189,100 @@ export default function GmailPage() {
       </div>
 
       {/* Email List Card */}
-      <div className="p-0 overflow-hidden bg-white border border-slate-200 rounded-3xl shadow-xs">
-        <div className="p-3.5 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between text-xs font-semibold text-slate-600">
+      <div className="p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-xs">
+        <div className="p-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-600">
           <div className="flex items-center gap-4">
-            <span className="text-blue-700 flex items-center gap-1.5 font-bold">
-              <Inbox size={14} className="text-blue-600" /> Showing {filteredEmails.length} Emails
+            <span className="text-gray-900 flex items-center gap-1.5 font-semibold text-xs">
+              <Inbox size={14} className="text-blue-600" /> {filteredEmails.length} Emails
             </span>
           </div>
-          <span className="text-[11px] text-slate-400">Click row to open/close reading pane</span>
+          <span className="text-[11px] text-gray-400 font-mono">Select row to read</span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm animate-pulse flex items-center justify-center gap-2">
-            <RefreshCw size={16} className="animate-spin text-blue-600" /> Fetching Gmail messages...
+          <div className="p-12 text-center text-gray-400 text-xs animate-pulse flex items-center justify-center gap-2">
+            <RefreshCw size={14} className="animate-spin text-blue-600" /> Fetching Gmail messages...
           </div>
         ) : filteredEmails.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-sm">
+          <div className="p-12 text-center text-gray-400 text-xs">
             No emails found in this category.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-gray-200">
             {filteredEmails.map(mail => {
               const isExpanded = expandedId === mail.id;
               const body = bodyMap[mail.id];
               const summary = summaryMap[mail.id];
               return (
-                <div key={mail.id} className={`transition-colors ${mail.unread ? 'bg-blue-50/40' : ''}`}>
+                <div key={mail.id} className={`transition-colors ${mail.unread ? 'bg-blue-50/30' : ''}`}>
                   {/* Email Row (Toggles open/close on click) */}
                   <div
-                    className="p-4 hover:bg-slate-50 flex items-center gap-4 cursor-pointer select-none"
+                    className="p-3.5 hover:bg-gray-50 flex items-center gap-3 cursor-pointer select-none"
                     onClick={() => toggleExpand(mail)}
                   >
                     <Star
-                      size={16}
-                      className="text-slate-300 hover:text-amber-400 shrink-0"
+                      size={15}
+                      className="text-gray-300 hover:text-amber-400 shrink-0"
                       onClick={e => e.stopPropagation()}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm ${mail.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                        <p className={`text-xs ${mail.unread ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
                           {mail.sender}
                         </p>
-                        {mail.unread && <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />}
+                        {mail.unread && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />}
                         {getCategoryBadge(mail.category)}
                       </div>
-                      <p className="text-xs font-semibold text-slate-800 truncate mt-0.5">{mail.subject}</p>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{mail.snippet}</p>
+                      <p className="text-xs font-semibold text-gray-900 truncate mt-0.5">{mail.subject}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{mail.snippet}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-slate-400">{mail.time}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-[11px] font-mono text-gray-400">{mail.time}</span>
+                      <button
                         disabled={summarizingId === mail.id}
                         onClick={e => {
                           e.stopPropagation();
                           handleSummarize(mail);
                         }}
-                        className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1"
+                        className="flex items-center gap-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-2.5 py-1 rounded-md text-xs font-medium shadow-xs transition-colors"
                       >
-                        <Bot size={13} /> {summarizingId === mail.id ? '...' : 'Summarize'}
-                      </Button>
+                        <Bot size={12} className="text-blue-600" />
+                        <span>{summarizingId === mail.id ? '...' : 'Summarize'}</span>
+                      </button>
                       {isExpanded ? (
-                        <ChevronUp size={16} className="text-blue-600" />
+                        <ChevronUp size={14} className="text-blue-600" />
                       ) : (
-                        <ChevronDown size={16} className="text-slate-400" />
+                        <ChevronDown size={14} className="text-gray-400" />
                       )}
                     </div>
                   </div>
 
                   {/* Inline Full Reading Pane */}
                   {isExpanded && (
-                    <div className="px-6 pb-6 pt-3 bg-slate-50 border-t border-slate-200 space-y-4">
+                    <div className="px-5 pb-5 pt-3 bg-gray-50 border-t border-gray-200 space-y-3">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <h3 className="text-base font-bold text-slate-900">{mail.subject}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
+                          <h3 className="text-sm font-semibold text-gray-900">{mail.subject}</h3>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
                             <span className="flex items-center gap-1"><User size={12} /> {mail.sender}</span>
-                            <span className="flex items-center gap-1"><Calendar size={12} /> {mail.time}</span>
+                            <span className="flex items-center gap-1 font-mono"><Calendar size={12} /> {mail.time}</span>
                             {getCategoryBadge(mail.category)}
                           </div>
                         </div>
                         <button
                           onClick={() => setExpandedId(null)}
-                          className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900"
+                          className="p-1 rounded-md hover:bg-gray-200 text-gray-500 hover:text-gray-900"
                           title="Close Reading Pane"
                         >
-                          <X size={16} />
+                          <X size={14} />
                         </button>
                       </div>
 
                       {/* Full Message Body */}
-                      <div className="bg-white rounded-2xl border border-slate-200 p-4 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto font-sans shadow-2xs">
+                      <div className="bg-white rounded-md border border-gray-200 p-3.5 text-xs text-gray-800 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto font-sans shadow-xs">
                         {loadingBodyId === mail.id ? (
-                          <span className="text-slate-400 animate-pulse">Loading email body from Google API...</span>
+                          <span className="text-gray-400 animate-pulse">Loading email body from Google API...</span>
                         ) : (
                           body || mail.snippet || 'No body text available.'
                         )}
@@ -287,25 +290,23 @@ export default function GmailPage() {
 
                       {/* Inline AI Summary */}
                       {summary && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-semibold text-blue-900">
-                            <Sparkles size={14} className="text-blue-600" /> AI Academic Summary
+                        <div className="bg-blue-50/70 border border-blue-200 rounded-md p-3.5 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-900">
+                            <Sparkles size={13} className="text-blue-600" /> AI Academic Summary
                           </div>
-                          <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{summary}</p>
+                          <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{summary}</p>
                         </div>
                       )}
 
                       {!summary && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="gap-1.5 text-xs h-8 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                        <button
                           disabled={summarizingId === mail.id}
                           onClick={() => handleSummarize(mail)}
+                          className="flex items-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-3 py-1.5 rounded-md text-xs font-medium shadow-xs transition-colors"
                         >
                           <Sparkles size={13} className="text-blue-600" />
-                          {summarizingId === mail.id ? 'Generating AI Summary...' : 'Generate AI Summary'}
-                        </Button>
+                          <span>{summarizingId === mail.id ? 'Generating AI Summary...' : 'Generate AI Summary'}</span>
+                        </button>
                       )}
                     </div>
                   )}

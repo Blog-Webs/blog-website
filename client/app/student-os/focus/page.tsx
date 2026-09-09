@@ -75,94 +75,93 @@ export default function FocusModePage() {
   const progressPct = ((totalSecs - secondsLeft) / totalSecs) * 100;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-6">
-      <div className="text-center space-y-2">
-        <Badge className="gap-1 px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 text-xs font-semibold">
-          <Focus size={13} className="text-blue-600" /> Distraction-Free Focus
-        </Badge>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pomodoro Focus Timer</h1>
-        <p className="text-xs text-slate-500">Eliminate distractions, build deep focus momentum with customizable intervals.</p>
+    <div className="max-w-2xl mx-auto space-y-6 py-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+            <Focus className="text-blue-600" size={20} /> Pomodoro Focus Engine
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">Eliminate distractions, build deep focus momentum with customizable intervals.</p>
+        </div>
       </div>
 
-      <Card className="max-w-lg mx-auto p-8 text-center space-y-6 bg-white border-slate-200 rounded-3xl shadow-xs">
+      <div className="p-8 text-center space-y-6 bg-white border border-gray-200 rounded-lg shadow-xs">
         {/* Mode Switch */}
-        <div className="flex justify-center gap-3">
-          <Button
-            size="sm"
+        <div className="flex justify-center gap-2">
+          <button
             onClick={() => switchMode('work')}
-            className={`rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md text-xs font-medium border transition-colors ${
               mode === 'work'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             {workMins} Min Work
-          </Button>
-          <Button
-            size="sm"
+          </button>
+          <button
             onClick={() => switchMode('break')}
-            className={`rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md text-xs font-medium border transition-colors ${
               mode === 'break'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             {breakMins} Min Break
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowSettings(!showSettings)} className="text-slate-500 hover:bg-slate-100 rounded-xl">
-            <Settings size={16} />
-          </Button>
+          </button>
+          <button 
+            onClick={() => setShowSettings(!showSettings)} 
+            className="p-1.5 rounded-md text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <Settings size={14} />
+          </button>
         </div>
 
         {/* Circular Progress Ring */}
-        <div className="relative flex items-center justify-center mx-auto" style={{ width: 220, height: 220 }}>
+        <div className="relative flex items-center justify-center mx-auto" style={{ width: 200, height: 200 }}>
           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="88" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+            <circle cx="100" cy="100" r="84" fill="none" stroke="#f3f4f6" strokeWidth="8" />
             <circle
-              cx="100" cy="100" r="88"
+              cx="100" cy="100" r="84"
               fill="none"
               stroke={mode === 'work' ? '#2563eb' : '#16a34a'}
-              strokeWidth="10"
+              strokeWidth="8"
               strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 88}`}
-              strokeDashoffset={`${2 * Math.PI * 88 * (1 - progressPct / 100)}`}
+              strokeDasharray={`${2 * Math.PI * 84}`}
+              strokeDashoffset={`${2 * Math.PI * 84 * (1 - progressPct / 100)}`}
               className="transition-all duration-1000"
             />
           </svg>
           <div className="text-center">
-            <span className="text-5xl font-mono font-black tracking-tight text-slate-900">
+            <span className="text-4xl font-mono font-bold tracking-tight text-gray-900">
               {formatTime(secondsLeft)}
             </span>
-            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">{mode === 'work' ? 'Work Session' : 'Break Time'}</p>
+            <p className="text-[10px] text-gray-500 font-semibold mt-1 uppercase tracking-wider">{mode === 'work' ? 'Work Session' : 'Break Time'}</p>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4">
-          <Button
+        <div className="flex items-center justify-center gap-3">
+          <button
             onClick={() => setIsActive(!isActive)}
-            size="lg"
-            className="w-16 h-16 rounded-full p-0 shadow-lg shadow-blue-500/25 bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-12 h-12 rounded-md flex items-center justify-center shadow-xs bg-blue-600 hover:bg-blue-700 text-white transition-colors"
           >
-            {isActive ? <Pause size={26} /> : <Play size={26} className="ml-0.5" />}
-          </Button>
-          <Button
+            {isActive ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
+          </button>
+          <button
             onClick={resetTimer}
-            variant="outline"
-            size="lg"
-            className="w-12 h-12 rounded-full p-0 bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            className="w-10 h-10 rounded-md flex items-center justify-center bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-xs transition-colors"
           >
-            <RotateCcw size={18} />
-          </Button>
+            <RotateCcw size={16} />
+          </button>
         </div>
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className="mt-2 pt-4 border-t border-slate-100 space-y-4 text-left">
-            <p className="text-xs font-bold text-slate-900 text-center uppercase tracking-wider">Custom Timer Settings</p>
+          <div className="mt-2 pt-4 border-t border-gray-200 space-y-3.5 text-left">
+            <p className="text-[11px] font-semibold text-gray-900 text-center uppercase tracking-wider">Custom Timer Settings</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-slate-600 font-semibold mb-1 block">Work Duration (mins)</label>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">Work Duration (mins)</label>
                 <input
                   type="range"
                   min={5} max={120} step={5}
@@ -170,10 +169,10 @@ export default function FocusModePage() {
                   onChange={e => setCustomWork(parseInt(e.target.value))}
                   className="w-full accent-blue-600"
                 />
-                <p className="text-sm font-bold text-slate-900 text-center mt-1">{customWork} min</p>
+                <p className="text-xs font-mono font-semibold text-gray-900 text-center mt-1">{customWork} min</p>
               </div>
               <div>
-                <label className="text-xs text-slate-600 font-semibold mb-1 block">Break Duration (mins)</label>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">Break Duration (mins)</label>
                 <input
                   type="range"
                   min={1} max={30} step={1}
@@ -181,45 +180,48 @@ export default function FocusModePage() {
                   onChange={e => setCustomBreak(parseInt(e.target.value))}
                   className="w-full accent-emerald-600"
                 />
-                <p className="text-sm font-bold text-slate-900 text-center mt-1">{customBreak} min</p>
+                <p className="text-xs font-mono font-semibold text-gray-900 text-center mt-1">{customBreak} min</p>
               </div>
             </div>
-            <Button onClick={applySettings} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs">
+            <button 
+              onClick={applySettings} 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-md text-xs font-medium shadow-xs transition-colors"
+            >
               Apply Settings
-            </Button>
+            </button>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-        <Card className="p-4 flex items-center gap-3 bg-white border-slate-200 rounded-3xl shadow-xs">
-          <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Award size={20} />
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-3.5 flex items-center gap-3 bg-white border border-gray-200 rounded-lg shadow-xs">
+          <div className="w-8 h-8 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+            <Award size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 uppercase font-bold">Today</p>
-            <p className="text-base font-bold text-slate-900">{focusMinutesToday} min</p>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Today</p>
+            <p className="text-sm font-bold font-mono text-gray-900">{focusMinutesToday} min</p>
           </div>
-        </Card>
-        <Card className="p-4 flex items-center gap-3 bg-white border-slate-200 rounded-3xl shadow-xs">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Focus size={20} />
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase font-bold">Sessions</p>
-            <p className="text-base font-bold text-slate-900">{sessions}</p>
-          </div>
-        </Card>
-        <Card className="p-4 flex items-center gap-3 bg-white border-slate-200 rounded-3xl shadow-xs">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <ShieldCheck size={20} />
+        </div>
+        <div className="p-3.5 flex items-center gap-3 bg-white border border-gray-200 rounded-lg shadow-xs">
+          <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+            <Focus size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 uppercase font-bold">Shield</p>
-            <p className="text-sm font-bold text-emerald-600">Active</p>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Sessions</p>
+            <p className="text-sm font-bold font-mono text-gray-900">{sessions}</p>
           </div>
-        </Card>
+        </div>
+        <div className="p-3.5 flex items-center gap-3 bg-white border border-gray-200 rounded-lg shadow-xs">
+          <div className="w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+            <ShieldCheck size={16} />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Shield</p>
+            <p className="text-xs font-semibold text-emerald-600">Active</p>
+          </div>
+        </div>
       </div>
     </div>
   );

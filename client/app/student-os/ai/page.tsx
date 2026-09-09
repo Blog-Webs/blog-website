@@ -60,40 +60,40 @@ function MessageBubble({ msg }: { msg: Message }) {
       if (part.startsWith('```') && part.endsWith('```')) {
         const code = part.slice(3, -3).replace(/^[a-z]+\n/, '');
         return (
-          <pre key={i} className="mt-2 p-3 bg-slate-900 rounded-xl border border-slate-700 text-emerald-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+          <pre key={i} className="mt-2 p-3 bg-gray-900 rounded-md border border-gray-800 text-emerald-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap">
             {code}
           </pre>
         );
       }
       if (part.startsWith('`') && part.endsWith('`')) {
-        return <code key={i} className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded text-xs font-mono border border-blue-200">{part.slice(1,-1)}</code>;
+        return <code key={i} className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded-sm text-xs font-mono border border-blue-200">{part.slice(1,-1)}</code>;
       }
       return <span key={i} className="whitespace-pre-wrap">{part}</span>;
     });
   };
 
   return (
-    <div className={`flex gap-3 ${isAi ? 'items-start' : 'items-start flex-row-reverse'}`}>
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isAi ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20' : 'bg-slate-700 text-white'}`}>
-        {isAi ? <Bot size={16} /> : <User size={16} />}
+    <div className={`flex gap-2.5 ${isAi ? 'items-start' : 'items-start flex-row-reverse'}`}>
+      <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${isAi ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-800 text-white'}`}>
+        {isAi ? <Bot size={15} /> : <User size={15} />}
       </div>
-      <div className="max-w-[82%]">
+      <div className="max-w-[84%]">
         {isAi && msg.agents && msg.agents.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-1.5">
-            <span className="text-[10px] text-blue-700 font-bold uppercase tracking-wider self-center mr-1">Collaborated:</span>
+          <div className="flex flex-wrap gap-1 mb-1">
+            <span className="text-[10px] text-blue-700 font-semibold uppercase tracking-wider self-center mr-1">Collaborated:</span>
             {msg.agents.map(a => (
-              <span key={a.id} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center gap-1 font-medium">
-                <span>{a.emoji}</span> {a.name} <span className="text-blue-500">({a.role})</span>
+              <span key={a.id} className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 flex items-center gap-1 font-medium">
+                <span>{a.emoji}</span> {a.name} <span className="text-blue-500 font-mono">({a.role})</span>
               </span>
             ))}
           </div>
         )}
-        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-          isAi ? 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs shadow-2xs' : 'bg-blue-600 text-white rounded-tr-xs shadow-md'
+        <div className={`rounded-lg px-3.5 py-2.5 text-xs leading-relaxed ${
+          isAi ? 'bg-white text-gray-800 border border-gray-200 shadow-xs' : 'bg-blue-600 text-white shadow-xs'
         }`}>
           {renderText(msg.text)}
         </div>
-        <p className={`text-[10px] text-slate-400 mt-1 px-1 ${isAi ? 'text-left' : 'text-right'}`}>{msg.timestamp}</p>
+        <p className={`text-[10px] text-gray-400 mt-1 px-1 font-mono ${isAi ? 'text-left' : 'text-right'}`}>{msg.timestamp}</p>
       </div>
     </div>
   );
@@ -325,50 +325,50 @@ export default function AiAssistantPage() {
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto h-[calc(100vh-100px)] min-h-[550px] flex gap-3 overflow-hidden">
+    <div className="max-w-[1600px] mx-auto h-[calc(100vh-120px)] min-h-[550px] flex gap-3 overflow-hidden">
       <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.txt,.docx,.doc,.pptx" className="hidden" />
 
       {/* ── Left History Sidebar ── */}
-      <div className={`${sidebarOpen ? 'w-72 sm:w-80' : 'w-0 hidden md:flex md:w-14'} shrink-0 transition-all duration-300 bg-white border border-slate-200 rounded-3xl flex flex-col overflow-hidden shadow-xs`}>
+      <div className={`${sidebarOpen ? 'w-64 sm:w-72' : 'w-0 hidden md:flex md:w-12'} shrink-0 transition-all duration-200 bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden shadow-xs`}>
         {sidebarOpen ? (
-          <div className="p-3 flex flex-col h-full space-y-3">
+          <div className="p-3 flex flex-col h-full space-y-2.5">
             {/* New Chat & Toggle Button */}
-            <div className="flex items-center gap-2">
-              <Button
+            <div className="flex items-center gap-1.5">
+              <button
                 onClick={handleCreateNewChat}
-                className="flex-1 justify-start gap-2 h-10 px-3 text-xs font-bold shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 flex items-center justify-center gap-1.5 h-8 px-3 rounded-md text-xs font-medium shadow-xs bg-blue-600 hover:bg-blue-700 text-white transition-colors"
               >
-                <Plus size={16} /> New Chat
-              </Button>
+                <Plus size={14} /> New Chat
+              </button>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
+                className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-gray-200 transition-colors"
                 title="Collapse sidebar"
               >
-                <PanelLeftClose size={16} />
+                <PanelLeftClose size={15} />
               </button>
             </div>
 
             {/* History Search */}
             <div className="relative">
-              <Search size={13} className="absolute left-3 top-2.5 text-slate-400" />
+              <Search size={12} className="absolute left-2.5 top-2.5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search history..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white"
+                className="w-full pl-7 pr-3 py-1 rounded-md bg-white border border-gray-300 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500"
               />
             </div>
 
             {/* Chat Sessions List */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
-              <div className="px-2 pt-1 pb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chat History</span>
+            <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+              <div className="px-1.5 pt-1 pb-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Chat History</span>
               </div>
 
               {filteredSessions.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-6">No matching chats</p>
+                <p className="text-xs text-gray-400 text-center py-6">No matching chats</p>
               )}
 
               {filteredSessions.map(s => {
@@ -379,14 +379,14 @@ export default function AiAssistantPage() {
                   <div
                     key={s.id}
                     onClick={() => setActiveSessionId(s.id)}
-                    className={`group relative flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all border ${
+                    className={`group relative flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors border ${
                       isActive
-                        ? 'bg-blue-50 border-blue-200 text-blue-800 font-bold shadow-2xs'
-                        : 'bg-slate-50/60 border-slate-200/70 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        ? 'bg-blue-50 border-blue-200 text-blue-900 font-semibold'
+                        : 'bg-white border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <MessageSquare size={14} className={isActive ? 'text-blue-600 shrink-0' : 'text-slate-400 shrink-0'} />
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <MessageSquare size={13} className={isActive ? 'text-blue-600 shrink-0' : 'text-gray-400 shrink-0'} />
                       {isEditing ? (
                         <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
                           <input
@@ -395,9 +395,9 @@ export default function AiAssistantPage() {
                             value={editTitleText}
                             onChange={e => setEditTitleText(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && saveRenameSession(s.id)}
-                            className="w-full bg-white px-2 py-1 rounded text-xs text-slate-900 border border-blue-500 focus:outline-none"
+                            className="w-full bg-white px-1.5 py-0.5 rounded-sm text-xs text-gray-900 border border-blue-500 focus:outline-none"
                           />
-                          <button onClick={() => saveRenameSession(s.id)} className="p-1 text-blue-600 hover:text-blue-800">
+                          <button onClick={() => saveRenameSession(s.id)} className="p-0.5 text-blue-600 hover:text-blue-800">
                             <Check size={12} />
                           </button>
                         </div>
@@ -410,17 +410,17 @@ export default function AiAssistantPage() {
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={e => startRenameSession(s, e)}
-                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700"
+                          className="p-0.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-700"
                           title="Rename chat"
                         >
-                          <Edit3 size={12} />
+                          <Edit3 size={11} />
                         </button>
                         <button
                           onClick={e => handleDeleteSession(s.id, e)}
-                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          className="p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"
                           title="Delete chat"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={11} />
                         </button>
                       </div>
                     )}
@@ -430,68 +430,66 @@ export default function AiAssistantPage() {
             </div>
           </div>
         ) : (
-          <div className="p-2 flex flex-col items-center gap-3">
+          <div className="p-2 flex flex-col items-center gap-2">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
+              className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-gray-200 transition-colors"
               title="Expand history sidebar"
             >
-              <PanelLeft size={18} />
+              <PanelLeft size={16} />
             </button>
             <button
               onClick={handleCreateNewChat}
-              className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+              className="p-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-xs"
               title="New Chat"
             >
-              <Plus size={18} />
+              <Plus size={16} />
             </button>
           </div>
         )}
       </div>
 
       {/* ── Main Chat Workspace ── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+      <div className="flex-1 flex flex-col min-w-0 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-xs">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50/80 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                 title="Open history sidebar"
               >
-                <PanelLeft size={18} />
+                <PanelLeft size={16} />
               </button>
             )}
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-              <Sparkles size={16} />
+            <div className="w-7 h-7 rounded-md bg-white border border-gray-200 text-blue-600 flex items-center justify-center shrink-0">
+              <Sparkles size={15} />
             </div>
             <div className="truncate">
-              <h1 className="text-sm font-bold text-slate-900 tracking-tight truncate">{activeSession?.title || 'AI Assistant'}</h1>
-              <p className="text-[10px] text-slate-500">StudentOS AI Tutor · Full Chat History Saved</p>
+              <h1 className="text-xs font-semibold text-gray-900 tracking-tight truncate">{activeSession?.title || 'AI Assistant'}</h1>
+              <p className="text-[10px] text-gray-500 font-mono">StudentOS AI Tutor · Multi-Agent Orchestration</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-8 text-xs border-slate-200 text-slate-700 hover:bg-slate-100"
+              className="flex items-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded-md text-xs font-medium shadow-xs transition-colors"
             >
               {uploading ? <RefreshCw size={12} className="animate-spin text-blue-600" /> : <Upload size={12} />}
-              {uploading ? 'Uploading...' : 'Upload Syllabus'}
-            </Button>
+              <span>{uploading ? 'Uploading...' : 'Upload Syllabus'}</span>
+            </button>
           </div>
         </div>
 
         {/* Uploaded Docs Context Badges */}
         {uploadedDocs.length > 0 && (
-          <div className="px-5 py-2 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-2 shrink-0">
-            <span className="text-[10px] text-slate-500 font-semibold uppercase self-center">Active Context:</span>
+          <div className="px-4 py-1.5 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-1.5 shrink-0">
+            <span className="text-[10px] text-gray-500 font-semibold uppercase self-center mr-1">Active Context:</span>
             {uploadedDocs.map(doc => (
-              <span key={doc.id} className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 bg-blue-50 border border-blue-200 rounded-full text-blue-700">
+              <span key={doc.id} className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 bg-white border border-gray-300 rounded-md text-gray-700">
                 <FileText size={11} /> {doc.name}
                 <button onClick={() => removeDoc(doc.id)} className="ml-1 hover:text-red-600"><X size={10} /></button>
               </span>
@@ -500,19 +498,19 @@ export default function AiAssistantPage() {
         )}
 
         {/* Chat Messages Body */}
-        <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4 min-h-0 bg-slate-50/50">
+        <div className="flex-1 p-4 overflow-y-auto space-y-3.5 min-h-0 bg-gray-50/40">
           {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
 
           {loading && (
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <Bot size={16} />
+            <div className="flex items-start gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center text-white shadow-xs">
+                <Bot size={15} />
               </div>
-              <div className="bg-white rounded-2xl rounded-tl-xs px-4 py-3 border border-slate-200 shadow-2xs">
+              <div className="bg-white rounded-lg px-3.5 py-2.5 border border-gray-200 shadow-xs">
                 <div className="flex gap-1.5 items-center">
-                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
@@ -521,13 +519,13 @@ export default function AiAssistantPage() {
         </div>
 
         {/* Quick Prompts Bar */}
-        <div className="px-4 py-2 border-t border-slate-200 bg-white flex gap-2 overflow-x-auto shrink-0">
+        <div className="px-3 py-1.5 border-t border-gray-200 bg-white flex gap-1.5 overflow-x-auto shrink-0">
           {QUICK_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               onClick={() => sendMessage(prompt)}
               disabled={loading}
-              className="text-[11px] px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 disabled:opacity-50 font-medium"
+              className="text-[11px] px-2.5 py-1 rounded-md bg-white border border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 disabled:opacity-50 font-medium"
             >
               <Lightbulb size={11} className="text-blue-600 shrink-0" />
               <span>{prompt}</span>
@@ -536,7 +534,7 @@ export default function AiAssistantPage() {
         </div>
 
         {/* Bottom Input Area */}
-        <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+        <div className="p-3 border-t border-gray-200 bg-white shrink-0">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               ref={inputRef}
@@ -544,17 +542,17 @@ export default function AiAssistantPage() {
               onChange={e => setInput(e.target.value)}
               placeholder="Ask about algorithms, concepts, code review, or study plans..."
               disabled={loading}
-              className="flex-1 bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 h-11 text-xs md:text-sm rounded-xl focus:border-blue-500 focus:bg-white"
+              className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 h-9 text-xs rounded-md focus:border-blue-500"
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
             />
-            <Button
+            <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="px-5 h-11 gap-2 rounded-xl font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+              className="px-3.5 h-9 flex items-center gap-1.5 rounded-md font-medium text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors disabled:opacity-50"
             >
-              {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+              {loading ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
               <span className="hidden sm:inline">Send</span>
-            </Button>
+            </button>
           </form>
         </div>
       </div>

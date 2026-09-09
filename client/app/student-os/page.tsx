@@ -3,367 +3,263 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  Sparkles, CheckSquare, Calendar, Focus, Code2, ArrowUpRight, FolderOpen,
-  Flame, Clock, Target, ChevronRight, Activity, ArrowRight, ShieldCheck,
-  BookOpen, Brain, Terminal, Zap, Play, CheckCircle2, Layers, Cpu, Award
+  Search, Folder, MousePointer, Lock, Plus, ArrowRight,
+  Sparkles, CheckSquare, Calendar, Focus, Code2, Globe,
+  Activity, Clock, ChevronRight, ShieldCheck
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { useStudentOS } from '@/context/StudentOSContext';
 import { useRoadmap } from '@/context/RoadmapContext';
-import { useAuth } from '@/modules/core/context/AuthContext';
 
 export default function StudentOSDashboard() {
-  const { tasks, events, focusMinutesToday, googleEmail, userName, streakDays } = useStudentOS();
-  const { milestones, targetRole } = useRoadmap();
-  const [activeDemoTab, setActiveDemoTab] = useState<'roadmap' | 'runtime' | 'ai'>('roadmap');
+  const { tasks, events, focusMinutesToday, streakDays } = useStudentOS();
+  const { milestones, targetRole, setTargetRole } = useRoadmap();
 
-  let displayName = userName || 'Student';
-  try {
-    const auth = useAuth();
-    if (auth?.user?.displayName) {
-      displayName = auth.user.displayName;
-    } else if (auth?.user?.name) {
-      displayName = auth.user.name;
-    } else if (auth?.user?.email) {
-      displayName = auth.user.email.split('@')[0];
-    }
-  } catch (err) {
-    // optional fallback
-  }
-  if ((!displayName || displayName === 'Student') && googleEmail) {
-    displayName = googleEmail.split('@')[0];
-  }
+  const [domainInput, setDomainInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
-  const completedTasks = tasks.filter((t) => t.status === 'completed');
+
+  const handleDomainSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (domainInput.trim()) {
+      setTargetRole(domainInput.trim());
+      setDomainInput('');
+    }
+  };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12 font-sans">
-      {/* ── Multi-Layer Hero Section ── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 p-6 md:p-10 text-white shadow-xl shadow-blue-500/15 border border-blue-500/20">
-        {/* Layer 1: Ambient Background & Glow */}
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-16 w-80 h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none" />
-        <div 
-          className="absolute inset-0 z-0 pointer-events-none opacity-10"
-          style={{
-            backgroundImage: 'radial-gradient(circle at center, #ffffff 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }}
-        />
+    <div className="max-w-6xl mx-auto space-y-10 font-sans antialiased text-gray-900 pb-12">
+      {/* ── Top Header Section (Announcement + Title + Search) ── */}
+      <div className="flex flex-col items-center text-center space-y-5 pt-4">
+        {/* Announcement Pill */}
+        <Link
+          href="/student-os/onboarding"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50/80 shadow-xs transition-all"
+        >
+          <span>Onboard your agent to StudentOS</span>
+          <span className="flex items-center gap-1">💥 👥 🗄️</span>
+        </Link>
 
-        {/* Layer 2: Content & Action Group */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] items-center gap-8 w-full">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-bold border border-white/20 shadow-xs">
-                <Sparkles size={13} className="text-yellow-300" /> Academic Intelligence Platform
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/30 text-blue-100 text-[11px] font-semibold border border-blue-400/30">
-                <Flame size={12} className="text-yellow-400" /> {streakDays || 1} Day Streak
-              </span>
+        {/* Main Clean Title */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+          Time to build something great.
+        </h1>
+
+        {/* Big Central Search Input */}
+        <div className="w-full max-w-2xl relative">
+          <div className="flex items-center justify-between px-3.5 h-11 rounded-lg border border-gray-200 bg-white hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 shadow-xs transition-all">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <Search size={16} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full bg-transparent border-none text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+              />
             </div>
-
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.1]">
-              Welcome back, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-sky-200">
-                {displayName}
-              </span>
-            </h1>
-
-            <p className="text-blue-100 text-xs sm:text-sm md:text-base max-w-[65ch] leading-relaxed font-normal">
-              Target Track: <strong className="text-white font-semibold">{targetRole}</strong>. 
-              Accelerate your engineering execution with interactive IDE workspaces, AI career pathways, and cloud sync.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link href="/student-os/ai">
-                <Button size="lg" className="gap-2 bg-white text-blue-700 hover:bg-blue-50 shadow-md font-bold text-sm rounded-xl">
-                  <Sparkles size={16} className="text-blue-600" /> Launch AI Assistant
-                </Button>
-              </Link>
-              <Link href="/student-os/focus">
-                <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/15 bg-white/10 text-sm font-semibold rounded-xl">
-                  <Focus size={16} /> Start Focus Session
-                </Button>
-              </Link>
-            </div>
+            <kbd className="text-[11px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 shrink-0">
+              Ctrl K
+            </kbd>
           </div>
-
-          {/* Layer 3: Interactive Visual Preview Window */}
-          <div className="hidden lg:block">
-            <div className="rounded-2xl border border-white/20 bg-slate-950/60 backdrop-blur-xl p-4 shadow-2xl text-left space-y-3">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-[11px] font-mono text-slate-300 ml-2 font-semibold">studentos.engine</span>
-                </div>
-                <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 text-[10px] font-mono">
-                  ACTIVE
-                </Badge>
-              </div>
-
-              <div className="flex gap-1 bg-white/5 p-1 rounded-xl">
-                {(['roadmap', 'runtime', 'ai'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveDemoTab(tab)}
-                    className={`flex-1 py-1 text-[11px] font-bold rounded-lg capitalize transition-all ${
-                      activeDemoTab === tab ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-900/90 font-mono text-xs text-slate-300 min-h-[105px] flex flex-col justify-center">
-                {activeDemoTab === 'roadmap' && (
-                  <div className="space-y-1">
-                    <p className="text-emerald-400">✓ Target Track: {targetRole}</p>
-                    <p className="text-slate-400">→ Active Phase: {milestones.find(m => m.status === 'in_progress')?.title || 'Foundations'}</p>
-                    <p className="text-blue-400 text-[11px]">→ Completed Phases: {milestones.filter(m => m.status === 'completed').length}/{milestones.length || 1}</p>
-                  </div>
-                )}
-                {activeDemoTab === 'runtime' && (
-                  <div className="space-y-1">
-                    <p className="text-blue-400">$ node compiler.js --watch</p>
-                    <p className="text-slate-300">Compiled successfully in 42ms</p>
-                    <p className="text-emerald-400">● 100% Tests Passed (8/8)</p>
-                  </div>
-                )}
-                {activeDemoTab === 'ai' && (
-                  <div className="space-y-1">
-                    <p className="text-purple-400">⚡ Gemini 2.5 Pro Context Active</p>
-                    <p className="text-slate-300">Ready to explain algorithms, review code & debug errors.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Metric Cards Grid (Design Tokens: bg-white, border-slate-200, shadow-xs) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all">
-          <div className="flex items-center justify-between pb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Action Items</span>
-            <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <CheckSquare size={18} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">{pendingTasks.length}</div>
-          <p className="text-xs text-blue-600 mt-1 flex items-center gap-1 font-semibold">
-            <Activity size={12} /> {completedTasks.length} completed
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all">
-          <div className="flex items-center justify-between pb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Focus Duration</span>
-            <div className="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Focus size={18} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">
-            {focusMinutesToday} <span className="text-sm font-normal text-slate-500">mins</span>
-          </div>
-          <p className="text-xs text-indigo-600 mt-1 font-semibold">Sessions logged today</p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all">
-          <div className="flex items-center justify-between pb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Schedule Events</span>
-            <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <Calendar size={18} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">{events.length}</div>
-          <p className="text-xs text-slate-500 mt-1 font-semibold">Synced in calendar</p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all">
-          <div className="flex items-center justify-between pb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Study Streak</span>
-            <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Flame size={18} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">
-            {streakDays || 1} {streakDays === 1 ? 'Day' : 'Days'}
-          </div>
-          <p className="text-xs text-blue-600 mt-1 font-semibold">Active momentum</p>
         </div>
       </div>
 
-      {/* ── Main Layout Grid Section ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Tasks Column */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <CheckSquare size={18} className="text-blue-600" /> Priorities & Sprints
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Tasks synchronized with your workspace</p>
-              </div>
-              <Link href="/student-os/tasks">
-                <Button variant="ghost" size="sm" className="gap-1 text-xs text-blue-600 font-bold hover:text-blue-700 hover:bg-blue-50 rounded-xl">
-                  View Board <ChevronRight size={14} />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="space-y-3 pt-4">
-              {pendingTasks.slice(0, 4).map((t) => (
-                <div
-                  key={t.id}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-blue-400 hover:bg-white flex items-center justify-between gap-4 transition-all duration-200 shadow-2xs cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                      t.priority === 'high' ? 'bg-rose-500' : 'bg-blue-600'
-                    }`} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 truncate">{t.title}</p>
-                      <p className="text-xs text-slate-500 truncate">{t.description}</p>
-                    </div>
+      {/* ── The 3 Precision Hero Cards (Exact Cloudflare / Enterprise Layout) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card 1: Ship something new (Dashed Drop Zone) */}
+        <div className="border border-gray-200 rounded-xl bg-white p-5 flex flex-col justify-between hover:border-gray-300 shadow-xs transition-all">
+          <div>
+            {/* Visual Area */}
+            <Link href="/student-os/drive" className="block">
+              <div className="border-2 border-dashed border-gray-200 rounded-xl h-44 bg-gray-50/50 hover:bg-gray-50 flex flex-col items-center justify-center p-4 relative group cursor-pointer transition-colors">
+                <div className="relative mb-2">
+                  <div className="w-12 h-10 rounded-md border border-gray-200 bg-white shadow-xs flex items-center justify-center text-gray-400 group-hover:border-blue-300 transition-colors">
+                    <Folder size={20} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
                   </div>
-                  <span className="shrink-0 text-[10px] px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 font-semibold">
-                    {t.dueDate || 'Soon'}
-                  </span>
+                  <MousePointer size={14} className="text-orange-500 fill-orange-500 absolute -bottom-1.5 -right-1.5 rotate-[-20deg]" />
                 </div>
-              ))}
-              {pendingTasks.length === 0 && (
-                <div className="text-center py-8 text-xs text-slate-500">
-                  No pending tasks. Great job staying on track!
-                </div>
-              )}
-            </div>
+                <p className="text-[11px] text-gray-400 font-medium">Drop a folder, or a zip</p>
+              </div>
+            </Link>
+
+            {/* Content */}
+            <h3 className="text-sm font-semibold text-gray-900 mt-4">Ship something new</h3>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              Deploy simple sites or full-stack apps with integrated compute, AI, storage, and media services.
+            </p>
           </div>
 
-          {/* Quick Tools Grid (Composable Component Cards) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Action Button */}
+          <div className="mt-5 pt-2">
             <Link href="/student-os/coding">
-              <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 hover:border-blue-400 hover:shadow-md group flex flex-col justify-between transition-all duration-200 shadow-xs">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Code2 size={22} />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm">Coding Workbench</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">Multi-language compiler & algorithm sandbox.</p>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
-                  Launch IDE <ChevronRight size={14} />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/student-os/roadmap">
-              <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 hover:border-blue-400 hover:shadow-md group flex flex-col justify-between transition-all duration-200 shadow-xs">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Target size={22} />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm">AI Career Pathway</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">Milestones towards {targetRole}.</p>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-indigo-600 font-bold group-hover:translate-x-1 transition-transform">
-                  View Roadmap <ChevronRight size={14} />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/student-os/drive">
-              <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 hover:border-blue-400 hover:shadow-md group flex flex-col justify-between transition-all duration-200 shadow-xs">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FolderOpen size={22} />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm">Cloud Drive</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">Google Drive & document storage.</p>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-sky-600 font-bold group-hover:translate-x-1 transition-transform">
-                  Open Drive <ChevronRight size={14} />
-                </div>
-              </div>
+              <button className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-800 px-3.5 py-1.5 shadow-xs transition-colors">
+                Create app
+              </button>
             </Link>
           </div>
         </div>
 
-        {/* Right Sidebar Widgets */}
-        <div className="space-y-6">
-          {/* Active Roadmap Target */}
-          <div className="rounded-3xl border border-blue-200 bg-gradient-to-b from-blue-50/50 to-white p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Target size={16} className="text-blue-600" /> Target Career Track
-                </h3>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">{targetRole}</p>
-              </div>
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">Active</span>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate-500">Roadmap Progress</span>
-                  <span className="text-blue-600 font-mono">
-                    {milestones.filter(m => m.status === 'completed').length} / {milestones.length || 1} Phases
-                  </span>
+        {/* Card 2: Add a domain / Career Track */}
+        <div className="border border-gray-200 rounded-xl bg-white p-5 flex flex-col justify-between hover:border-gray-300 shadow-xs transition-all">
+          <div>
+            {/* Visual Area: Mockup Domain / Track Rows */}
+            <Link href="/student-os/roadmap" className="block">
+              <div className="border border-gray-100 rounded-xl h-44 bg-gray-50/40 hover:bg-gray-50/80 flex flex-col items-center justify-center p-4 space-y-2.5 cursor-pointer transition-colors">
+                <div className="w-full max-w-[210px] bg-white border border-gray-200 rounded-full px-3 py-1.5 flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                    <span className="w-16 h-2 rounded-full bg-orange-100" />
+                  </div>
+                  <div className="w-4 h-4 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-[10px] font-bold">
+                    +
+                  </div>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${milestones.length > 0 ? (milestones.filter(m => m.status === 'completed').length / milestones.length) * 100 : 25}%`
-                    }}
-                  />
-                </div>
-              </div>
 
-              <div className="pt-2">
-                <Link href="/student-os/roadmap">
-                  <Button variant="outline" size="sm" className="w-full justify-center text-xs gap-1.5 font-bold border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl">
-                    View Full Roadmap <ArrowUpRight size={14} />
-                  </Button>
-                </Link>
+                <div className="w-full max-w-[210px] bg-white border border-gray-200 rounded-full px-3 py-1.5 flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                    <span className="w-20 h-2 rounded-full bg-orange-100" />
+                  </div>
+                  <div className="w-4 h-4 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-[10px] font-bold">
+                    +
+                  </div>
+                </div>
+
+                <div className="w-24 h-2 rounded-full bg-gray-200/80 mt-1" />
               </div>
-            </div>
+            </Link>
+
+            {/* Content */}
+            <h3 className="text-sm font-semibold text-gray-900 mt-4">Add a domain & career track</h3>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              Register a target engineering track ({targetRole}) or bring your own. Free roadmap synthesis, automatic diagnostic tests, and AI tutoring included.
+            </p>
           </div>
 
-          {/* Upcoming Events */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Clock size={16} className="text-blue-600" /> Upcoming Schedule
-              </h3>
-              <Link href="/student-os/calendar">
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] text-blue-600 font-bold hover:bg-blue-50 rounded-lg">
-                  Calendar
-                </Button>
-              </Link>
+          {/* Action Input / Submit */}
+          <form onSubmit={handleDomainSubmit} className="mt-5 pt-2">
+            <div className="relative">
+              <input
+                type="text"
+                value={domainInput}
+                onChange={(e) => setDomainInput(e.target.value)}
+                placeholder="Type in your domain..."
+                className="w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-2xs"
+              />
             </div>
-            <div className="space-y-3">
-              {events.slice(0, 3).map((e) => (
-                <div key={e.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
-                  <p className="text-xs font-bold text-slate-900 truncate">{e.title}</p>
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    {e.start ? new Date(e.start).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Scheduled Event'}
-                  </p>
+          </form>
+        </div>
+
+        {/* Card 3: Protect apps and users (Wireframe Lock) */}
+        <div className="border border-gray-200 rounded-xl bg-white p-5 flex flex-col justify-between hover:border-gray-300 shadow-xs transition-all">
+          <div>
+            {/* Visual Area: Browser Window Wireframe */}
+            <Link href="/student-os/coding" className="block">
+              <div className="border border-gray-100 rounded-xl h-44 bg-gray-50/40 hover:bg-gray-50/80 flex flex-col justify-between p-3.5 cursor-pointer transition-colors">
+                {/* Browser top dots */}
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-gray-300" />
+                  <span className="w-2 h-2 rounded-full bg-gray-300" />
+                  <span className="w-2 h-2 rounded-full bg-gray-300" />
                 </div>
-              ))}
-              {events.length === 0 && (
-                <p className="text-xs text-slate-400 py-4 text-center">No upcoming events scheduled.</p>
-              )}
+
+                {/* Center Lock */}
+                <div className="flex flex-col items-center justify-center my-auto">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 shadow-xs flex items-center justify-center">
+                    <Lock size={16} className="text-orange-500" />
+                  </div>
+                </div>
+
+                <div className="w-12 h-1.5 rounded-full bg-gray-200 self-center" />
+              </div>
+            </Link>
+
+            {/* Content */}
+            <h3 className="text-sm font-semibold text-gray-900 mt-4">Protect apps and users</h3>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              Modern access control, private networking and security for your users, devices, code sandboxes, and cloud storage.
+            </p>
+          </div>
+
+          {/* Action Button */}
+          <div className="mt-5 pt-2">
+            <Link href="/student-os/focus">
+              <button className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-800 px-3.5 py-1.5 shadow-xs transition-colors">
+                Protect your app
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Secondary Section: Quick Status & Workspace Recents ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+        {/* Recents / Priorities */}
+        <div className="lg:col-span-2 border border-gray-200 rounded-xl bg-white p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={16} className="text-gray-600" />
+              <h2 className="text-sm font-semibold text-gray-900">Recent Tasks & Sprints</h2>
+            </div>
+            <Link href="/student-os/tasks" className="text-xs font-medium text-blue-600 hover:text-blue-700">
+              View all tasks →
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            {pendingTasks.slice(0, 3).map((t) => (
+              <div
+                key={t.id}
+                className="p-3 rounded-lg border border-gray-100 hover:border-gray-200 bg-gray-50/50 flex items-center justify-between gap-4 transition-colors"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    t.priority === 'high' ? 'bg-rose-500' : 'bg-blue-600'
+                  }`} />
+                  <p className="text-xs font-medium text-gray-900 truncate">{t.title}</p>
+                </div>
+                <span className="text-[11px] text-gray-500 shrink-0 font-medium">
+                  {t.dueDate || 'Soon'}
+                </span>
+              </div>
+            ))}
+            {pendingTasks.length === 0 && (
+              <p className="text-xs text-gray-400 py-4 text-center">No pending tasks. You are all caught up.</p>
+            )}
+          </div>
+        </div>
+
+        {/* System Overview / Stats */}
+        <div className="border border-gray-200 rounded-xl bg-white p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-gray-600" />
+              <h2 className="text-sm font-semibold text-gray-900">Workspace Health</h2>
+            </div>
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Operational
+            </span>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <div className="flex items-center justify-between py-1 border-b border-gray-50">
+              <span className="text-gray-500">Active Track</span>
+              <span className="font-semibold text-gray-800">{targetRole}</span>
+            </div>
+            <div className="flex items-center justify-between py-1 border-b border-gray-50">
+              <span className="text-gray-500">Roadmap Progress</span>
+              <span className="font-semibold text-gray-800 font-mono">
+                {milestones.filter(m => m.status === 'completed').length}/{milestones.length || 1} Phases
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-1 border-b border-gray-50">
+              <span className="text-gray-500">Focus Duration</span>
+              <span className="font-semibold text-gray-800">{focusMinutesToday} mins</span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-gray-500">Active Streak</span>
+              <span className="font-semibold text-gray-800">{streakDays || 1} Days</span>
             </div>
           </div>
         </div>

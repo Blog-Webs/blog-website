@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import {
   Play, Folder, FolderOpen, FileCode, Plus, Trash2, Edit2, RefreshCw,
   Terminal, ChevronRight, ChevronDown, Save, Code2,
-  FilePlus, FolderPlus, X, Check, Coffee, FileText, Layout
+  FilePlus, FolderPlus, X, Check, Layout
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
 
 export type EditorItem = {
@@ -161,19 +158,6 @@ function getLanguageFromFileName(fileName: string): string {
   return LANG_MAP[ext] || 'javascript';
 }
 
-function getFileBadgeColor(lang: string) {
-  switch (lang) {
-    case 'java': return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-    case 'python': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
-    case 'cpp': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-    case 'javascript': return 'text-amber-300 bg-amber-400/10 border-amber-400/30';
-    case 'typescript': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-    case 'go': return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30';
-    case 'rust': return 'text-red-400 bg-red-500/10 border-red-500/30';
-    default: return 'text-zinc-400 bg-zinc-800 border-zinc-700';
-  }
-}
-
 export default function VSCodeWorkbench() {
   const [items, setItems] = useState<EditorItem[]>(DEFAULT_ITEMS);
   const [activeFileId, setActiveFileId] = useState<string>('f-java-1');
@@ -188,13 +172,11 @@ export default function VSCodeWorkbench() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [execMeta, setExecMeta] = useState<{ time?: string; code?: number } | null>(null);
 
-  // New Item Creation Modal / Prompt State
   const [createTargetParent, setCreateTargetParent] = useState<string | null | undefined>(undefined);
   const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   const [newItemName, setNewItemName] = useState<string>('');
   const [activeTabPanel, setActiveTabPanel] = useState<'output' | 'stdin'>('output');
 
-  // Load persistent files from localStorage on start
   useEffect(() => {
     try {
       const saved = localStorage.getItem('studentos_vscode_files');
@@ -300,7 +282,6 @@ export default function VSCodeWorkbench() {
 
     if (!confirm(`Delete ${item.type} "${item.name}"?`)) return;
 
-    // Recursive helper to find all child IDs
     const getSubItemIds = (id: string): string[] => {
       const children = items.filter(i => i.parentId === id);
       let ids = [id];
@@ -360,7 +341,6 @@ export default function VSCodeWorkbench() {
     }
   };
 
-  // Recursive Tree Node Component
   const renderTree = (parentId: string | null = null, depth: number = 0) => {
     const children = items.filter(i => i.parentId === parentId);
     if (children.length === 0 && createTargetParent !== parentId) return null;
@@ -374,44 +354,43 @@ export default function VSCodeWorkbench() {
               <div key={item.id} className="select-none">
                 <div
                   onClick={() => toggleFolder(item.id)}
-                  style={{ paddingLeft: `${depth * 12 + 8}px` }}
-                  className="group flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 cursor-pointer transition-colors text-xs font-medium"
+                  style={{ paddingLeft: `${depth * 10 + 6}px` }}
+                  className="group flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900 cursor-pointer transition-colors text-xs font-medium"
                 >
                   <div className="flex items-center gap-1.5 min-w-0 truncate">
-                    {isExpanded ? <ChevronDown size={14} className="text-slate-400 shrink-0" /> : <ChevronRight size={14} className="text-slate-400 shrink-0" />}
-                    {isExpanded ? <FolderOpen size={15} className="text-blue-600 shrink-0" /> : <Folder size={15} className="text-blue-600 shrink-0" />}
+                    {isExpanded ? <ChevronDown size={13} className="text-gray-400 shrink-0" /> : <ChevronRight size={13} className="text-gray-400 shrink-0" />}
+                    {isExpanded ? <FolderOpen size={14} className="text-blue-600 shrink-0" /> : <Folder size={14} className="text-blue-600 shrink-0" />}
                     <span className="truncate">{item.name}</span>
                   </div>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={e => handleStartCreate(item.id, 'file', e)}
-                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-900"
+                      className="p-0.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900"
                       title="New file in folder"
                     >
-                      <FilePlus size={13} />
+                      <FilePlus size={12} />
                     </button>
                     <button
                       onClick={e => handleStartCreate(item.id, 'folder', e)}
-                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-900"
+                      className="p-0.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900"
                       title="New sub-folder"
                     >
-                      <FolderPlus size={13} />
+                      <FolderPlus size={12} />
                     </button>
                     <button
                       onClick={e => handleDeleteItem(item.id, e)}
-                      className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                      className="p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"
                       title="Delete folder"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
 
-                {/* Inline Creation inside this folder */}
                 {createTargetParent === item.id && (
-                  <div style={{ paddingLeft: `${(depth + 1) * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
-                    {createType === 'folder' ? <Folder size={14} className="text-blue-600" /> : <FileCode size={14} className="text-blue-600" />}
+                  <div style={{ paddingLeft: `${(depth + 1) * 10 + 6}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
+                    {createType === 'folder' ? <Folder size={13} className="text-blue-600" /> : <FileCode size={13} className="text-blue-600" />}
                     <input
                       type="text"
                       autoFocus
@@ -422,14 +401,13 @@ export default function VSCodeWorkbench() {
                         if (e.key === 'Escape') setCreateTargetParent(undefined);
                       }}
                       placeholder={createType === 'folder' ? 'folder-name' : 'filename.ext'}
-                      className="w-full bg-transparent text-xs text-slate-900 focus:outline-none"
+                      className="w-full bg-transparent text-xs text-gray-900 focus:outline-none"
                     />
                     <button onClick={handleConfirmCreate} className="text-blue-600 hover:text-blue-800"><Check size={12} /></button>
-                    <button onClick={() => setCreateTargetParent(undefined)} className="text-slate-400 hover:text-slate-700"><X size={12} /></button>
+                    <button onClick={() => setCreateTargetParent(undefined)} className="text-gray-400 hover:text-gray-700"><X size={12} /></button>
                   </div>
                 )}
 
-                {/* Recursive Children Render */}
                 {isExpanded && renderTree(item.id, depth + 1)}
               </div>
             );
@@ -439,34 +417,33 @@ export default function VSCodeWorkbench() {
               <div
                 key={item.id}
                 onClick={() => handleOpenFile(item.id)}
-                style={{ paddingLeft: `${depth * 12 + 8}px` }}
-                className={`group flex items-center justify-between py-1.5 px-2 rounded-lg cursor-pointer transition-all text-xs select-none ${
+                style={{ paddingLeft: `${depth * 10 + 6}px` }}
+                className={`group flex items-center justify-between py-1 px-1.5 rounded-md cursor-pointer transition-all text-xs select-none ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-600 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-1.5 min-w-0 truncate">
-                  <FileCode size={14} className={isActive ? 'text-blue-600 shrink-0' : 'text-slate-400 shrink-0'} />
+                  <FileCode size={13} className={isActive ? 'text-blue-600 shrink-0' : 'text-gray-400 shrink-0'} />
                   <span className="truncate">{item.name}</span>
                 </div>
 
                 <button
                   onClick={e => handleDeleteItem(item.id, e)}
-                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-opacity"
+                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-opacity"
                   title="Delete file"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             );
           }
         })}
 
-        {/* Inline Creation at this parent level if selected */}
         {createTargetParent === parentId && (
-          <div style={{ paddingLeft: `${depth * 12 + 8}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
-            {createType === 'folder' ? <Folder size={14} className="text-blue-600" /> : <FileCode size={14} className="text-blue-600" />}
+          <div style={{ paddingLeft: `${depth * 10 + 6}px` }} className="p-1 flex items-center gap-1 bg-white rounded border border-blue-500 my-0.5 shadow-xs">
+            {createType === 'folder' ? <Folder size={13} className="text-blue-600" /> : <FileCode size={13} className="text-blue-600" />}
             <input
               type="text"
               autoFocus
@@ -477,10 +454,10 @@ export default function VSCodeWorkbench() {
                 if (e.key === 'Escape') setCreateTargetParent(undefined);
               }}
               placeholder={createType === 'folder' ? 'folder-name' : 'filename.ext'}
-              className="w-full bg-transparent text-xs text-slate-900 focus:outline-none"
+              className="w-full bg-transparent text-xs text-gray-900 focus:outline-none"
             />
             <button onClick={handleConfirmCreate} className="text-blue-600 hover:text-blue-800"><Check size={12} /></button>
-            <button onClick={() => setCreateTargetParent(undefined)} className="text-slate-400 hover:text-slate-700"><X size={12} /></button>
+            <button onClick={() => setCreateTargetParent(undefined)} className="text-gray-400 hover:text-gray-700"><X size={12} /></button>
           </div>
         )}
       </div>
@@ -488,86 +465,71 @@ export default function VSCodeWorkbench() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto h-[calc(100vh-90px)] flex flex-col space-y-2">
-      {/* Top VS Code Command Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
-            <Code2 size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-900 tracking-tight">StudentOS Studio</span>
-              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 uppercase font-mono bg-blue-50 text-blue-700 border-blue-200">
-                Compiler Sandbox
-              </Badge>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Editing: <strong className="text-slate-700">{activeFile?.name}</strong> ({activeFile?.language})
-            </p>
-          </div>
+    <div className="max-w-[1600px] mx-auto h-[calc(100vh-80px)] flex flex-col space-y-2">
+      {/* Top Command Bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-white border border-gray-200 rounded-md shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <Code2 size={16} className="text-gray-700" />
+          <span className="text-xs font-semibold text-gray-900">Compute & Code Studio</span>
+          <span className="text-[10px] text-gray-400">|</span>
+          <span className="text-xs text-gray-500">
+            {activeFile?.name} ({activeFile?.language})
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Badge className="text-xs capitalize font-medium bg-blue-50 text-blue-700 border-blue-200">
-            {activeFile?.language || 'JavaScript'}
-          </Badge>
-
-          <Button
+        <div className="flex items-center gap-2">
+          <button
             onClick={handleRunCode}
             disabled={isRunning}
-            size="sm"
-            className="h-8 gap-1.5 px-4 font-semibold shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-7 gap-1 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-xs flex items-center transition-colors"
           >
-            {isRunning ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} className="fill-white" />}
+            {isRunning ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} className="fill-white" />}
             {isRunning ? 'Running...' : 'Run Code'}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Main IDE Grid */}
       <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
-        {/* ── Left File Explorer (Nested VS Code Tree) ── */}
-        <div className="col-span-12 md:col-span-3 lg:col-span-2 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
-          <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200 bg-slate-50/80">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <Layout size={14} className="text-blue-600" /> Explorer
+        {/* Explorer */}
+        <div className="col-span-12 md:col-span-3 lg:col-span-2 bg-white border border-gray-200 rounded-md flex flex-col overflow-hidden shadow-2xs">
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-gray-200 bg-gray-50/70">
+            <span className="text-[11px] font-semibold text-gray-600 flex items-center gap-1">
+              <Layout size={13} className="text-gray-500" /> Explorer
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={e => handleStartCreate(null, 'file', e)}
-                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
+                className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900"
                 title="New File at Root"
               >
-                <FilePlus size={14} />
+                <FilePlus size={13} />
               </button>
               <button
                 onClick={e => handleStartCreate(null, 'folder', e)}
-                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
+                className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900"
                 title="New Folder at Root"
               >
-                <FolderPlus size={14} />
+                <FolderPlus size={13} />
               </button>
               <button
                 onClick={() => saveItemsState(DEFAULT_ITEMS)}
-                className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
-                title="Reset Default Workspaces"
+                className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900"
+                title="Reset Workspace"
               >
-                <RefreshCw size={12} />
+                <RefreshCw size={11} />
               </button>
             </div>
           </div>
 
-          {/* Tree Explorer View */}
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="flex-1 overflow-y-auto p-1.5">
             {renderTree(null, 0)}
           </div>
         </div>
 
-        {/* ── Middle Monaco Editor & Tab Bar ── */}
-        <div className="col-span-12 md:col-span-9 lg:col-span-7 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
-          {/* File Tabs Bar */}
-          <div className="flex items-center gap-1 px-2 pt-2 bg-slate-100/70 border-b border-slate-200 overflow-x-auto">
+        {/* Monaco Editor */}
+        <div className="col-span-12 md:col-span-9 lg:col-span-7 bg-white border border-gray-200 rounded-md flex flex-col overflow-hidden shadow-2xs">
+          <div className="flex items-center gap-1 px-1.5 pt-1.5 bg-gray-50/70 border-b border-gray-200 overflow-x-auto">
             {openTabs.map((tabId) => {
               const file = items.find((f) => f.id === tabId);
               if (!file) return null;
@@ -576,26 +538,25 @@ export default function VSCodeWorkbench() {
                 <div
                   key={tabId}
                   onClick={() => setActiveFileId(tabId)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-t-xl text-xs cursor-pointer border-t border-x transition-all ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-t-md text-xs cursor-pointer border-t border-x transition-all ${
                     isActive
-                      ? 'bg-white border-slate-200 text-blue-700 font-semibold border-b-transparent shadow-xs'
-                      : 'bg-slate-200/50 border-transparent text-slate-600 hover:text-slate-900'
+                      ? 'bg-white border-gray-200 text-gray-900 font-semibold border-b-transparent shadow-2xs'
+                      : 'bg-transparent border-transparent text-gray-500 hover:text-gray-800'
                   }`}
                 >
-                  <FileCode size={13} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
+                  <FileCode size={12} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
                   <span>{file.name}</span>
                   <button
                     onClick={(e) => handleCloseTab(tabId, e)}
-                    className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700"
+                    className="p-0.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-700"
                   >
-                    <X size={12} />
+                    <X size={11} />
                   </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Editor Container */}
           <div className="flex-1 relative bg-white">
             {activeFile ? (
               <MonacoEditor
@@ -610,64 +571,60 @@ export default function VSCodeWorkbench() {
                   minimap: { enabled: true },
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
-                  padding: { top: 12, bottom: 12 },
+                  padding: { top: 8, bottom: 8 },
                 }}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs">
-                <FileCode size={36} className="mb-2 opacity-50" />
-                <p>No open files. Select a file from the explorer.</p>
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 text-xs">
+                <FileCode size={32} className="mb-2 opacity-40" />
+                <p>No open files.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Right Execution Output & Stdin Panel ── */}
-        <div className="col-span-12 lg:col-span-3 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-xs">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/80">
-            <div className="flex items-center gap-2">
+        {/* Terminal & Stdin */}
+        <div className="col-span-12 lg:col-span-3 bg-white border border-gray-200 rounded-md flex flex-col overflow-hidden shadow-2xs">
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-gray-200 bg-gray-50/70">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setActiveTabPanel('output')}
-                className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${
-                  activeTabPanel === 'output'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                className={`text-xs font-medium px-2 py-0.5 rounded transition-colors ${
+                  activeTabPanel === 'output' ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
-                Terminal Output
+                Output
               </button>
               <button
                 onClick={() => setActiveTabPanel('stdin')}
-                className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${
-                  activeTabPanel === 'stdin'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                className={`text-xs font-medium px-2 py-0.5 rounded transition-colors ${
+                  activeTabPanel === 'stdin' ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
-                Standard Input
+                Stdin
               </button>
             </div>
 
             {execMeta && (
-              <Badge variant="secondary" className="text-[10px] py-0 font-mono bg-blue-50 text-blue-700 border-blue-200">
+              <span className="text-[10px] text-gray-500 font-mono">
                 {execMeta.time}
-              </Badge>
+              </span>
             )}
           </div>
 
-          <div className="flex-1 p-3 font-mono text-xs overflow-y-auto bg-slate-900 text-slate-100 rounded-b-2xl">
+          <div className="flex-1 p-2.5 font-mono text-xs overflow-y-auto bg-gray-900 text-gray-100">
             {activeTabPanel === 'output' ? (
-              <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed font-mono">
-                {output || 'Click "Run Code" above to compile & execute.'}
+              <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed font-mono text-xs">
+                {output || 'Click "Run Code" to compile & execute.'}
               </pre>
             ) : (
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-400 uppercase font-sans font-bold">Stdin Console Input</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 uppercase font-sans font-medium">Console Input</label>
                 <textarea
                   value={stdinInput}
                   onChange={e => setStdinInput(e.target.value)}
-                  placeholder="Provide test inputs for program execution..."
-                  className="w-full h-40 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  placeholder="Test inputs for program execution..."
+                  className="w-full h-36 p-2 rounded border border-gray-700 bg-gray-950 text-xs text-white focus:outline-none font-mono"
                 />
               </div>
             )}

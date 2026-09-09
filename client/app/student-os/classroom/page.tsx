@@ -38,61 +38,66 @@ export default function ClassroomPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-7xl mx-auto space-y-5">
+      <div className="flex items-center justify-between pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <BookOpen className="text-blue-600" /> Google Classroom Hub
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+            <BookOpen className="text-blue-600" size={20} /> Google Classroom Hub
           </h1>
-          <p className="text-xs text-slate-500 mt-1">Enrolled course streams and upcoming assignment alerts from Google Classroom.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Enrolled course streams and upcoming assignment alerts from Google Classroom.</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={fetchCourses} disabled={loading} className="text-slate-600 hover:text-slate-900">
-          <RefreshCw size={16} className={loading ? 'animate-spin text-blue-600' : ''} />
-        </Button>
+        <button 
+          onClick={fetchCourses} 
+          disabled={loading} 
+          className="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 text-xs transition-colors"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin text-blue-600' : ''} />
+        </button>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1,2,3].map(i => <div key={i} className="h-48 rounded-3xl animate-pulse bg-slate-200/70" />)}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1,2,3].map(i => <div key={i} className="h-44 rounded-lg animate-pulse bg-gray-100 border border-gray-200" />)}
         </div>
       ) : courses.length === 0 ? (
-        <div className="p-12 text-center space-y-3 bg-white rounded-3xl border border-slate-200 shadow-xs">
-          <BookOpen size={40} className="text-blue-600/60 mx-auto" />
-          <p className="text-slate-900 font-semibold text-sm">No active Google Classroom courses found.</p>
-          <p className="text-slate-500 text-xs">Make sure Google Workspace is connected and you are enrolled in courses.</p>
+        <div className="p-12 text-center space-y-3 bg-white rounded-lg border border-gray-200 shadow-xs">
+          <BookOpen size={32} className="text-gray-400 mx-auto" />
+          <p className="text-gray-900 font-medium text-xs">No active Google Classroom courses found.</p>
+          <p className="text-gray-500 text-[11px]">Make sure Google Workspace is connected and you are enrolled in courses.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {courses.map(course => (
-            <div key={course.id} className="p-6 rounded-3xl bg-white border border-slate-200 flex flex-col justify-between hover:border-blue-400 hover:shadow-md transition-all shadow-xs">
-              <div className="space-y-3">
+            <div key={course.id} className="p-5 rounded-lg bg-white border border-gray-200 flex flex-col justify-between hover:border-gray-300 transition-all shadow-xs">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">ENROLLED</Badge>
-                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-semibold uppercase">Enrolled</span>
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
                     <Users size={12} className="text-blue-600" />
-                    {course.totalStudents !== undefined ? course.totalStudents : '—'}
-                    <span className="text-slate-400 text-[10px]">students</span>
+                    <span className="font-mono text-gray-700">{course.totalStudents !== undefined ? course.totalStudents : '—'}</span>
+                    <span className="text-gray-400 text-[10px]">students</span>
                   </span>
                 </div>
-                <h2 className="text-base font-bold text-slate-900 leading-snug">{course.name}</h2>
-                {course.section && <p className="text-xs text-slate-500">{course.section}</p>}
+                <h2 className="text-sm font-semibold text-gray-900 leading-snug">{course.name}</h2>
+                {course.section && <p className="text-xs text-gray-500 font-mono">{course.section}</p>}
                 {course.description && (
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{course.description}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{course.description}</p>
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
-                <div className="flex items-center gap-2 text-xs text-blue-900 bg-blue-50 p-2.5 rounded-xl border border-blue-100">
-                  <Clock size={14} className="shrink-0 text-blue-600" />
-                  <span>Check Google Classroom for upcoming assignments and announcements</span>
+              <div className="mt-5 pt-3 border-t border-gray-100 space-y-2.5">
+                <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-md border border-gray-200">
+                  <Clock size={13} className="shrink-0 text-blue-600" />
+                  <span className="text-[11px] truncate">Assignments & announcements synced</span>
                 </div>
-                <Button
-                  className="w-full text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                <button
+                  className="w-full flex items-center justify-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-3.5 py-1.5 rounded-md text-xs font-medium shadow-xs transition-colors disabled:opacity-50"
                   onClick={() => openStream(course)}
                   disabled={!course.alternateLink}
                 >
-                  Open Stream <ExternalLink size={12} />
-                </Button>
+                  <span>Open Stream</span>
+                  <ExternalLink size={12} />
+                </button>
               </div>
             </div>
           ))}

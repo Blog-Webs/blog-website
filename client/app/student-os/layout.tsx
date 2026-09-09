@@ -4,37 +4,49 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Home, Clock, Globe, Search, ChevronRight, ChevronDown,
   LayoutDashboard, BookOpen, FolderOpen, Mail, Calendar, CheckSquare,
-  Sparkles, Focus, Menu, X, Command, Code2, MapPin, ClipboardList,
-  TrendingUp, Brain, AlertTriangle, Search, Bell, Globe, CheckCircle2, ShieldAlert,
-  Flame, User as UserIcon
+  Sparkles, Focus, Menu, Command, Code2, MapPin, ClipboardList,
+  TrendingUp, Brain, AlertTriangle, User as UserIcon, HelpCircle,
+  Shield, Activity, PanelLeftClose, PanelLeft
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useStudentOS } from '@/context/StudentOSContext';
 
-const MAIN_NAV = [
-  { href: '/student-os', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/student-os/tasks', label: 'Kanban Tasks', icon: CheckSquare },
-  { href: '/student-os/coding', label: 'Coding Workbench', icon: Code2 },
-  { href: '/student-os/calendar', label: 'Calendar', icon: Calendar },
-  { href: '/student-os/drive', label: 'Cloud Drive', icon: FolderOpen },
-  { href: '/student-os/classroom', label: 'Google Classroom', icon: BookOpen },
-  { href: '/student-os/gmail', label: 'Gmail Hub', icon: Mail },
-];
-
-const CAREER_NAV = [
-  { href: '/student-os/roadmap', label: 'AI Roadmap', icon: MapPin },
-  { href: '/student-os/planner', label: 'Daily Planner', icon: ClipboardList },
-  { href: '/student-os/career', label: 'Career Hub', icon: TrendingUp },
-  { href: '/student-os/assessment', label: 'Skill Diagnostic', icon: Brain },
-  { href: '/student-os/weak-areas', label: 'Weak Areas', icon: AlertTriangle },
-];
-
-const INTELLIGENCE_NAV = [
-  { href: '/student-os/ai', label: 'AI Assistant', icon: Sparkles, badge: 'Pro' },
-  { href: '/student-os/focus', label: 'Focus Mode', icon: Focus },
-  { href: '/student-os/profile', label: 'Academic Profile', icon: UserIcon },
+const SIDEBAR_GROUPS = [
+  {
+    title: '',
+    items: [
+      { href: '/student-os', label: 'Account home', icon: Home, exact: true },
+      { href: '/student-os/tasks', label: 'Recents & Tasks', icon: Clock },
+      { href: '/student-os/roadmap', label: 'Domains & Tracks', icon: Globe },
+    ]
+  },
+  {
+    title: 'Observe',
+    items: [
+      { href: '/student-os/assessment', label: 'Investigate & Tests', icon: Brain },
+      { href: '/student-os/weak-areas', label: 'Analytics & Gaps', icon: Activity },
+    ]
+  },
+  {
+    title: 'Build',
+    items: [
+      { href: '/student-os/coding', label: 'Compute & IDE', icon: Code2 },
+      { href: '/student-os/ai', label: 'AI Assistant', icon: Sparkles },
+      { href: '/student-os/drive', label: 'Storage & Drive', icon: FolderOpen },
+      { href: '/student-os/classroom', label: 'Classroom & Stream', icon: BookOpen },
+      { href: '/student-os/gmail', label: 'Realtime Mail', icon: Mail },
+    ]
+  },
+  {
+    title: 'Protect & connect',
+    items: [
+      { href: '/student-os/focus', label: 'Focus Shield', icon: Shield },
+      { href: '/student-os/career', label: 'Career Hub & Radar', icon: TrendingUp },
+      { href: '/student-os/calendar', label: 'Calendar & Delivery', icon: Calendar },
+      { href: '/student-os/profile', label: 'Account & Credentials', icon: UserIcon },
+    ]
+  }
 ];
 
 export default function StudentOSLayout({
@@ -44,185 +56,166 @@ export default function StudentOSLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isGoogleConnected, googleEmail, userName, userAvatar, streakDays, connectGoogleWorkspace } = useStudentOS();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [quickSearch, setQuickSearch] = useState('');
+  const { isGoogleConnected, googleEmail, userName, userAvatar } = useStudentOS();
 
-  const isActiveRoute = (href: string) => {
-    if (href === '/student-os') return pathname === '/student-os';
-    return pathname.startsWith(href);
+  const isActiveRoute = (item: any) => {
+    if (item.exact || item.href === '/student-os') {
+      return pathname === '/student-os';
+    }
+    return pathname.startsWith(item.href);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
-      {/* ── Google Workspace Integration Banner (when disconnected) ── */}
-      {!isGoogleConnected && (
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 border-b border-blue-200 px-4 py-2.5 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-50">
-          <div className="flex items-center gap-2 text-blue-950 font-medium">
-            <Globe size={14} className="text-blue-600 shrink-0" />
-            <span>Connect your <strong>Google Workspace</strong> (Classroom, Drive, Gmail, Calendar) to sync real live data.</span>
-          </div>
-          <Button
-            onClick={connectGoogleWorkspace}
-            variant="default"
-            size="sm"
-            className="h-7 text-[11px] px-3 gap-1 shrink-0 bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
-          >
-            <Sparkles size={12} /> Connect Google Account
-          </Button>
-        </div>
-      )}
+  const userEmailDisplay = googleEmail || 'user@studentos.internal';
 
-      {/* ── SaaS Header Bar ── */}
-      <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white/95 backdrop-blur-2xl px-4 lg:px-6 flex items-center justify-between shadow-xs">
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 font-sans antialiased">
+      {/* ── Precision Enterprise Header Bar ── */}
+      <header className="sticky top-0 z-40 h-[52px] border-b border-gray-200 bg-white px-4 flex items-center justify-between">
+        {/* Left: Brand Icon + Account Selector Dropdown */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100"
           >
             <Menu size={18} />
           </button>
 
-          <Link href="/student-os" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-700 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Command size={16} />
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-slate-900 font-sans">StudentOS</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
-              v3.0 Connected
-            </span>
-          </Link>
-        </div>
-
-        {/* Center Search Trigger */}
-        <div className="hidden md:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-100/90 border border-slate-200 text-xs text-slate-500 w-80 cursor-pointer hover:border-blue-300 hover:bg-white transition-all shadow-xs">
-          <Search size={14} className="text-slate-400" />
-          <span className="flex-1">Search tasks, courses, code files...</span>
-          <kbd className="px-1.5 py-0.5 rounded-md bg-white text-[10px] text-slate-500 border border-slate-200 font-mono shadow-xs">
-            ⌘K
-          </kbd>
-        </div>
-
-        {/* Streak, Connection & User Profile Header */}
-        <div className="flex items-center gap-3">
-          {/* Daily Streak Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-xs">
-            <Flame size={14} className="text-blue-600 animate-pulse fill-blue-600" />
-            <span>{streakDays} {streakDays === 1 ? 'Day' : 'Days'} Streak</span>
-          </div>
-
-          {isGoogleConnected ? (
-            <Badge variant="success" className="hidden sm:flex items-center gap-1 text-[10px] py-1 bg-emerald-50 text-emerald-700 border-emerald-200">
-              <CheckCircle2 size={11} /> {googleEmail || 'Google Connected'}
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-[10px] py-1 text-slate-600 bg-slate-100 border-slate-200">
-              <ShieldAlert size={11} className="text-blue-600" /> Standalone Mode
-            </Badge>
-          )}
-
-          <Link href="/student-os/profile" className="flex items-center gap-2 pl-2 border-l border-slate-200 hover:opacity-85 transition-opacity">
-            {userAvatar ? (
-              <img
-                src={userAvatar}
-                alt={userName}
-                className="w-8 h-8 rounded-full object-cover border border-blue-400 shadow-sm"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
-                {userName ? userName.slice(0, 2).toUpperCase() : 'SO'}
+          <div className="flex items-center gap-2">
+            <Link href="/student-os" className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center text-white shadow-xs">
+                <Command size={14} />
               </div>
+            </Link>
+
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-100 cursor-pointer text-xs font-medium text-gray-800 transition-colors">
+              <span className="max-w-[180px] sm:max-w-[240px] truncate">{userEmailDisplay}</span>
+              <ChevronDown size={13} className="text-gray-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3 text-xs">
+          <Link href="/student-os/ai">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+              <Sparkles size={14} className="text-blue-600" />
+              <span>Ask AI</span>
+            </button>
+          </Link>
+
+          <Link href="/docs">
+            <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+              <HelpCircle size={14} className="text-gray-500" />
+              <span>Support</span>
+            </button>
+          </Link>
+
+          <Link href="/student-os/profile" className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:border-gray-400 transition-colors">
+            {userAvatar ? (
+              <img src={userAvatar} alt={userName} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <UserIcon size={14} />
             )}
-            <span className="hidden sm:inline text-xs font-semibold text-slate-700 max-w-[130px] truncate">
-              {userName || 'StudentOS User'}
-            </span>
           </Link>
         </div>
       </header>
 
+      {/* ── Main Workspace Body ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Mobile backdrop */}
+        {/* Mobile Backdrop */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-slate-900/40 z-30 lg:hidden backdrop-blur-xs"
+            className="fixed inset-0 bg-black/20 z-30 lg:hidden backdrop-blur-xs"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* ── Left Sidebar (Clean White & Blue SaaS Aesthetic) ── */}
-        <aside className={`fixed lg:static top-16 bottom-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 ${
+        {/* ── Left Sidebar ── */}
+        <aside className={`fixed lg:static top-[52px] bottom-0 left-0 z-40 ${sidebarCollapsed ? 'w-14' : 'w-60'} bg-white border-r border-gray-200 flex flex-col transition-all duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-1.5">
-            <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Core Workspace
+          {/* Quick Search inside Sidebar */}
+          {!sidebarCollapsed && (
+            <div className="p-3 border-b border-gray-100">
+              <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md border border-gray-200 bg-white text-xs text-gray-500 hover:border-gray-300 transition-colors shadow-2xs">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <Search size={13} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={quickSearch}
+                    onChange={e => setQuickSearch(e.target.value)}
+                    placeholder="Quick search..."
+                    className="w-full bg-transparent border-none text-xs text-gray-800 placeholder-gray-400 focus:outline-none"
+                  />
+                </div>
+                <kbd className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1 py-0.5 rounded border border-gray-200 shrink-0">
+                  Ctrl K
+                </kbd>
+              </div>
             </div>
-            {MAIN_NAV.map((item) => {
-              const active = isActiveRoute(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
-                    active
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <item.icon size={16} className={active ? 'text-blue-600' : 'text-slate-400'} />
-                  <span className="flex-1 truncate">{item.label}</span>
-                </Link>
-              );
-            })}
+          )}
 
-            <div className="px-3 pt-5 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Career & Roadmap
-            </div>
-            {CAREER_NAV.map((item) => {
-              const active = isActiveRoute(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
-                    active
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <item.icon size={16} className={active ? 'text-blue-600' : 'text-slate-400'} />
-                  <span className="flex-1 truncate">{item.label}</span>
-                </Link>
+          {/* Navigation Groups */}
+          <nav className="flex-1 p-2 overflow-y-auto space-y-4">
+            {SIDEBAR_GROUPS.map((group, gIdx) => {
+              const filteredItems = group.items.filter(i => 
+                !quickSearch || i.label.toLowerCase().includes(quickSearch.toLowerCase())
               );
-            })}
+              if (filteredItems.length === 0) return null;
 
-            <div className="px-3 pt-5 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Intelligence
-            </div>
-            {INTELLIGENCE_NAV.map((item) => {
-              const active = isActiveRoute(item.href);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all ${
-                    active
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <item.icon size={16} className={active ? 'text-blue-600' : 'text-slate-400'} />
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {item.badge && <Badge variant="apple" className="py-0 text-[9px] bg-blue-600 text-white border-0">{item.badge}</Badge>}
-                </Link>
+                <div key={gIdx} className="space-y-0.5">
+                  {group.title && !sidebarCollapsed && (
+                    <div className="px-3 py-1 text-[11px] font-semibold text-gray-400 tracking-normal">
+                      {group.title}
+                    </div>
+                  )}
+                  {filteredItems.map((item) => {
+                    const active = isActiveRoute(item);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          active
+                            ? 'bg-gray-100 text-gray-900 font-semibold'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                        title={sidebarCollapsed ? item.label : undefined}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <item.icon size={15} className={active ? 'text-gray-900' : 'text-gray-400'} />
+                          {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                        </div>
+                        {!sidebarCollapsed && !active && (
+                          <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-500 shrink-0" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               );
             })}
           </nav>
+
+          {/* Bottom Sidebar Controls */}
+          <div className="p-2 border-t border-gray-100 hidden lg:flex items-center justify-between text-xs text-gray-400">
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-1.5 rounded-md hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <PanelLeft size={15} /> : <PanelLeftClose size={15} />}
+            </button>
+            {!sidebarCollapsed && <span className="text-[10px] text-gray-400">StudentOS v3.0</span>}
+          </div>
         </aside>
 
-        {/* ── Main Viewport Panel ── */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
+        {/* ── Main Viewport Canvas ── */}
+        <main className="flex-1 overflow-y-auto bg-white p-6 md:p-10">
           {children}
         </main>
       </div>

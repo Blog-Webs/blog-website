@@ -10,9 +10,9 @@ import { useRoadmap, WeakArea } from '@/context/RoadmapContext';
 import api from '@/lib/api';
 
 const SEVERITY_CONFIG = {
-  high: { label: 'Critical', color: 'text-red-700', bg: 'bg-red-50/50 border-red-200', dot: 'bg-red-500' },
-  medium: { label: 'Moderate', color: 'text-amber-700', bg: 'bg-amber-50/50 border-amber-200', dot: 'bg-amber-500' },
-  low: { label: 'Minor', color: 'text-emerald-700', bg: 'bg-emerald-50/50 border-emerald-200', dot: 'bg-emerald-500' },
+  high: { label: 'Critical', color: 'text-red-700', bg: 'bg-white border-red-200', dot: 'bg-red-500' },
+  medium: { label: 'Moderate', color: 'text-amber-700', bg: 'bg-white border-amber-200', dot: 'bg-amber-500' },
+  low: { label: 'Minor', color: 'text-emerald-700', bg: 'bg-white border-emerald-200', dot: 'bg-emerald-500' },
 };
 
 export default function WeakAreasPage() {
@@ -64,61 +64,61 @@ export default function WeakAreasPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="max-w-4xl mx-auto space-y-5 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <AlertTriangle className="text-amber-500" /> Weak Area Diagnostics
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+            <AlertTriangle className="text-amber-500" size={20} /> Weak Area Diagnostics
           </h1>
-          <p className="text-xs text-slate-500 mt-1">AI analysis of your profile and assessment history to identify and plan improvement areas.</p>
+          <p className="text-xs text-gray-500 mt-0.5">AI analysis of your profile and assessment history to identify and plan improvement areas.</p>
         </div>
-        <Button
+        <button
           onClick={analyzeProfile}
           disabled={analyzing}
-          className="gap-2 self-start bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs"
+          className="flex items-center gap-1.5 self-start bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-md text-xs font-medium shadow-xs transition-colors"
         >
-          {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-          {analyzing ? 'Analyzing Profile...' : weakAreas.length > 0 ? 'Re-analyze Profile' : 'Analyze My Profile'}
-        </Button>
+          {analyzing ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          <span>{analyzing ? 'Analyzing Profile...' : weakAreas.length > 0 ? 'Re-analyze Profile' : 'Analyze My Profile'}</span>
+        </button>
       </div>
 
       {/* Context Summary */}
       {(activePhase || assessmentHistory.length > 0) && (
-        <Card className="p-4 flex flex-col sm:flex-row gap-4 bg-white border-slate-200 rounded-3xl shadow-xs">
+        <div className="p-3.5 flex flex-col sm:flex-row gap-4 bg-white border border-gray-200 rounded-lg shadow-xs">
           {activePhase && (
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <BookOpen size={16} />
+            <div className="flex items-center gap-2.5 flex-1">
+              <div className="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                <BookOpen size={14} />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Active Phase</p>
-                <p className="text-xs text-slate-800 font-bold">{activePhase.title}</p>
+                <p className="text-[10px] text-gray-400 uppercase font-semibold">Active Phase</p>
+                <p className="text-xs text-gray-800 font-semibold">{activePhase.title}</p>
               </div>
             </div>
           )}
           {assessmentHistory.length > 0 && (
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={16} />
+            <div className="flex items-center gap-2.5 flex-1">
+              <div className="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <CheckCircle2 size={14} />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Recent Assessments</p>
-                <p className="text-xs text-slate-800 font-bold">
+                <p className="text-[10px] text-gray-400 uppercase font-semibold">Recent Assessments</p>
+                <p className="text-xs text-gray-800 font-medium font-mono">
                   {assessmentHistory.slice(0, 2).map(a => `${a.topic}: ${a.score}/${a.total}`).join(' · ')}
                 </p>
               </div>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {weakAreas.length === 0 ? (
-        <Card className="p-12 text-center space-y-4 bg-white border-slate-200 rounded-3xl shadow-xs">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto">
-            <AlertTriangle size={32} />
+        <div className="p-12 text-center space-y-3 bg-white border border-gray-200 rounded-lg shadow-xs">
+          <div className="w-12 h-12 rounded-md bg-amber-50 text-amber-500 flex items-center justify-center mx-auto border border-amber-100">
+            <AlertTriangle size={24} />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">No Weak Areas Identified Yet</h2>
-          <p className="text-slate-500 text-xs max-w-md mx-auto leading-relaxed">
+          <h2 className="text-xs font-semibold text-gray-900">No Weak Areas Identified Yet</h2>
+          <p className="text-gray-500 text-[11px] max-w-md mx-auto leading-relaxed">
             {assessmentHistory.length === 0
               ? 'Complete at least one Skill Assessment first, then click "Analyze My Profile" for personalized weak area detection.'
               : 'Click "Analyze My Profile" to generate an AI-powered weak area analysis based on your assessment history and roadmap phase.'
@@ -126,49 +126,50 @@ export default function WeakAreasPage() {
           </p>
           {assessmentHistory.length === 0 && (
             <Link href="/student-os/assessment">
-              <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs">
-                <Sparkles size={14} /> Take Skill Assessment
-              </Button>
+              <button className="flex items-center gap-1.5 mx-auto bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-md text-xs font-medium shadow-xs transition-colors">
+                <Sparkles size={13} />
+                <span>Take Skill Assessment</span>
+              </button>
             </Link>
           )}
-        </Card>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {weakAreas.map((area, idx) => {
             const config = SEVERITY_CONFIG[area.severity] || SEVERITY_CONFIG.medium;
             const isExpanded = expandedIdx === idx;
 
             return (
-              <Card
+              <div
                 key={idx}
-                className={`p-6 border transition-all cursor-pointer rounded-3xl bg-white shadow-xs hover:shadow-md ${config.bg} ${isExpanded ? 'ring-2 ring-blue-500/20' : ''}`}
+                className={`p-4 border transition-colors cursor-pointer rounded-lg bg-white shadow-xs ${config.bg} ${isExpanded ? 'border-gray-400' : 'hover:border-gray-300'}`}
                 onClick={() => setExpandedIdx(isExpanded ? null : idx)}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${config.dot}`} />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${config.dot}`} />
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-base font-bold text-slate-900">{area.area}</h2>
-                        <Badge className={`text-[10px] py-0.5 border ${config.color} bg-white font-bold`}>{config.label}</Badge>
+                        <h2 className="text-xs font-semibold text-gray-900">{area.area}</h2>
+                        <span className={`text-[10px] font-mono px-2 py-0.2 rounded-md border ${config.color} bg-gray-50 font-medium`}>{config.label}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{area.description}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{area.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-slate-500 flex items-center gap-1 font-medium"><Clock size={11} /> {area.estimatedDays}d</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-gray-500 flex items-center gap-1 font-mono"><Clock size={11} /> {area.estimatedDays}d</span>
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 space-y-4" onClick={e => e.stopPropagation()}>
+                  <div className="mt-3.5 pt-3 border-t border-gray-100 space-y-3" onClick={e => e.stopPropagation()}>
                     <div>
-                      <p className="text-xs font-bold text-slate-900 mb-2 uppercase tracking-wider">Study Steps</p>
-                      <ol className="space-y-2">
+                      <p className="text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Study Steps</p>
+                      <ol className="space-y-1.5">
                         {area.studySteps.map((step, si) => (
-                          <li key={si} className="flex items-start gap-2 text-xs text-slate-700">
-                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{si + 1}</span>
-                            {step}
+                          <li key={si} className="flex items-start gap-2 text-xs text-gray-700">
+                            <span className="w-4 h-4 rounded bg-gray-100 text-gray-700 flex items-center justify-center text-[10px] font-mono font-medium shrink-0 mt-0.5">{si + 1}</span>
+                            <span>{step}</span>
                           </li>
                         ))}
                       </ol>
@@ -176,30 +177,31 @@ export default function WeakAreasPage() {
 
                     {area.resources && area.resources.length > 0 && (
                       <div>
-                        <p className="text-xs font-bold text-slate-900 mb-2 uppercase tracking-wider">Recommended Resources</p>
-                        <div className="flex flex-wrap gap-2">
+                        <p className="text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Recommended Resources</p>
+                        <div className="flex flex-wrap gap-1.5">
                           {area.resources.map((r, ri) => (
-                            <span key={ri} className="text-xs px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200 font-medium">{r}</span>
+                            <span key={ri} className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-gray-50 text-gray-700 border border-gray-200 font-medium">{r}</span>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-1">
                       <Link href="/student-os/ai">
-                        <Button size="sm" className="gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs">
-                          Ask AI Tutor <ArrowRight size={12} />
-                        </Button>
+                        <button className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md font-medium shadow-xs transition-colors">
+                          <span>Ask AI Tutor</span>
+                          <ArrowRight size={11} />
+                        </button>
                       </Link>
                       <Link href="/student-os/coding">
-                        <Button variant="outline" size="sm" className="gap-1 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl">
+                        <button className="flex items-center gap-1 text-xs bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded-md font-medium shadow-xs transition-colors">
                           Practice in Workbench
-                        </Button>
+                        </button>
                       </Link>
                     </div>
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>
