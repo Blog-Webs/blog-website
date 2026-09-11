@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowLeft, Cpu, Sparkles, Gamepad2, Layers, Volume2, Users,
-  CheckCircle2, Clock, Zap, Bot
+  ArrowLeft, Cpu, Sparkles, Users, Clock, CheckCircle2, MessageSquare, Send
 } from 'lucide-react';
 import { HouseWorkProvider, useHouseWork } from '../context/HouseWorkContext';
 import AgentOrb from '../components/AgentOrb';
@@ -23,21 +22,21 @@ function AgentRosterGrid() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Users size={16} className="text-blue-400" />
+          <Users size={15} className="text-blue-400" />
           <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-200">
-            Active Multi-Agent Roster (6 Personas)
+            Multi-Agent Team Personas (6 Personas)
           </h3>
         </div>
         <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Parallel Execution Ready
+          OpenAI ChatGPT Active
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {agents.map((ag) => {
           const isBusy = ag.status === 'working';
           const isDone = ag.status === 'done';
@@ -46,29 +45,29 @@ function AgentRosterGrid() {
             <div
               key={ag.id}
               onClick={() => setSelectedAgent(ag)}
-              className="p-3.5 rounded-2xl bg-[#0c121e]/80 border border-white/8 hover:border-white/20 transition-all cursor-pointer group shadow-md hover:shadow-xl hover:-translate-y-0.5 flex flex-col justify-between"
+              className="p-3 rounded-2xl bg-[#0c121e]/90 border border-white/8 hover:border-white/20 transition-all cursor-pointer group shadow-md hover:-translate-y-0.5 flex flex-col justify-between"
               style={{
                 boxShadow: isBusy ? `0 0 15px ${ag.color}25` : undefined,
               }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md shrink-0"
-                    style={{ background: `${ag.color}25`, border: `1.5px solid ${ag.color}45` }}
-                  >
-                    {ag.emoji}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
-                      {ag.name}
-                    </div>
-                    <div className="text-[10px] text-white/40 font-mono">{ag.role}</div>
-                  </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-base shadow-md shrink-0"
+                  style={{ background: `${ag.color}25`, border: `1.5px solid ${ag.color}45` }}
+                >
+                  {ag.emoji}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors truncate">
+                    {ag.name}
+                  </div>
+                  <div className="text-[9px] text-white/40 font-mono truncate">{ag.role}</div>
+                </div>
+              </div>
 
+              <div className="mt-2 flex items-center justify-between">
                 <span
-                  className={`text-[9px] px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1 ${
+                  className={`text-[8px] px-1.5 py-0.5 rounded-full font-mono font-bold flex items-center gap-1 ${
                     isBusy
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
                       : isDone
@@ -76,24 +75,10 @@ function AgentRosterGrid() {
                       : 'bg-white/5 text-white/40 border border-white/10'
                   }`}
                 >
-                  {isBusy && <Clock size={10} />}
-                  {isDone && <CheckCircle2 size={10} />}
-                  {isBusy ? 'WORKING' : isDone ? 'DONE' : 'IDLE'}
+                  {isBusy ? 'WORKING' : isDone ? 'DONE' : 'READY'}
                 </span>
+                <span className="text-[9px] text-white/30 font-mono">Chat 💬</span>
               </div>
-
-              {ag.currentTask ? (
-                <div
-                  className="mt-2.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono truncate"
-                  style={{ background: `${ag.color}15`, color: ag.color, border: `1px solid ${ag.color}25` }}
-                >
-                  {ag.currentTask}
-                </div>
-              ) : (
-                <div className="mt-2.5 text-[10px] text-white/30 font-mono truncate">
-                  Ready to assist in {ag.room} room
-                </div>
-              )}
             </div>
           );
         })}
@@ -161,17 +146,15 @@ function AgentRosterGrid() {
 }
 
 function HouseWorkContent() {
-  const [activeTab, setActiveTab] = useState('orb'); // 'orb' | 'office' | 'split'
-
   return (
     <div
-      className="h-screen w-screen flex flex-col overflow-hidden text-slate-100 select-none"
+      className="min-h-screen flex flex-col overflow-hidden text-slate-100 select-none"
       style={{
-        background: 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(30,58,138,0.15), transparent), #050811',
+        background: 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(30,58,138,0.12), transparent), #050811',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* ── Top App Bar ─────────────────────────────────────────────────── */}
+      {/* ── Top Bar ─────────────────────────────────────────────────────── */}
       <header className="shrink-0 h-14 border-b border-white/8 bg-[#070b16]/90 backdrop-blur-md px-5 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
           <Link
@@ -180,7 +163,7 @@ function HouseWorkContent() {
             title="Return to Main Portal"
           >
             <ArrowLeft size={15} />
-            <span className="hidden sm:inline">Home</span>
+            <span>Home</span>
           </Link>
 
           <div className="w-px h-5 bg-white/10" />
@@ -195,163 +178,67 @@ function HouseWorkContent() {
                   HouseWork<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">AI</span>
                 </span>
                 <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold">
-                  OpenAI ChatGPT
+                  OpenAI ChatGPT Active
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Center View Selector (Desktop Switcher) */}
-        <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/8 shadow-inner">
-          <button
-            onClick={() => setActiveTab('orb')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-              activeTab === 'orb'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Sparkles size={13} />
-            <span>Voice & Agents</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('office')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-              activeTab === 'office'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Gamepad2 size={13} />
-            <span>2D Office Game</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('split')}
-            className={`hidden xl:flex px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold items-center gap-1.5 transition-all ${
-              activeTab === 'split'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Layers size={13} />
-            <span>Studio View</span>
-          </button>
-        </div>
-
-        {/* Right Info Pill */}
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 text-[11px] font-mono text-white/40">
+          <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-white/40">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>6 PARALLEL AGENTS</span>
+            <span>6 DEMO OFFICE AGENTS</span>
           </div>
 
           <Link
             to="/housework-ai/setup"
             className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all border border-white/10 font-mono font-medium"
           >
-            ⚙️ Setup
+            ⚙️ Setup Guide
           </Link>
         </div>
       </header>
 
-      {/* ── Main Responsive Desktop Layout ─────────────────────────────── */}
+      {/* ── Main Layout: Interactive Office + Orb (Left/Center) & Chat (Right) ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT / CENTER: Interactive Workspace Area */}
+        {/* LEFT / CENTER: Demo Office Simulation & Neural Orb */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          {/* Tab 1: Perplexity Voice & Multi-Agent Studio */}
-          {activeTab === 'orb' && (
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Neural Orb Hero Card */}
-              <div
-                className="relative rounded-3xl border border-white/10 p-6 md:p-8 overflow-hidden shadow-2xl"
-                style={{
-                  background: 'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(59,130,246,0.1), rgba(8,12,24,0.95))',
-                }}
-              >
-                {/* Decorative Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-blue-400 font-bold">
-                    <Sparkles size={13} />
-                    <span>Neural Voice Coordinator</span>
-                  </div>
-                  <div className="text-[10px] font-mono text-white/30 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                    PERPLEXITY AUDIO ENGINE
-                  </div>
-                </div>
-
-                {/* Orb Component */}
-                <AgentOrb />
-
-                {/* Subtitle description */}
-                <p className="text-center text-xs text-white/35 font-mono mt-4">
-                  Speak naturally to the AI coordinator · Real-time multi-agent parallel dispatch
-                </p>
+          {/* Perplexity Acoustic Orb Hero */}
+          <div
+            className="relative rounded-3xl border border-white/10 p-6 overflow-hidden shadow-2xl"
+            style={{
+              background: 'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(59,130,246,0.08), rgba(8,12,24,0.95))',
+            }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-blue-400 font-bold">
+                <Sparkles size={13} />
+                <span>Perplexity Voice & Neural Coordinator</span>
               </div>
-
-              {/* Multi-Agent Roster Grid */}
-              <AgentRosterGrid />
-            </div>
-          )}
-
-          {/* Tab 2: 2D Pixel Office Game Simulation */}
-          {activeTab === 'office' && (
-            <div className="max-w-5xl mx-auto space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <Gamepad2 size={16} className="text-amber-400" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-200">
-                    Live Office Simulation Game
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono text-white/40">
-                  Workers interact, walk between desks, and execute assignments
-                </span>
+              <div className="text-[10px] font-mono text-white/30 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                ACOUSTIC MICROPHONE SENSING
               </div>
-
-              <OfficeSimulation />
             </div>
-          )}
 
-          {/* Tab 3: Studio Split View (Wide screens) */}
-          {activeTab === 'split' && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left: Orb */}
-                <div
-                  className="rounded-3xl border border-white/10 p-6 shadow-2xl flex flex-col justify-between"
-                  style={{
-                    background: 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(59,130,246,0.08), rgba(8,12,24,0.95))',
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-bold">
-                      Neural Coordinator
-                    </span>
-                    <span className="text-[9px] font-mono text-emerald-400">ONLINE</span>
-                  </div>
-                  <AgentOrb />
-                </div>
+            <AgentOrb />
+          </div>
 
-                {/* Right: Office */}
-                <div>
-                  <OfficeSimulation />
-                </div>
-              </div>
+          {/* 🏢 DEMO OFFICE SIMULATION (Employees working, talking & assigning work together) */}
+          <div className="space-y-2">
+            <OfficeSimulation />
+          </div>
 
-              <AgentRosterGrid />
-            </div>
-          )}
+          {/* Multi-Agent Roster Grid */}
+          <AgentRosterGrid />
         </main>
 
-        {/* RIGHT: Spacious Desktop Chat & Voice Command Center */}
+        {/* RIGHT: Chat & Voice Command Center */}
         <aside
-          className="shrink-0 flex flex-col h-full z-20 transition-all"
+          className="shrink-0 flex flex-col h-full z-20 transition-all border-l border-white/8"
           style={{
-            width: 'min(480px, 38vw)',
+            width: 'min(480px, 40vw)',
             minWidth: '380px',
           }}
         >
