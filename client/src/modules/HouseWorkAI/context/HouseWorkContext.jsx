@@ -22,23 +22,26 @@ const API_BASE = (() => {
   return '/api';
 })();
 
-async function generateClientAiFallback(userMessage) {
-  const apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY)
-    ? import.meta.env.VITE_GEMINI_API_KEY
+async function generateClientOpenAiFallback(userMessage) {
+  const apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENAI_API_KEY)
+    ? import.meta.env.VITE_OPENAI_API_KEY
     : null;
 
   if (!apiKey) return null;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are an AI multi-agent office team coordinator. 
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an AI multi-agent office team coordinator. 
 The user submitted this prompt: "${userMessage}"
 
 Analyze the request and delegate work to appropriate team members from:
@@ -56,29 +59,30 @@ Return ONLY a raw JSON object (no markdown, no backticks) with this structure:
     { "agentId": "pixel", "isPrimary": false, "response": "Specific 1-2 sentence supporting response addressing '${userMessage}' as Pixel" }
   ],
   "coordinatorSummary": "The team is working together on ${userMessage}..."
-}`
-            }]
-          }]
-        })
-      }
-    );
+}`,
+          },
+          { role: 'user', content: userMessage },
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     if (!response.ok) return null;
     const data = await response.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = data?.choices?.[0]?.message?.content;
     if (!rawText) return null;
 
-    const cleanedJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanedJson);
+    const parsed = JSON.parse(rawText.trim());
     if (parsed.assignments && parsed.coordinatorSummary) {
       return {
         assignments: parsed.assignments,
         coordinatorSummary: parsed.coordinatorSummary,
         aiAvailable: true,
+        provider: 'OpenAI ChatGPT (Client Fallback)',
       };
     }
   } catch (err) {
-    console.warn('[Client Gemini Fallback] Error:', err.message);
+    console.warn('[Client OpenAI Fallback] Error:', err.message);
   }
   return null;
 }
@@ -94,15 +98,15 @@ async function callBackend(message) {
   for (const base of uniqueTargets) {
     try {
       const url = base.endsWith('/') ? base.slice(0, -1) : base;
-      const res = await axios.post(`${url}/housework-ai/message`, { message }, { timeout: 10000 });
+      const res = await axios.post(`${url}/housework-ai/message`, { message }, { timeout: 12000 });
       if (res.data && res.data.assignments) {
         return res.data;
       }
     } catch (_) {}
   }
 
-  // If backend endpoints failed, use direct Gemini client fallback
-  const clientAi = await generateClientAiFallback(message);
+  // If backend endpoints failed, check direct client fallback
+  const clientAi = await generateClientOpenAiFallback(message);
   if (clientAi) {
     return clientAi;
   }
@@ -124,7 +128,7 @@ export function HouseWorkProvider({ children }) {
   const [messages, setMessages] = useState([
     {
       id: 1, role: 'ai', timestamp: new Date(), assignedAgents: [],
-      text: "Hello! I'm your AI coordinator. Send me a task and I'll dispatch it to the right team members — multiple agents can work on it simultaneously!",
+      text: "Hello! I'm your AI coordinator powered by OpenAI ChatGPT. Speak or send a task and I'll dispatch it to the right team members — multiple agents can work on it simultaneously!",
     },
   ]);
 
@@ -138,10 +142,19 @@ export function HouseWorkProvider({ children }) {
   const [isListening, setIsListening] = useState(false);
   const [orbMode, setOrbMode]         = useState('idle'); // idle|thinking|speaking|listening
   const [aiAvailable, setAiAvailable] = useState(true);
+  const [aiProvider, setAiProvider]   = useState('OpenAI ChatGPT');
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [voiceError, setVoiceError]   = useState(null);
+  const [audioLevel, setAudioLevel]   = useState(0); // 0.0 to 1.0 real-time volume level
 
   const recognitionRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const lastTranscriptRef = useRef('');
 
-  // ── Voice Output ──────────────────────────────────────────────────────
+  // ── Voice Output (SpeechSynthesis) ────────────────────────────────────
   const speak = useCallback((text) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
@@ -157,13 +170,14 @@ export function HouseWorkProvider({ children }) {
         .replace(/\*([^*]+)\*/g, '$1')     // remove italic
         .replace(/`([^`]+)`/g, '$1')       // remove inline code
         .replace(/#+\s+/g, '')             // remove headers
+        .replace(/https?:\/\/\S+/g, '')    // remove URLs
         .replace(/\n+/g, ' ')              // replace newlines with space
         .trim();
 
       if (!cleanText) return;
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.0;
+      utterance.rate = 1.05;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
@@ -172,12 +186,14 @@ export function HouseWorkProvider({ children }) {
         if (voices && voices.length > 0) {
           const preferred = voices.find(v =>
             v.lang.startsWith('en') && (
-              v.name.includes('Google') ||
               v.name.includes('Natural') ||
+              v.name.includes('Google') ||
               v.name.includes('Samantha') ||
+              v.name.includes('Jenny') ||
+              v.name.includes('Guy') ||
+              v.name.includes('Aria') ||
               v.name.includes('Zira') ||
-              v.name.includes('Karen') ||
-              (v.name.toLowerCase().includes('female') && !v.name.toLowerCase().includes('male'))
+              v.name.includes('Karen')
             )
           ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
 
@@ -193,7 +209,7 @@ export function HouseWorkProvider({ children }) {
       utterance.onstart = () => { setIsSpeaking(true); setOrbMode('speaking'); };
       utterance.onend   = () => { setIsSpeaking(false); setOrbMode('idle'); };
       utterance.onerror = (e) => {
-        console.warn('[SpeechSynthesis] Error:', e);
+        console.warn('[SpeechSynthesis] Event warning:', e);
         setIsSpeaking(false);
         setOrbMode('idle');
       };
@@ -225,7 +241,12 @@ export function HouseWorkProvider({ children }) {
 
   // ── Main: send message to backend, dispatch multiple agents ───────────
   const sendMessage = useCallback(async (text) => {
-    if (!text.trim()) return;
+    if (!text || !text.trim()) return;
+
+    // Interrupt any ongoing speech
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
 
     const userMsg = { id: Date.now(), role: 'user', text: text.trim(), timestamp: new Date(), assignedAgents: [] };
     setMessages(prev => [...prev, userMsg]);
@@ -234,28 +255,25 @@ export function HouseWorkProvider({ children }) {
     setOrbMode('thinking');
 
     try {
-      // Call the real backend multi-agent endpoint
       const data = await callBackend(text.trim());
       setAiAvailable(data.aiAvailable ?? true);
+      if (data.provider) setAiProvider(data.provider);
 
-      // data.assignments = [{ agentId, isPrimary, response }]
       const assignments = data.assignments || [];
 
       // Dispatch each assigned agent simultaneously (staggered start, parallel work)
       const taskShort = text.length > 60 ? text.slice(0, 57) + '…' : text;
       assignments.forEach(({ agentId }, idx) => {
-        const startDelay = idx * 300; // stagger start by 300ms per agent
+        const startDelay = idx * 300;
         const workDuration = 6000 + Math.random() * 7000;
         setTimeout(() => {
           setAgentWorking(agentId, taskShort, workDuration);
         }, startDelay);
       });
 
-      // Build coordinator message (shows all agents' responses)
       const coordinatorText = data.coordinatorSummary ||
         `${assignments.length} agents are working simultaneously on your request.`;
 
-      // Build per-agent sub-messages
       const agentMessages = assignments.map((a, i) => ({
         id: Date.now() + i + 100,
         role: 'agent',
@@ -277,7 +295,7 @@ export function HouseWorkProvider({ children }) {
       setMessages(prev => [...prev, ...agentMessages, coordinatorMsg]);
       setIsThinking(false);
 
-      // Speak the coordinator summary
+      // Speak the coordinator summary aloud
       speak(coordinatorText);
 
     } catch (err) {
@@ -296,7 +314,7 @@ export function HouseWorkProvider({ children }) {
         {
           agentId: mainAgent,
           isPrimary: true,
-          response: `I'm analyzing your request: "${text}". Working on the implementation and solution right now.`,
+          response: `Analyzing your prompt "${text}". Implementing solution and running validation.`,
         },
         {
           agentId: 'aria',
@@ -335,54 +353,104 @@ export function HouseWorkProvider({ children }) {
       setMessages(prev => [...prev, ...agentMessages, coordinatorMsg]);
       setIsThinking(false);
       setOrbMode('idle');
+      speak(coordinatorMsg.text);
     }
   }, [setAgentWorking, speak]);
 
-  const [interimTranscript, setInterimTranscript] = useState('');
-  const [voiceError, setVoiceError]               = useState(null);
+  // ── Web Audio Analyser (Real-time acoustic visualizer for Perplexity Voice) ─
+  const startAudioMeter = useCallback(async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      micStreamRef.current = stream;
 
-  // ── Voice input (Speech-to-Text) ──────────────────────────────────────
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const audioCtx = new AudioCtx();
+      audioContextRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateMeter = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+        const normalized = Math.min(avg / 128, 1);
+        setAudioLevel(normalized);
+        animFrameRef.current = requestAnimationFrame(updateMeter);
+      };
+
+      updateMeter();
+    } catch (err) {
+      console.warn('[AudioMeter] Mic stream error:', err.message);
+    }
+  }, []);
+
+  const stopAudioMeter = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(t => t.stop());
+      micStreamRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try { audioContextRef.current.close(); } catch (_) {}
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setAudioLevel(0);
+  }, []);
+
+  // ── Voice Input (Speech-to-Text) ──────────────────────────────────────
   const startListening = useCallback(async () => {
     setVoiceError(null);
     setInterimTranscript('');
+    lastTranscriptRef.current = '';
+
+    // Stop TTS if currently speaking
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
 
     if (typeof window === 'undefined') return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setVoiceError('Voice input requires Google Chrome, Microsoft Edge, or Safari.');
+      setVoiceError('Voice recognition requires Google Chrome, Microsoft Edge, or Safari.');
       return;
     }
 
-    // Step 1: Explicitly check hardware mic permission via getUserMedia to unlock Chrome speech engine
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Release hardware mic track so SpeechRecognition can access it
-        stream.getTracks().forEach(t => t.stop());
-      } catch (micErr) {
-        console.warn('[Microphone] getUserMedia check failed:', micErr);
-        if (micErr.name === 'NotAllowedError' || micErr.name === 'PermissionDeniedError') {
-          setVoiceError('Microphone access denied. Please click the lock icon in browser address bar and set Microphone to Allow.');
-          return;
-        }
-      }
-    }
-
-    // Step 2: Now start SpeechRecognition safely
     try {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (_) {}
+        try { recognitionRef.current.abort(); } catch (_) {}
+        recognitionRef.current = null;
       }
 
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
       recognition.continuous = false;
       recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         setIsListening(true);
         setOrbMode('listening');
+        startAudioMeter();
       };
 
       recognition.onresult = (e) => {
@@ -390,42 +458,56 @@ export function HouseWorkProvider({ children }) {
         let interimText = '';
 
         for (let i = e.resultIndex; i < e.results.length; ++i) {
+          const item = e.results[i][0];
           if (e.results[i].isFinal) {
-            finalText += e.results[i][0].transcript;
+            finalText += item.transcript;
           } else {
-            interimText += e.results[i][0].transcript;
+            interimText += item.transcript;
           }
         }
 
-        if (interimText) {
-          setInterimTranscript(interimText);
+        const currentText = (finalText || interimText).trim();
+        if (currentText) {
+          lastTranscriptRef.current = currentText;
+          setInterimTranscript(currentText);
         }
 
         if (finalText.trim()) {
-          setInterimTranscript(finalText.trim());
+          lastTranscriptRef.current = finalText.trim();
           setIsListening(false);
           setOrbMode('idle');
+          stopAudioMeter();
           sendMessage(finalText.trim());
           setTimeout(() => setInterimTranscript(''), 2000);
         }
       };
 
       recognition.onerror = (e) => {
-        console.warn('[SpeechRecognition] Error:', e.error);
+        console.warn('[SpeechRecognition] Event:', e.error);
         setIsListening(false);
         setOrbMode('idle');
+        stopAudioMeter();
 
-        // Do not block on 'no-speech' or transient 'aborted'
-        if (e.error === 'no-speech' || e.error === 'aborted') {
+        if (e.error === 'no-speech') {
+          // If silence timeout occurred but user spoke earlier, dispatch stored transcript
+          if (lastTranscriptRef.current) {
+            sendMessage(lastTranscriptRef.current);
+            setTimeout(() => setInterimTranscript(''), 2000);
+            return;
+          }
+          return;
+        }
+
+        if (e.error === 'aborted') {
           return;
         }
 
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          setVoiceError('Speech recognition service busy or interrupted. Tap the mic button again to speak.');
+          setVoiceError('Microphone permission needed. Click the lock icon in your browser address bar and choose "Allow Microphone".');
         } else if (e.error === 'audio-capture') {
-          setVoiceError('No microphone detected on your device.');
+          setVoiceError('No microphone detected. Please plug in a mic or select the default audio input.');
         } else if (e.error === 'network') {
-          setVoiceError('Speech recognition network error. Please check your connection.');
+          setVoiceError('Speech recognition service offline or network busy. Tap the mic button to retry.');
         } else {
           setVoiceError(`Voice input error: ${e.error}`);
         }
@@ -434,6 +516,15 @@ export function HouseWorkProvider({ children }) {
       recognition.onend = () => {
         setIsListening(false);
         setOrbMode('idle');
+        stopAudioMeter();
+
+        // If recognition closed with pending speech transcript, auto-send
+        if (lastTranscriptRef.current && lastTranscriptRef.current.trim()) {
+          const textToSend = lastTranscriptRef.current.trim();
+          lastTranscriptRef.current = '';
+          sendMessage(textToSend);
+          setTimeout(() => setInterimTranscript(''), 2000);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -442,17 +533,26 @@ export function HouseWorkProvider({ children }) {
       console.warn('[SpeechRecognition] Exception:', err);
       setIsListening(false);
       setOrbMode('idle');
-      setVoiceError('Could not start speech recognition.');
+      stopAudioMeter();
+      setVoiceError('Could not start speech recognition. Tap to try again.');
     }
-  }, [sendMessage]);
+  }, [sendMessage, startAudioMeter, stopAudioMeter]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (_) {}
     }
+    stopAudioMeter();
     setIsListening(false);
     setOrbMode('idle');
-  }, []);
+
+    if (lastTranscriptRef.current && lastTranscriptRef.current.trim()) {
+      const textToSend = lastTranscriptRef.current.trim();
+      lastTranscriptRef.current = '';
+      sendMessage(textToSend);
+      setTimeout(() => setInterimTranscript(''), 2000);
+    }
+  }, [sendMessage, stopAudioMeter]);
 
   const sendDirectAgentMessage = useCallback(async (agentId, text) => {
     if (!text || !text.trim()) return;
@@ -485,10 +585,20 @@ export function HouseWorkProvider({ children }) {
     }
   }, [setAgentWorking, speak]);
 
+  // Clean up mic and audio resources on unmount
+  useEffect(() => {
+    return () => {
+      stopAudioMeter();
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [stopAudioMeter]);
+
   return (
     <HouseWorkContext.Provider value={{
-      messages, agents, isThinking, isSpeaking, isListening, orbMode, aiAvailable,
-      interimTranscript, voiceError,
+      messages, agents, isThinking, isSpeaking, isListening, orbMode, aiAvailable, aiProvider,
+      interimTranscript, voiceError, audioLevel,
       sendMessage, sendDirectAgentMessage, speak, startListening, stopListening,
     }}>
       {children}

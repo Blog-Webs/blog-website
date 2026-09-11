@@ -1,5 +1,3 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
 // ── Agent Definitions ──────────────────────────────────────────────────────
 const AGENTS = {
   aria: {
@@ -98,31 +96,47 @@ function routeTask(userMessage) {
   return result;
 }
 
+const OpenAIService = require('../../../utils/openAiService');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
 function getAI() {
+  if (OpenAIService.isAvailable()) {
+    return { type: 'openai', service: OpenAIService };
+  }
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
+  if (key) {
+    return { type: 'gemini', client: new GoogleGenerativeAI(key) };
+  }
+  return null;
 }
 
 const MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
 
-async function generateWithFallback(ai, prompt) {
+async function generateWithFallback(ai, prompt, systemPrompt) {
+  if (!ai) throw new Error('No AI provider available');
+
+  if (ai.type === 'openai') {
+    return await ai.service.generateText(prompt, systemPrompt);
+  }
+
+  // Gemini fallback
   let lastErr = null;
   for (const name of MODEL_CANDIDATES) {
     try {
-      const model = ai.getGenerativeModel({ model: name });
-      const result = await model.generateContent(prompt);
+      const model = ai.client.getGenerativeModel({ model: name });
+      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+      const result = await model.generateContent(fullPrompt);
       const text = result?.response?.text()?.trim();
       if (text) return text;
     } catch (err) {
       lastErr = err;
     }
   }
-  throw lastErr || new Error('Gemini API call failed across model candidates');
+  throw lastErr || new Error('AI API call failed across model candidates');
 }
 
 /**
- * HouseWorkAI Multi-Agent Orchestrator
+ * HouseWorkAI Multi-Agent Orchestrator (Powered by OpenAI ChatGPT)
  * Runs multiple agents in PARALLEL for true multi-agent behavior.
  */
 const HouseWorkAIService = {
@@ -167,25 +181,27 @@ const HouseWorkAIService = {
       assignments: responses,
       coordinatorSummary,
       aiAvailable: true,
+      provider: ai.type === 'openai' ? 'OpenAI ChatGPT' : 'Gemini AI',
     };
   },
 
   /**
-   * Run a single agent against the task using Gemini.
+   * Run a single agent against the task using OpenAI ChatGPT.
    */
   async _runAgent(ai, agentId, userMessage, isPrimary) {
     const agent = AGENTS[agentId];
     if (!agent) throw new Error(`Unknown agent: ${agentId}`);
 
-    const prompt = `${agent.systemPrompt}
+    const systemPrompt = `${agent.systemPrompt}
+You are ${agent.name} (${agent.role}). Respond in character.`;
 
-USER REQUEST: "${userMessage}"
+    const userPrompt = `USER REQUEST: "${userMessage}"
 
-${isPrimary ? 'You are the PRIMARY agent leading this task.' : 'You are a SUPPORTING agent. Keep your response short (1-2 sentences) and complementary to the primary agent.'}
+${isPrimary ? 'You are the PRIMARY agent leading this task. Provide a direct, actionable 2-3 sentence response.' : 'You are a SUPPORTING agent. Keep your response short (1-2 sentences) and complementary to the primary agent.'}
 
 Respond now as ${agent.name}:`;
 
-    return await generateWithFallback(ai, prompt);
+    return await generateWithFallback(ai, userPrompt, systemPrompt);
   },
 
   /**
@@ -197,15 +213,15 @@ Respond now as ${agent.name}:`;
         .map(r => `${AGENTS[r.agentId]?.name} (${AGENTS[r.agentId]?.role}): ${r.response}`)
         .join('\n');
 
-      const prompt = `You are the AI Coordinator for a multi-agent office team.
-The user asked: "${userMessage}"
+      const systemPrompt = `You are the AI Coordinator for a multi-agent office team.`;
+      const prompt = `The user asked: "${userMessage}"
 Your agents are handling it:
 ${agentSummaries}
 
 Write a brief 1-2 sentence coordinator summary explaining what the team is doing together. 
 Be confident and collaborative. Start with "The team is..."`;
 
-      return await generateWithFallback(ai, prompt);
+      return await generateWithFallback(ai, prompt, systemPrompt);
     } catch {
       return `The team is on it! ${responses.length} agents are working in parallel to handle your request efficiently.`;
     }

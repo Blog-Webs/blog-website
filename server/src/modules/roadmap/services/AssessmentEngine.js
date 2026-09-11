@@ -1,12 +1,18 @@
+const OpenAIService = require('../../../utils/openAiService');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Assessment = require('../models/Assessment');
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gpt-4o-mini';
 
 function getAI() {
+  if (OpenAIService.isAvailable()) {
+    return { type: 'openai', service: OpenAIService };
+  }
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
+  if (key) {
+    return { type: 'gemini', client: new GoogleGenerativeAI(key) };
+  }
+  return null;
 }
 
 /**
@@ -32,7 +38,7 @@ const SCORE_TO_LEVEL = (score) => {
 
 const AssessmentEngine = {
   isAvailable() {
-    return !!process.env.GEMINI_API_KEY;
+    return OpenAIService.isAvailable() || !!process.env.GEMINI_API_KEY;
   },
 
   /**
@@ -47,8 +53,6 @@ const AssessmentEngine = {
   async generateQuestions(domain, skill, difficulty = 'easy', count = 5, careerGoal = '') {
     const ai = getAI();
     if (!ai) return [];
-
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
 
     const prompt = `You are an expert educator and assessment designer.
 
@@ -81,11 +85,17 @@ Return ONLY valid JSON array, no markdown, no extra text:
 ]`;
 
     try {
-      const result = await model.generateContent(prompt);
-      let raw = result.response.text().trim();
-      raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
-      const questions = JSON.parse(raw);
-      return Array.isArray(questions) ? questions : [];
+      if (ai.type === 'openai') {
+        const questions = await ai.service.generateJSON(prompt, 'You are an expert educational assessment designer. Return JSON array.');
+        return Array.isArray(questions) ? questions : (questions.questions || []);
+      } else {
+        const model = ai.client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(prompt);
+        let raw = result.response.text().trim();
+        raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+        const questions = JSON.parse(raw);
+        return Array.isArray(questions) ? questions : [];
+      }
     } catch (err) {
       console.error('[AssessmentEngine] Question generation failed:', err.message);
       return [];

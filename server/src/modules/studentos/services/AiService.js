@@ -1,3 +1,4 @@
+const OpenAIService = require('../../../utils/openAiService');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const mongoose = require('mongoose');
 const Document = require('../models/Document');
@@ -56,24 +57,48 @@ function routeStudentTask(message) {
 }
 
 function getAI() {
+  if (OpenAIService.isAvailable()) {
+    return { type: 'openai', service: OpenAIService };
+  }
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
+  if (key) {
+    return { type: 'gemini', client: new GoogleGenerativeAI(key) };
+  }
+  return null;
 }
 
-async function generateContentWithFallback(ai, prompt) {
+async function generateContentWithFallback(ai, prompt, systemPrompt) {
+  if (!ai) throw new Error('No AI provider available');
+
+  if (ai.type === 'openai') {
+    return await ai.service.generateText(prompt, systemPrompt || 'You are an expert academic tutor and career guide.');
+  }
+
   let lastErr = null;
   for (const name of MODEL_CANDIDATES) {
     try {
-      const model = ai.getGenerativeModel({ model: name });
-      const result = await model.generateContent(prompt);
+      const model = ai.client.getGenerativeModel({ model: name });
+      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+      const result = await model.generateContent(fullPrompt);
       const text = result?.response?.text()?.trim();
       if (text) return text;
     } catch (err) {
       lastErr = err;
     }
   }
-  throw lastErr || new Error('Gemini API call failed across model candidates');
+  throw lastErr || new Error('AI API call failed across model candidates');
+}
+
+async function generateJSONWithFallback(ai, prompt, systemPrompt) {
+  if (!ai) throw new Error('No AI provider available');
+
+  if (ai.type === 'openai') {
+    return await ai.service.generateJSON(prompt, systemPrompt || 'You are an academic JSON generator.');
+  }
+
+  const text = await generateContentWithFallback(ai, prompt, systemPrompt);
+  let raw = text.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+  return JSON.parse(raw);
 }
 
 function sanitizeDocTexts(rawTexts) {
@@ -228,12 +253,12 @@ async function getRAGContext(ai, message, userId) {
 
 const AiService = {
   isAvailable() {
-    return !!process.env.GEMINI_API_KEY;
+    return OpenAIService.isAvailable() || !!process.env.GEMINI_API_KEY;
   },
 
   async summarizeEmail(emailBody, subject = '') {
     const ai = getAI();
-    if (!ai) return { summary: 'AI features require a GEMINI_API_KEY to be configured.', available: false };
+    if (!ai) return { summary: 'AI features require OPENAI_API_KEY to be configured.', available: false };
 
     try {
       const prompt = `You are an academic assistant helping a student understand their emails.
@@ -253,7 +278,7 @@ Summary:`;
 
   async summarizePDF(textContent, filename) {
     const ai = getAI();
-    if (!ai) return { summary: 'AI features require a GEMINI_API_KEY.', available: false };
+    if (!ai) return { summary: 'AI features require OPENAI_API_KEY.', available: false };
 
     try {
       const prompt = `You are an academic assistant. Summarize this document "${filename || 'document'}" in 5-7 bullet points covering key concepts a student needs for their exam.
@@ -278,7 +303,7 @@ Summary (use bullet points):`;
     if (!ai) {
       const offlineAgentOutputs = assignedAgents.map(a => `${a.emoji} **${a.name} (${a.role})**: Ready to assist on ${a.role.toLowerCase()} aspects of your query.`).join('\n\n');
       let offlineReply = docTexts
-        ? `Here is the extracted text and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`GEMINI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
+        ? `Here is the extracted text and summary from your uploaded course document:\n\n${docTexts.slice(0, 2500)}\n\n*(Note: Configure a valid \`OPENAI_API_KEY\` in \`server/.env\` to enable active AI generative answers over your files.)*`
         : `### Multi-Agent Academic Team:\n${offlineAgentOutputs}\n\n` +
           `**Key Concepts & Solution Framework**:\n` +
           `- Focus on foundational principles and asymptotic complexity trade-offs.\n` +
@@ -328,13 +353,10 @@ Summary (use bullet points):`;
     // Run assigned agents in PARALLEL (true multi-agent execution)
     const agentResults = await Promise.allSettled(
       assignedAgents.map(async (agent) => {
-        const agentPrompt = `${agent.systemPrompt}
-
-${contextStr}
-Student Request: "${message}"
+        const agentPrompt = `${contextStr}Student Request: "${message}"
 
 Respond concisely (2-4 paragraphs) strictly from your specialized domain perspective as ${agent.name} (${agent.role}).`;
-        const text = await generateContentWithFallback(ai, agentPrompt);
+        const text = await generateContentWithFallback(ai, agentPrompt, agent.systemPrompt);
         return { agentId: agent.id, name: agent.name, role: agent.role, emoji: agent.emoji, response: text };
       })
     );
@@ -345,7 +367,7 @@ Respond concisely (2-4 paragraphs) strictly from your specialized domain perspec
 
     if (successfulAgentResponses.length === 0) {
       return {
-        reply: "The AI multi-agent team encountered an issue generating responses. Please check your Gemini API key configuration.",
+        reply: "The AI multi-agent team encountered an issue generating responses. Please check your OpenAI API key configuration.",
         available: false
       };
     }
@@ -366,7 +388,6 @@ Respond concisely (2-4 paragraphs) strictly from your specialized domain perspec
     const ai = getAI();
     if (!ai) return { flashcards: [], available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const prompt = `Generate 8 flashcards from this academic content about "${topic || 'the topic'}".
 Format as a JSON array: [{"question": "...", "answer": "..."}, ...]
 Only return valid JSON, no extra text.
@@ -374,13 +395,9 @@ Only return valid JSON, no extra text.
 Content:
 ${content.slice(0, 3000)}`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    // Strip markdown code fences if present
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      const flashcards = JSON.parse(raw);
-      return { flashcards, available: true };
+      const flashcards = await generateJSONWithFallback(ai, prompt, 'You are an educational flashcard generator. Return JSON array of question/answer objects.');
+      return { flashcards: Array.isArray(flashcards) ? flashcards : (flashcards.flashcards || []), available: true };
     } catch {
       return { flashcards: [], available: true, error: 'Could not parse AI response' };
     }
@@ -390,7 +407,6 @@ ${content.slice(0, 3000)}`;
     const ai = getAI();
     if (!ai) return { quiz: [], available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const prompt = `Generate ${count} multiple choice questions about "${topic || 'the topic'}" at ${difficulty} difficulty level.
 ${content ? `Use this content as context:\n${content.slice(0, 3000)}` : `Base the questions on standard academic knowledge of ${topic}.`}
 
@@ -399,12 +415,9 @@ Format as JSON array:
 correctAnswer is the 0-based index of the correct option.
 Only return valid JSON, no extra text.`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      const quiz = JSON.parse(raw);
-      return { quiz, available: true };
+      const quiz = await generateJSONWithFallback(ai, prompt, 'You are an academic quiz generator. Return JSON array of quiz question objects.');
+      return { quiz: Array.isArray(quiz) ? quiz : (quiz.quiz || quiz.questions || []), available: true };
     } catch {
       return { quiz: [], available: true, error: 'Could not parse AI response' };
     }
@@ -412,9 +425,8 @@ Only return valid JSON, no extra text.`;
 
   async generateAssessmentReport({ topic, score, total, wrongQuestions }) {
     const ai = getAI();
-    if (!ai) return { report: 'AI features require a GEMINI_API_KEY.', available: false };
+    if (!ai) return { report: 'AI features require an OPENAI_API_KEY.', available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const percentage = Math.round((score / total) * 100);
     const wrongSummary = wrongQuestions.length > 0
       ? `Wrong questions:\n${wrongQuestions.map(q => `- ${q.question} (Correct: ${q.correct})`).join('\n')}`
@@ -433,15 +445,14 @@ Write a professional performance report with:
 
 Be specific, encouraging, and academic. Use clear formatting.`;
 
-    const result = await model.generateContent(prompt);
-    return { report: result.response.text().trim(), score, total, percentage, available: true };
+    const text = await generateContentWithFallback(ai, prompt, 'You are an expert academic advisor.');
+    return { report: text, score, total, percentage, available: true };
   },
 
   async analyzeWeakAreas({ assessmentResults, roadmapPhase, targetRole }) {
     const ai = getAI();
     if (!ai) return { weakAreas: [], available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const resultsText = assessmentResults.length > 0
       ? assessmentResults.map(r => `- ${r.topic}: ${r.score}/${r.total} (${Math.round(r.score/r.total*100)}%)`).join('\n')
       : 'No assessment data available, analyze based on typical gaps for the target role.';
@@ -464,12 +475,9 @@ Return a JSON array of weak areas:
 
 Identify 3-5 weak areas. Only return valid JSON.`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      const weakAreas = JSON.parse(raw);
-      return { weakAreas, available: true };
+      const weakAreas = await generateJSONWithFallback(ai, prompt, 'You are a career gap analysis specialist.');
+      return { weakAreas: Array.isArray(weakAreas) ? weakAreas : (weakAreas.weakAreas || []), available: true };
     } catch {
       return { weakAreas: [], available: true, error: 'Could not parse AI response' };
     }
@@ -479,7 +487,6 @@ Identify 3-5 weak areas. Only return valid JSON.`;
     const ai = getAI();
     if (!ai) return { slots: [], available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const prompt = `Create a detailed daily study plan for a student:
 Target Role: ${targetRole || 'Software Engineer'}
 Current Roadmap Phase: ${roadmapPhase || 'Foundations'}
@@ -497,12 +504,9 @@ Generate time-block slots for today. Return JSON array:
 
 Create 5-7 realistic slots covering the ${availableHours} hours. Include a break. Be specific to the roadmap phase. Only return valid JSON.`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      const slots = JSON.parse(raw);
-      return { slots, available: true };
+      const slots = await generateJSONWithFallback(ai, prompt, 'You are a daily study planner.');
+      return { slots: Array.isArray(slots) ? slots : (slots.slots || []), available: true };
     } catch {
       return { slots: [], available: true, error: 'Could not parse AI response' };
     }
@@ -512,7 +516,6 @@ Create 5-7 realistic slots covering the ${availableHours} hours. Include a break
     const ai = getAI();
     if (!ai) return { milestones: [], available: false };
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const prompt = `Create a personalized learning roadmap for a student:
 Target Role: ${targetRole}
 Current Experience Level: ${experience || 'Beginner'}
@@ -534,12 +537,9 @@ Generate 4-6 milestone phases. Return JSON array:
 
 First phase status should be "in_progress", rest should be "locked". Only return valid JSON.`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      const milestones = JSON.parse(raw);
-      return { milestones, available: true };
+      const milestones = await generateJSONWithFallback(ai, prompt, 'You are a technical career roadmap architect.');
+      return { milestones: Array.isArray(milestones) ? milestones : (milestones.milestones || []), available: true };
     } catch {
       return { milestones: [], available: true, error: 'Could not parse AI response' };
     }
@@ -557,7 +557,6 @@ First phase status should be "in_progress", rest should be "locked". Only return
       };
     }
 
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
     const prompt = `You are an expert technical recruiter and resume parser.
 Analyze this resume text:
 ${resumeText.slice(0, 4000)}
@@ -574,11 +573,8 @@ Extract and return valid JSON:
 experienceLevel must be one of: "intern", "entry", "mid", "senior".
 Only return valid JSON, no surrounding markdown.`;
 
-    const result = await model.generateContent(prompt);
-    let raw = result.response.text().trim();
-    raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
     try {
-      return JSON.parse(raw);
+      return await generateJSONWithFallback(ai, prompt, 'You are a professional resume parser.');
     } catch {
       return {
         skills: ['JavaScript', 'React', 'Node.js', 'Algorithms', 'Databases'],

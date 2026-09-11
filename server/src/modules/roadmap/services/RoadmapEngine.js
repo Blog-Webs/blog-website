@@ -1,15 +1,21 @@
+const OpenAIService = require('../../../utils/openAiService');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { v4: uuidv4 } = require('uuid');
 const Roadmap = require('../models/Roadmap');
 const DomainRegistry = require('./DomainRegistry');
 const GapAnalysisService = require('./GapAnalysisService');
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gpt-4o-mini';
 
 function getAI() {
+  if (OpenAIService.isAvailable()) {
+    return { type: 'openai', service: OpenAIService };
+  }
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
+  if (key) {
+    return { type: 'gemini', client: new GoogleGenerativeAI(key) };
+  }
+  return null;
 }
 
 /**
@@ -43,11 +49,16 @@ const RoadmapEngine = {
           : 24;
 
         const prompt = this._buildPrompt(profile, gaps, strengths, gapText, requiredSkills, certifications, weeksAvailable, domainConfig);
-        const model = ai.getGenerativeModel({ model: MODEL_NAME });
-        const result = await model.generateContent(prompt);
-        let raw = result.response.text().trim();
-        raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
-        parsed = JSON.parse(raw);
+
+        if (ai.type === 'openai') {
+          parsed = await ai.service.generateJSON(prompt, 'You are an expert curriculum designer. Return valid JSON only.');
+        } else {
+          const model = ai.client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const result = await model.generateContent(prompt);
+          let raw = result.response.text().trim();
+          raw = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+          parsed = JSON.parse(raw);
+        }
       } catch (err) {
         console.warn('[RoadmapEngine] AI call failed/timed out, using smart domain fallback:', err.message);
       }

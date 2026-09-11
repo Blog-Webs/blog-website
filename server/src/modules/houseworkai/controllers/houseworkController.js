@@ -59,11 +59,22 @@ const HouseWorkAIController = {
 
   /**
    * GET /api/housework-ai/status
-   * Returns whether Gemini AI is available.
+   * Returns whether OpenAI ChatGPT or AI is available.
    */
   getStatus: asyncWrap(async (req, res) => {
-    const aiAvailable = !!process.env.GEMINI_API_KEY;
-    res.json({ status: 'ok', aiAvailable, agentCount: 6 });
+    const openAiAvailable = !!(process.env.OPENAI_API_KEY || process.env.CHATGPT_API_KEY);
+    const geminiAvailable = !!process.env.GEMINI_API_KEY;
+    const aiAvailable = openAiAvailable || geminiAvailable;
+    const provider = openAiAvailable ? 'OpenAI ChatGPT' : geminiAvailable ? 'Gemini AI' : 'Simulated';
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+    res.json({
+      status: 'ok',
+      aiAvailable,
+      provider,
+      model: openAiAvailable ? model : (geminiAvailable ? 'gemini-2.5-flash' : 'simulated'),
+      agentCount: 6,
+    });
   }),
 };
 
