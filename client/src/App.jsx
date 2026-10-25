@@ -14,7 +14,6 @@ const TopicPage = lazy(() => import('./modules/learn/pages/TopicPage'));
 const BlogList = lazy(() => import('./modules/blog/pages/BlogList'));
 const BlogDetail = lazy(() => import('./modules/blog/pages/BlogDetail'));
 const SeriesDetail = lazy(() => import('./modules/blog/pages/SeriesDetail'));
-const TodoPage = lazy(() => import('./modules/workspace/pages/TodoPage'));
 const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 const PrivacyPolicy = lazy(() => import('./modules/core/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./modules/core/pages/TermsOfService'));
@@ -57,8 +56,7 @@ function App() {
           <Route path="/learn" element={<LearnHome />} />
           <Route path="/docs/:slug?" element={<DocsPage />} />
           <Route path="/blog" element={<BlogList />} />
-          <Route path="/series/:slug" element={<SeriesDetail />} />
-          <Route path="/todos" element={<TodoPage />} />
+          <Route path="/todos" element={<Navigate to="/student-os/tasks" replace />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/forum/*" element={<Navigate to="/contact" replace />} />
           <Route path="/forum" element={<Navigate to="/contact" replace />} />

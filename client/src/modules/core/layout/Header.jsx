@@ -137,7 +137,6 @@ const Header = () => {
           <NavLink to="/learn" className={navLinkClass}>Learn</NavLink>
           {/* "Blog" label — previously "Blog", now clearly labelled "Blogs" */}
           <NavLink to="/blog" className={navLinkClass}>Blogs</NavLink>
-          <NavLink to="/todos" className={navLinkClass}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
           <NavLink to="/contact" className={navLinkClass}>Contact</NavLink>
           <NavLink
@@ -284,7 +283,6 @@ const Header = () => {
         <div className="md:hidden border-t border-white/5 px-4 py-3 flex flex-col gap-2 bg-[#0e0e10]">
           <NavLink to="/learn" className={navLinkClass} onClick={() => setMobileOpen(false)}>Learn</NavLink>
           <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blogs</NavLink>
-          <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
           <NavLink to="/contact" className={navLinkClass} onClick={() => setMobileOpen(false)}>Contact</NavLink>
           <NavLink to="/housework-ai" onClick={() => setMobileOpen(false)}
