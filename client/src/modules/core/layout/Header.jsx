@@ -139,7 +139,7 @@ const Header = () => {
           <NavLink to="/blog" className={navLinkClass}>Blogs</NavLink>
           <NavLink to="/todos" className={navLinkClass}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass}>Workspace</NavLink>
-          <NavLink to="/forum" className={navLinkClass}>Forum</NavLink>
+          <NavLink to="/contact" className={navLinkClass}>Contact</NavLink>
           <NavLink
             to="/housework-ai"
             className={({ isActive }) =>
@@ -286,7 +286,7 @@ const Header = () => {
           <NavLink to="/blog" className={navLinkClass} onClick={() => setMobileOpen(false)}>Blogs</NavLink>
           <NavLink to="/todos" className={navLinkClass} onClick={() => setMobileOpen(false)}>Todo</NavLink>
           <NavLink to="/student-os" className={navLinkClass} onClick={() => setMobileOpen(false)}>Workspace</NavLink>
-          <NavLink to="/forum" className={navLinkClass} onClick={() => setMobileOpen(false)}>Forum</NavLink>
+          <NavLink to="/contact" className={navLinkClass} onClick={() => setMobileOpen(false)}>Contact</NavLink>
           <NavLink to="/housework-ai" onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-1.5 text-[11px] uppercase tracking-widest transition-colors duration-200 ${

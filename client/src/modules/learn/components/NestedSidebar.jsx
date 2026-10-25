@@ -79,10 +79,10 @@ const NestedSidebar = ({
         <div className="bg-[#1C202B] border border-[#2D3342] rounded-xl p-5 shadow-lg">
           <h4 className="text-sm font-bold text-white mb-2">Need Help?</h4>
           <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
-            Join our community forum for {subjectName} developers.
+            Have questions or feedback about {subjectName}? Contact our support team.
           </p>
-          <Link to="/forum" className="block w-full py-2 bg-[#abc4ff] hover:bg-[#b9cdff] text-[#0E1015] font-bold text-xs text-center rounded-lg transition-colors">
-            Visit Forum
+          <Link to="/contact" className="block w-full py-2 bg-[#abc4ff] hover:bg-[#b9cdff] text-[#0E1015] font-bold text-xs text-center rounded-lg transition-colors">
+            Contact Support
           </Link>
         </div>
       </div>

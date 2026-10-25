@@ -38,9 +38,9 @@ const Footer = () => {
                   <GitBranch size={14} />
                 </a>
                 <Link
-                  to="/forum"
+                  to="/contact"
                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                  aria-label="Forum"
+                  aria-label="Contact"
                 >
                   <MessageSquare size={14} />
                 </Link>
@@ -67,9 +67,9 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/forum" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
+                  <Link to="/contact" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
                     <span className="w-1 h-1 rounded-full bg-gray-700 group-hover:bg-[#3B82F6] transition-colors" />
-                    Security
+                    Support
                   </Link>
                 </li>
               </ul>
@@ -95,9 +95,9 @@ const Footer = () => {
                   </a>
                 </li>
                 <li>
-                  <Link to="/forum" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
+                  <Link to="/contact" className="text-[13px] text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
                     <span className="w-1 h-1 rounded-full bg-gray-700 group-hover:bg-[#6366F1] transition-colors" />
-                    Forum
+                    Contact
                   </Link>
                 </li>
               </ul>

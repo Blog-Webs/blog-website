@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './modules/core/layout/Layout';
 import BackToTop from './modules/core/components/ui/BackToTop';
 const ReadingLayout = lazy(() => import('./modules/core/layout/ReadingLayout'));
@@ -18,6 +18,7 @@ const TodoPage = lazy(() => import('./modules/workspace/pages/TodoPage'));
 const NotFound = lazy(() => import('./modules/core/pages/NotFound'));
 const PrivacyPolicy = lazy(() => import('./modules/core/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./modules/core/pages/TermsOfService'));
+const ContactPage = lazy(() => import('./modules/core/pages/ContactPage'));
 
 // Forum
 const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
@@ -58,10 +59,9 @@ function App() {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/todos" element={<TodoPage />} />
-          <Route path="/forum" element={<ForumHome />} />
-          <Route path="/forum/create" element={<CreateTopicPage />} />
-          <Route path="/forum/:categorySlug" element={<ForumHome />} />
-          <Route path="/forum/topic/:topicSlug" element={<TopicDetail />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/forum/*" element={<Navigate to="/contact" replace />} />
+          <Route path="/forum" element={<Navigate to="/contact" replace />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
         </Route>
